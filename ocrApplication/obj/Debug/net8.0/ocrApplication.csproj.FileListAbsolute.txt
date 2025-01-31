@@ -1,0 +1,15 @@
+/Users/karthikprabu/Documents/OCR/ocrApplication/bin/Debug/net8.0/ocrApplication
+/Users/karthikprabu/Documents/OCR/ocrApplication/bin/Debug/net8.0/ocrApplication.deps.json
+/Users/karthikprabu/Documents/OCR/ocrApplication/bin/Debug/net8.0/ocrApplication.runtimeconfig.json
+/Users/karthikprabu/Documents/OCR/ocrApplication/bin/Debug/net8.0/ocrApplication.dll
+/Users/karthikprabu/Documents/OCR/ocrApplication/bin/Debug/net8.0/ocrApplication.pdb
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ocrApplication.GeneratedMSBuildEditorConfig.editorconfig
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ocrApplication.AssemblyInfoInputs.cache
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ocrApplication.AssemblyInfo.cs
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ocrApplication.csproj.CoreCompileInputs.cache
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ocrApplication.sourcelink.json
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ocrApplication.dll
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/refint/ocrApplication.dll
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ocrApplication.pdb
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ocrApplication.genruntimeconfig.cache
+/Users/karthikprabu/Documents/OCR/ocrApplication/obj/Debug/net8.0/ref/ocrApplication.dll
