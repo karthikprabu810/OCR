@@ -1,0 +1,58 @@
+# JetBrains IDEs (IntelliJ, PyCharm, WebStorm, etc.)
+.idea/
+
+# VS Code specific
+.vscode/
+
+# Visual Studio specific
+.vs/
+.vs2019/
+.vs2017/
+
+# OS-specific files
+.DS_Store           # macOS system file
+Thumbs.db           # Windows Explorer specific file
+desktop.ini         # Windows specific file
+
+# Node.js and other dependency directories
+node_modules/
+
+# Build output directories
+/build/
+out/
+target/              # Maven, Gradle output
+*.iml                # IntelliJ module files
+
+# Log files
+*.log
+
+# Temporary and backup files
+*.swp                # Vim swap files
+*.swo
+*.tmp
+*.bak                # Backup files
+*.orig               # Git merge conflict leftovers
+
+# Environment-specific config files (optional)
+.env                 # For environment variables (often contains sensitive info)
+
+# Python specific (if applicable)
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon?
+ehthumbs.db
+
+# Windows Installer files (if applicable)
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows specific files
+ehthumbs.db
+Icon?
