@@ -20,6 +20,8 @@ node_modules/
 # Build output directories
 /build/
 out/
+Debug/
+Release/
 target/              # Maven, Gradle output
 *.iml                # IntelliJ module files
 
@@ -60,3 +62,14 @@ ehthumbs.db
 # Windows specific files
 ehthumbs.db
 Icon?
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Build results
+*.dll
+*.exe
+*.pdb
