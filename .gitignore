@@ -73,3 +73,5 @@ Icon?
 *.dll
 *.exe
 *.pdb
+
+ocr_config.json
