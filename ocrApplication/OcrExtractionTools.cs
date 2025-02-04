@@ -3,12 +3,15 @@ using Google.Cloud.Vision.V1;
 using IronOcr;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Tesseract;
 
 namespace ocrApplication
 {
     public class OcrConfig
     {
         public string TesseractPath { get; set; }
+        
+        public string TesseractTessDataPath { get; set; }
         public string OCRSpaceApiKey { get; set; }
         public string IronOcrLicenseKey { get; set; }
         public string GoogleVisionApiKey { get; set; }
@@ -17,6 +20,7 @@ namespace ocrApplication
     public class OcrExtractionTools : IDisposable
     {
         private string _tesseractPath;
+        private string _tessDataPath;
         private string _ocrSpaceApiKey;
         private string _ironOcrLicenseKey;
         private string _googleVisionApiKey;
@@ -28,6 +32,7 @@ namespace ocrApplication
             var config = LoadConfig(configFilePath);
 
             _tesseractPath = config.TesseractPath ?? "tesseract";
+            _tessDataPath = config.TesseractTessDataPath;
             _ocrSpaceApiKey = config.OCRSpaceApiKey;
             _ironOcrLicenseKey = config.IronOcrLicenseKey;
             _googleVisionApiKey = config.GoogleVisionApiKey;
@@ -67,6 +72,39 @@ namespace ocrApplication
 
             Console.WriteLine("Tesseract OCR complete! Check the output text file.");
         }
+        
+        // Method to extract text using Tesseract OCR via Nuget Package
+        
+        
+
+        public string ExtractTextUsingTesseractWindowsNuGet(string imagePath, string language = "eng")
+        {
+            try
+            {
+                // Specify the path to the Tesseract language data files
+                string tesseractDataPath = _tessDataPath;  // Make sure this path is correct
+        
+                // Initialize the Tesseract engine
+                using (var engine = new TesseractEngine(tesseractDataPath, language, EngineMode.Default))
+                {
+                    // Load the image
+                    using (var img = Pix.LoadFromFile(imagePath))
+                    {
+                        // Perform OCR on the image
+                        var result = engine.Process(img);
+
+                        // Return the extracted text
+                        return result.GetText();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during OCR process: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
 
         // Method to extract text using IronOCR API
         public string ExtractTextUsingIronOcr(string imagePath)
