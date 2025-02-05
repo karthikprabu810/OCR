@@ -1,0 +1,204 @@
+using Emgu.CV;
+using Emgu.CV.CvEnum;
+using System.Drawing;
+using Emgu.CV.Structure;
+
+namespace ocrApplication;
+
+public class ImagePreprocessing
+{
+    // 1. Grayscale Conversion Function
+    public static Mat ConvertToGrayscale(string imagePath)
+    {
+        // Load the image
+        Mat image = CvInvoke.Imread(imagePath); // Read image in color mode
+        // Mat image = CvInvoke.Imread(imagePath, ImreadModes.Color); // Read image in color mode
+        
+        // Convert to grayscale
+        Mat grayImage = new Mat();
+        CvInvoke.CvtColor(image, grayImage, ColorConversion.Bgr2Gray);
+        
+        if (grayImage.IsEmpty)
+        {
+            Console.WriteLine("Error loading image: " + imagePath);
+        }
+        
+        return grayImage;
+    }
+    
+    // 2. Noise Removal: Gaussian Blur
+    public static Mat RemoveNoiseUsingGaussian(string imagePath)
+    {
+
+        int kernelSize = 5;
+        Mat image = ConvertToGrayscale(imagePath); // First convert to grayscale if not done
+        Mat denoisedImage = new Mat();
+
+        // Apply Gaussian Blur to reduce noise
+        CvInvoke.GaussianBlur(image, denoisedImage, new Size(kernelSize, kernelSize), 0);
+        
+        if (denoisedImage.IsEmpty)
+        {
+            Console.WriteLine("Gaussian blur failed for " + imagePath);
+        }
+        
+        return denoisedImage;
+    }
+    
+    // 3. Noise Removal: Median Filtering
+    public static Mat RemoveNoiseUsingMedian(string imagePath)
+    {
+        int kernelSize = 3;
+        Mat image = ConvertToGrayscale(imagePath); // First convert to grayscale if not done
+        Mat denoisedImage = new Mat();
+
+        // Apply Median Filtering to reduce noise
+        CvInvoke.MedianBlur(image, denoisedImage, kernelSize);
+        
+        if (denoisedImage.IsEmpty)
+        {
+            Console.WriteLine("Median filtering failed for " + imagePath);
+        }
+        
+        return denoisedImage;
+    }
+    
+    // 4. Adaptive Thresholding (Used when lighting varies across the image)
+    public static Mat AdaptiveThresholding(string imagePath)
+    {
+        Mat image = ConvertToGrayscale(imagePath);
+        Mat thresholdedImage = new Mat();
+        
+        CvInvoke.AdaptiveThreshold(image, thresholdedImage, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 11, 2);
+        
+        if (thresholdedImage.IsEmpty)
+        {
+            Console.WriteLine("Adaptive thresholding failed for " + imagePath);
+        }
+        
+        return thresholdedImage;
+    }
+    
+    // 5. Gamma Correction (Used for correcting the image brightness)
+    public static Mat GammaCorrection(string imagePath)
+    {
+        double gamma = 1.5;
+        Mat image = ConvertToGrayscale(imagePath);
+        Mat gammaCorrectedImage = new Mat();
+
+        // Create lookup table for gamma correction
+        Mat lookUpTable = new Mat(1, 256, DepthType.Cv8U, 1);
+        for (int i = 0; i < 256; i++)
+        {
+            byte[] values = new byte[] { (byte)(Math.Pow(i / 255.0, gamma) * 255.0) };
+            lookUpTable.SetTo(values);
+        }
+
+        CvInvoke.LUT(image, lookUpTable, gammaCorrectedImage);
+
+        if (gammaCorrectedImage.IsEmpty)
+        {
+            Console.WriteLine("Gamma correction failed for " + imagePath);
+        }
+
+        return gammaCorrectedImage;
+    }
+    
+    // 6. Canny Edge Detection (Used to detect edges in an image)
+    public static Mat CannyEdgeDetection(string imagePath)
+    {
+        Mat image = ConvertToGrayscale(imagePath);
+        Mat edgeDetectedImage = new Mat();
+        CvInvoke.Canny(image, edgeDetectedImage, 100, 200);
+        if (edgeDetectedImage.IsEmpty)
+        {
+            Console.WriteLine("Canny edge detection failed for " + imagePath);
+        }
+        return edgeDetectedImage;
+    }
+
+    // 7. Morphological Operations (Dilation)
+    public static Mat Dilation(string imagePath)
+    {
+        int kernelSize = 3;
+        Mat image = ConvertToGrayscale(imagePath);
+        Mat dilatedImage = new Mat();
+        
+        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
+        CvInvoke.Dilate(image, dilatedImage, kernel, new Point(-1, -1), 1, BorderType.Reflect, new MCvScalar(0));
+        
+        if (dilatedImage.IsEmpty)
+        {
+            Console.WriteLine("Dilation failed for " + imagePath);
+        }
+        return dilatedImage;
+        
+    }
+
+    // 8. Morphological Operations (Erosion)
+    public static Mat Erosion(string imagePath)
+    {
+        int kernelSize = 3;
+        Mat image = ConvertToGrayscale(imagePath);
+        Mat erodedImage = new Mat();
+        
+        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
+        CvInvoke.Erode(image, erodedImage, kernel, new Point(-1, -1), 1, BorderType.Reflect, new MCvScalar(0));
+        
+        if (erodedImage.IsEmpty)
+        {
+            Console.WriteLine("Erosion failed for " + imagePath);
+        }
+        
+        return erodedImage;
+    }
+    
+    // 9. Binarization Improvements (Otsu's Method)
+    public static Mat OtsuBinarization(string imagePath)
+    {
+        // Step 1: Read the image in grayscale mode
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        
+        // Step 2: Apply Otsu's method to perform automatic thresholding
+        Mat binaryImage = new Mat();
+        try
+        {
+            CvInvoke.Threshold(image, binaryImage, 0, 255, ThresholdType.Otsu);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: Otsu binarization failed for image at path: {imagePath}. Error code: 1502. Exception: {ex.Message}");
+            return new Mat(); // Return empty Mat if thresholding fails
+        }
+
+        return binaryImage;
+    }
+    
+    // 10. Deskew the image (rotate to correct skew) (Used to fix skewed images)
+    public static Mat Deskew(string imagePath)
+    {
+        Mat image = ConvertToGrayscale(imagePath);
+        Mat deskewedImage = new Mat();
+
+        // Calculate skew angle using moments and rotate the image
+        var moments = CvInvoke.Moments(image);
+        double skewAngle = 0.5 * Math.Atan2(2 * moments.M11, moments.M02 - moments.M20) * 180 / Math.PI;
+
+        // Create the rotation matrix for the image (no need for an output argument here)
+        var center = new PointF(image.Width / 2.0f, image.Height / 2.0f);
+        Mat rotationMatrix = new Mat();  // This will hold the result
+
+        // Get the rotation matrix using the proper method
+        CvInvoke.GetRotationMatrix2D(center, skewAngle, 1.0, rotationMatrix);
+
+        // Apply the warp affine transformation to deskew the image
+        CvInvoke.WarpAffine(image, deskewedImage, rotationMatrix, image.Size);
+
+        if (deskewedImage.IsEmpty)
+        {
+            Console.WriteLine("Deskewing failed for " + imagePath);
+        }
+
+        return deskewedImage;
+    }
+}
