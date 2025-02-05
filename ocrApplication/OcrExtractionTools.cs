@@ -15,6 +15,10 @@ namespace ocrApplication
         public string OCRSpaceApiKey { get; set; }
         public string IronOcrLicenseKey { get; set; }
         public string GoogleVisionApiKey { get; set; }
+        
+        public int Counter { get; set; }
+        
+        public int Limit { get; set; }
     }
 
     public class OcrExtractionTools : IDisposable
@@ -25,9 +29,11 @@ namespace ocrApplication
         private string _ironOcrLicenseKey;
         private string _googleVisionApiKey;
         private bool _disposed = false;
+        private string _configFilePath;
 
         public OcrExtractionTools(string configFilePath)
         {
+            _configFilePath = configFilePath;
             // Load configuration settings from the JSON file
             var config = LoadConfig(configFilePath);
 
@@ -49,6 +55,13 @@ namespace ocrApplication
         {
             var json = File.ReadAllText(filePath);
             return JsonConvert.DeserializeObject<OcrConfig>(json);
+        }
+        
+        // Method to write the updated configuration back to the JSON file
+        private void WriteConfigToFile(OcrConfig config)
+        {
+            string jsonContent = JsonConvert.SerializeObject(config, Formatting.Indented);
+            File.WriteAllText(_configFilePath, jsonContent);
         }
 
         // Method to extract text using Tesseract OCR
@@ -74,9 +87,6 @@ namespace ocrApplication
         }
         
         // Method to extract text using Tesseract OCR via Nuget Package
-        
-        
-
         public string ExtractTextUsingTesseractWindowsNuGet(string imagePath, string language = "eng")
         {
             try
@@ -125,6 +135,15 @@ namespace ocrApplication
         {
             try
             {
+                // Read the current configuration from the file (including the counter and limit)
+                var config = LoadConfig(_configFilePath);
+
+                // Check if the counter has reached or exceeded the limit
+                if (config.Counter >= config.Limit)
+                {
+                    throw new InvalidOperationException("OCR process limit has been reached.");
+                }
+
                 // Set Google Vision API credentials
                 Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", _googleVisionApiKey);
 
@@ -143,7 +162,13 @@ namespace ocrApplication
                 {
                     extractedText += annotation.Description + "\n";
                 }
+                // Increment the counter after the OCR process
+                config.Counter++;
+                Console.WriteLine($"Google Vision OCR process: {config.Counter} of {config.Limit}");
 
+                // Write the updated configuration back to the file
+                WriteConfigToFile(config);
+                
                 return extractedText;
             }
             catch (Exception ex)
