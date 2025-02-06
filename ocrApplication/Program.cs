@@ -1,40 +1,37 @@
-﻿namespace ocrApplication
+﻿using System.Runtime.InteropServices;
+using Emgu.CV;
+
+namespace ocrApplication
 {
     public class Program
     {
         static async Task Main()
         {
-            // Define the folder path where images are stored (input folder)
-            string folderPath = @"/Users/karthikprabu/Downloads/T2"; // Specify your folder path here
-
-            // Define the main output folder for the OCR results
-            string outputFolder = @"/Users/karthikprabu/Downloads/AA/";
-
-            // Create a timestamp-based subfolder (e.g., "2025-02-01_12-30-00")
-            string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            string timestampFolder = Path.Combine(outputFolder, timestamp);
-
-            // Define the subfolder name where OCR results will be saved
-            string ocrResultFolder = "OcrResults";
-
-            // Combine timestamp folder and OCR result folder
-            string fullOutputPath = Path.Combine(timestampFolder, ocrResultFolder);
-
-            // Create the full directory structure (timestamp -> ocrresult) if it doesn't exist
-            if (!Directory.Exists(fullOutputPath))
-            {
-                Directory.CreateDirectory(fullOutputPath);
-                Console.WriteLine($"Created output folder structure: {fullOutputPath}");
-            }
-
+            bool isMacOs = RuntimeInformation.OSDescription.Contains("Darwin", StringComparison.OrdinalIgnoreCase);
+            bool isWindows = RuntimeInformation.OSDescription.Contains("Windows", StringComparison.OrdinalIgnoreCase);
+            
             // Specify the config file path
             string configFilePath = @"/Users/karthikprabu/Documents/OCR/ocr_config.json";  // Specify the full path to the config file here.
 
             // Create an instance of the OcrExtractionTools with configuration values
             OcrExtractionTools ocrTool = new OcrExtractionTools(configFilePath);
+            
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            
+            // Define the folder paths
+            string inputFolderPath = @"/Users/karthikprabu/Downloads/T2";  // Original images folder
+            string outputFolderPath = @$"/Users/karthikprabu/Downloads/AA/{timestamp}";  // Output folder
+            
+            // Folder for processed images and OCR results
+            string processedImagesFolder = Path.Combine(outputFolderPath, "processed_images");
+            string ocrResultsFolder = Path.Combine(outputFolderPath, "ocr_results");
+            
+            // Create necessary folders if they don't exist
+            Directory.CreateDirectory(processedImagesFolder);
+            Directory.CreateDirectory(ocrResultsFolder);
 
-            // Get all image files in the folder and subfolders (e.g., .png, .jpg, .jpeg files)
-            string[] imageFiles = Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories)
+            // Get all image files in the input folder
+            string[] imageFiles = Directory.GetFiles(inputFolderPath, "*.*", SearchOption.AllDirectories)
                 .Where(file => file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
                                file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
                                file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
@@ -47,46 +44,147 @@
                 return;
             }
 
-            // Process each image file in the folder and subfolders
-            foreach (var imagePath in imageFiles)
+            // Define preprocessing methods and their names
+            var preprocessMethods = new (string Name, Func<string, Mat> Method)[]
             {
-                // Construct an output path for each image (inside the timestamp/ocrresult folder)
+                ("grayscale", ImagePreprocessing.ConvertToGrayscale),
+                ("gaussian", ImagePreprocessing.RemoveNoiseUsingGaussian),
+                ("median", ImagePreprocessing.RemoveNoiseUsingMedian),
+                ("adaptive_thresholding", ImagePreprocessing.AdaptiveThresholding),
+                ("gamma_correction", ImagePreprocessing.GammaCorrection),
+                ("canny_edge", ImagePreprocessing.CannyEdgeDetection),
+                ("dilation", ImagePreprocessing.Dilation),
+                ("erosion", ImagePreprocessing.Erosion),
+                ("otsu_binarization", ImagePreprocessing.OtsuBinarization),
+                // ("deskew", ImagePreprocessing.Deskew)
+            };
+            
+            // Process each image in parallel
+            await Task.WhenAll(imageFiles.Select(async imagePath =>
+            {
                 string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(imagePath);
-                string imageOutputFolder = Path.Combine(fullOutputPath, fileNameWithoutExtension);  // Combine the subfolder and image name
+                string imageProcessedFolder = Path.Combine(processedImagesFolder, fileNameWithoutExtension);
+                string imageOcrResultFolder = Path.Combine(ocrResultsFolder, fileNameWithoutExtension);
 
-                // Create the image-specific output folder if it doesn't exist
-                if (!Directory.Exists(imageOutputFolder))
+                Directory.CreateDirectory(imageProcessedFolder);
+                Directory.CreateDirectory(imageOcrResultFolder);
+
+                // 1. Process the original image and save it to processed_images folder
+                string originalImagePath = Path.Combine(imageProcessedFolder, "original.jpg");
+                File.Copy(imagePath, originalImagePath, true); // Copy original image
+
+                // Process the original image with OCR tools
+                string originalOcrToolFolder = Path.Combine(imageOcrResultFolder, "original");
+                Directory.CreateDirectory(originalOcrToolFolder);
+
+                // OCR extraction for original image
+                ProcessOcrForImage(originalImagePath, originalOcrToolFolder, ocrTool, isMacOs, isWindows);
+
+                // 2. Apply preprocessing techniques and save each preprocessed image
+                foreach (var (methodName, method) in preprocessMethods)
                 {
-                    Directory.CreateDirectory(imageOutputFolder);
+                    string preprocessedImagePath = Path.Combine(imageProcessedFolder, $"{methodName}.jpg");
+                    var preprocessedImage = method(imagePath); // Apply preprocessing technique
+                    if (!preprocessedImage.IsEmpty)
+                    {
+                        preprocessedImage.Save(preprocessedImagePath); // Save the preprocessed image
+                    }
+
+                    // 3. Call OCR tools and save the results for each preprocessing technique
+                    string ocrToolFolder = Path.Combine(imageOcrResultFolder, methodName);
+                    Directory.CreateDirectory(ocrToolFolder);
+
+                    // OCR extraction for preprocessed image
+                    ProcessOcrForImage(preprocessedImagePath, ocrToolFolder, ocrTool, isMacOs, isWindows);
                 }
 
-                // --- Tesseract OCR ---
-                string tesseractOutputPath = Path.Combine(imageOutputFolder, "tesseract_output");
-                ocrTool.ExtractTextUsingTesseract(imagePath, tesseractOutputPath);
-                Console.WriteLine($"Tesseract OCR processed: {imagePath}");
-
-                // --- IronOCR OCR ---
-                string ironOcrOutputPath = Path.Combine(imageOutputFolder, "ironocr_output.txt");
-                string ironOcrText = ocrTool.ExtractTextUsingIronOcr(imagePath);
-                File.WriteAllText(ironOcrOutputPath, ironOcrText);
-                Console.WriteLine($"IronOCR processed: {imagePath}");
-
-                
-                // --- Google Vision OCR ---
-                string googleVisionOutputPath = Path.Combine(imageOutputFolder, "googlevision_output.txt");
-                string googleVisionText = await ocrTool.ExtractTextUsingGoogleVisionAsync(imagePath);
-                File.WriteAllText(googleVisionOutputPath, googleVisionText);
-                Console.WriteLine($"Google Vision OCR processed: {imagePath}");
-
-                // --- OCR.Space API ---
-                string ocrSpaceOutputPath = Path.Combine(imageOutputFolder, "ocrspace_output.txt");
-                string ocrSpaceText = await ocrTool.ExtractTextUsingOCRSpaceAsync(imagePath); // Call instance method
-                File.WriteAllText(ocrSpaceOutputPath, ocrSpaceText);
-                Console.WriteLine($"OCR.Space processed: {imagePath}"); 
-                
-            }
+            }));
 
             Console.WriteLine("OCR processing complete for all images in the folder and its subfolders.");
         }
+        
+        // Helper method for processing OCR for both original and preprocessed images
+        private static void ProcessOcrForImage(string imagePath, string ocrToolFolder, OcrExtractionTools ocrTool, bool isMacOs, bool isWindows)
+        {
+            // --- Tesseract OCR ---
+            if (isMacOs)
+            {
+                ocrTool.ExtractTextUsingTesseract(imagePath, ocrToolFolder);
+                Console.WriteLine(ocrToolFolder);
+                File.Move(Path.Combine(Directory.GetParent(ocrToolFolder).FullName, Path.GetFileName(ocrToolFolder) + ".txt"), 
+                    Path.Combine(ocrToolFolder, "tesseract.txt"));
+                
+                Console.WriteLine($"Tesseract OCR processed: {imagePath}");
+            }
+
+            if (isWindows)
+            {
+                string tesseractText = ocrTool.ExtractTextUsingTesseractWindowsNuGet(imagePath);
+                File.WriteAllText(Path.Combine(ocrToolFolder, "tesseract.txt"), tesseractText);
+                Console.WriteLine($"Tesseract OCR processed: {imagePath}");
+            }
+
+            // --- IronOCR OCR ---
+            string ironOcrText = ocrTool.ExtractTextUsingIronOcr(imagePath);
+            File.WriteAllText(Path.Combine(ocrToolFolder, "ironocr.txt"), ironOcrText);
+            Console.WriteLine($"IronOCR processed: {imagePath}");
+
+            /*
+            // --- Google Vision OCR ---
+            string googleVisionOcrText = ocrTool.ExtractTextUsingGoogleVisionAsync(imagePath).Result;
+            File.WriteAllText(Path.Combine(ocrToolFolder, "googlevision.txt"), googleVisionOcrText);
+            Console.WriteLine($"Google Vision OCR processed: {imagePath}");
+
+            // --- OCR.Space API ---
+            string ocrSpaceOcrText = ocrTool.ExtractTextUsingOCRSpaceAsync(imagePath).Result;
+            File.WriteAllText(Path.Combine(ocrToolFolder, "ocrspace.txt"), ocrSpaceOcrText);
+            Console.WriteLine($"OCR.Space processed: {imagePath}");
+            */
+        }
     }
 }
+
+
+
+/*// Process each image file 
+   foreach (var imagePath in imageFiles)
+   {
+       // Extract the file name (without extension) and create subfolders for processed images and OCR results
+       string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(imagePath);
+       string imageProcessedFolder = Path.Combine(processedImagesFolder, fileNameWithoutExtension);
+       string imageOcrResultFolder = Path.Combine(ocrResultsFolder, fileNameWithoutExtension);
+
+       // Create subfolders for processed images and OCR results
+       Directory.CreateDirectory(imageProcessedFolder);
+       Directory.CreateDirectory(imageOcrResultFolder);
+
+       // 1. Process the original image and save it to processed_images folder
+       string originalImagePath = Path.Combine(imageProcessedFolder, "original.jpg");
+       File.Copy(imagePath, originalImagePath, true); // Copy original image
+       
+       // Process the original image with OCR tools
+       string originalOcrToolFolder = Path.Combine(imageOcrResultFolder, "original");
+       Directory.CreateDirectory(originalOcrToolFolder); // Folder for OCR results for the original image
+
+       // OCR extraction for original image (same as for preprocessed images)
+       ProcessOcrForImage(originalImagePath, originalOcrToolFolder, ocrTool, isMacOs, isWindows);
+
+       // 2. Apply preprocessing techniques and save each preprocessed image
+       foreach (var (methodName, method) in preprocessMethods)
+       {
+           string preprocessedImagePath = Path.Combine(imageProcessedFolder, $"{methodName}.jpg");
+           var preprocessedImage = method(imagePath);  // Apply preprocessing technique
+           if (!preprocessedImage.IsEmpty)
+           {
+               preprocessedImage.Save(preprocessedImagePath);  // Save the preprocessed image
+           }
+
+           // 3. Call OCR tools and save the results for each preprocessing technique
+           string ocrToolFolder = Path.Combine(imageOcrResultFolder, methodName); // Folder for OCR tool results per method
+           Directory.CreateDirectory(ocrToolFolder); // Create the folder for the method
+           
+           // OCR extraction for preprocessed image
+           ProcessOcrForImage(preprocessedImagePath, ocrToolFolder, ocrTool, isMacOs, isWindows);
+
+           
+       }*/
