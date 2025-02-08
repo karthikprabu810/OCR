@@ -5,7 +5,7 @@ using Emgu.CV.Structure;
 
 namespace ocrApplication;
 
-public class ImagePreprocessing
+public static class ImagePreprocessing
 {
     // 1. Grayscale Conversion Function
     public static Mat ConvertToGrayscale(string imagePath)
@@ -67,16 +67,16 @@ public class ImagePreprocessing
     public static Mat AdaptiveThresholding(string imagePath)
     {
         Mat image = ConvertToGrayscale(imagePath);
-        Mat thresholdedImage = new Mat();
+        Mat thresholdImage = new Mat();
         
-        CvInvoke.AdaptiveThreshold(image, thresholdedImage, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 11, 2);
+        CvInvoke.AdaptiveThreshold(image, thresholdImage, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 11, 2);
         
-        if (thresholdedImage.IsEmpty)
+        if (thresholdImage.IsEmpty)
         {
             Console.WriteLine("Adaptive thresholding failed for " + imagePath);
         }
         
-        return thresholdedImage;
+        return thresholdImage;
     }
     
     // 5. Gamma Correction (Used for correcting the image brightness)
@@ -196,7 +196,7 @@ public class ImagePreprocessing
 
         if (deskewedImage.IsEmpty)
         {
-            Console.WriteLine("Deskewing failed for " + imagePath);
+            Console.WriteLine("Image Deskew failed for " + imagePath);
         }
 
         return deskewedImage;
