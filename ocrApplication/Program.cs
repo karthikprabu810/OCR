@@ -3,7 +3,7 @@ using Emgu.CV;
 
 namespace ocrApplication
 {
-    public class Program
+    public static class Program
     {
         static async Task Main()
         {
@@ -60,7 +60,7 @@ namespace ocrApplication
             };
             
             // Process each image in parallel
-            await Task.WhenAll(imageFiles.Select(async imagePath =>
+            await Task.WhenAll(imageFiles.Select(imagePath =>
             {
                 string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(imagePath);
                 string imageProcessedFolder = Path.Combine(processedImagesFolder, fileNameWithoutExtension);
@@ -78,7 +78,7 @@ namespace ocrApplication
                 Directory.CreateDirectory(originalOcrToolFolder);
 
                 // OCR extraction for original image
-                ProcessOcrForImage(originalImagePath, originalOcrToolFolder, ocrTool, isMacOs, isWindows);
+                OcrExtractionHelper.ProcessOcrForImage(originalImagePath, originalOcrToolFolder, ocrTool, isMacOs, isWindows);
 
                 // 2. Apply preprocessing techniques and save each preprocessed image
                 foreach (var (methodName, method) in preprocessMethods)
@@ -95,96 +95,13 @@ namespace ocrApplication
                     Directory.CreateDirectory(ocrToolFolder);
 
                     // OCR extraction for preprocessed image
-                    ProcessOcrForImage(preprocessedImagePath, ocrToolFolder, ocrTool, isMacOs, isWindows);
+                    OcrExtractionHelper.ProcessOcrForImage(preprocessedImagePath, ocrToolFolder, ocrTool, isMacOs, isWindows);
                 }
 
+                return Task.CompletedTask;
             }));
 
             Console.WriteLine("OCR processing complete for all images in the folder and its subfolders.");
         }
-        
-        // Helper method for processing OCR for both original and preprocessed images
-        private static void ProcessOcrForImage(string imagePath, string ocrToolFolder, OcrExtractionTools ocrTool, bool isMacOs, bool isWindows)
-        {
-            // --- Tesseract OCR ---
-            if (isMacOs)
-            {
-                ocrTool.ExtractTextUsingTesseract(imagePath, ocrToolFolder);
-                Console.WriteLine(ocrToolFolder);
-                File.Move(Path.Combine(Directory.GetParent(ocrToolFolder).FullName, Path.GetFileName(ocrToolFolder) + ".txt"), 
-                    Path.Combine(ocrToolFolder, "tesseract.txt"));
-                
-                Console.WriteLine($"Tesseract OCR processed: {imagePath}");
-            }
-
-            if (isWindows)
-            {
-                string tesseractText = ocrTool.ExtractTextUsingTesseractWindowsNuGet(imagePath);
-                File.WriteAllText(Path.Combine(ocrToolFolder, "tesseract.txt"), tesseractText);
-                Console.WriteLine($"Tesseract OCR processed: {imagePath}");
-            }
-
-            // --- IronOCR OCR ---
-            string ironOcrText = ocrTool.ExtractTextUsingIronOcr(imagePath);
-            File.WriteAllText(Path.Combine(ocrToolFolder, "ironocr.txt"), ironOcrText);
-            Console.WriteLine($"IronOCR processed: {imagePath}");
-
-            /*
-            // --- Google Vision OCR ---
-            string googleVisionOcrText = ocrTool.ExtractTextUsingGoogleVisionAsync(imagePath).Result;
-            File.WriteAllText(Path.Combine(ocrToolFolder, "googlevision.txt"), googleVisionOcrText);
-            Console.WriteLine($"Google Vision OCR processed: {imagePath}");
-
-            // --- OCR.Space API ---
-            string ocrSpaceOcrText = ocrTool.ExtractTextUsingOCRSpaceAsync(imagePath).Result;
-            File.WriteAllText(Path.Combine(ocrToolFolder, "ocrspace.txt"), ocrSpaceOcrText);
-            Console.WriteLine($"OCR.Space processed: {imagePath}");
-            */
-        }
     }
 }
-
-
-
-/*// Process each image file 
-   foreach (var imagePath in imageFiles)
-   {
-       // Extract the file name (without extension) and create subfolders for processed images and OCR results
-       string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(imagePath);
-       string imageProcessedFolder = Path.Combine(processedImagesFolder, fileNameWithoutExtension);
-       string imageOcrResultFolder = Path.Combine(ocrResultsFolder, fileNameWithoutExtension);
-
-       // Create subfolders for processed images and OCR results
-       Directory.CreateDirectory(imageProcessedFolder);
-       Directory.CreateDirectory(imageOcrResultFolder);
-
-       // 1. Process the original image and save it to processed_images folder
-       string originalImagePath = Path.Combine(imageProcessedFolder, "original.jpg");
-       File.Copy(imagePath, originalImagePath, true); // Copy original image
-       
-       // Process the original image with OCR tools
-       string originalOcrToolFolder = Path.Combine(imageOcrResultFolder, "original");
-       Directory.CreateDirectory(originalOcrToolFolder); // Folder for OCR results for the original image
-
-       // OCR extraction for original image (same as for preprocessed images)
-       ProcessOcrForImage(originalImagePath, originalOcrToolFolder, ocrTool, isMacOs, isWindows);
-
-       // 2. Apply preprocessing techniques and save each preprocessed image
-       foreach (var (methodName, method) in preprocessMethods)
-       {
-           string preprocessedImagePath = Path.Combine(imageProcessedFolder, $"{methodName}.jpg");
-           var preprocessedImage = method(imagePath);  // Apply preprocessing technique
-           if (!preprocessedImage.IsEmpty)
-           {
-               preprocessedImage.Save(preprocessedImagePath);  // Save the preprocessed image
-           }
-
-           // 3. Call OCR tools and save the results for each preprocessing technique
-           string ocrToolFolder = Path.Combine(imageOcrResultFolder, methodName); // Folder for OCR tool results per method
-           Directory.CreateDirectory(ocrToolFolder); // Create the folder for the method
-           
-           // OCR extraction for preprocessed image
-           ProcessOcrForImage(preprocessedImagePath, ocrToolFolder, ocrTool, isMacOs, isWindows);
-
-           
-       }*/
