@@ -12,7 +12,7 @@ namespace ocrApplication
         public string TesseractPath { get; set; }
         
         public string TesseractTessDataPath { get; set; }
-        public string OCRSpaceApiKey { get; set; }
+        public string OcrSpaceApiKey { get; set; }
         public string IronOcrLicenseKey { get; set; }
         public string GoogleVisionApiKey { get; set; }
         
@@ -39,7 +39,7 @@ namespace ocrApplication
 
             _tesseractPath = config.TesseractPath ?? "tesseract";
             _tessDataPath = config.TesseractTessDataPath;
-            _ocrSpaceApiKey = config.OCRSpaceApiKey;
+            _ocrSpaceApiKey = config.OcrSpaceApiKey;
             _ironOcrLicenseKey = config.IronOcrLicenseKey;
             _googleVisionApiKey = config.GoogleVisionApiKey;
 
@@ -179,7 +179,7 @@ namespace ocrApplication
         }
 
         // Method to extract text using OCR.Space API
-        public async Task<string> ExtractTextUsingOCRSpaceAsync(string imagePath)
+        public async Task<string> ExtractTextUsingOcrSpaceAsync(string imagePath)
         {
             using (var client = new HttpClient())
             {
