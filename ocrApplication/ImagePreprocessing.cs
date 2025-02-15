@@ -177,28 +177,57 @@ public static class ImagePreprocessing
     // 10. Deskew the image (rotate to correct skew) (Used to fix skewed images)
     public static Mat Deskew(string imagePath)
     {
-        Mat image = ConvertToGrayscale(imagePath);
-        Mat deskewedImage = new Mat();
-
-        // Calculate skew angle using moments and rotate the image
-        var moments = CvInvoke.Moments(image);
-        double skewAngle = 0.5 * Math.Atan2(2 * moments.M11, moments.M02 - moments.M20) * 180 / Math.PI;
-
-        // Create the rotation matrix for the image (no need for an output argument here)
-        var center = new PointF(image.Width / 2.0f, image.Height / 2.0f);
-        Mat rotationMatrix = new Mat();  // This will hold the result
-
-        // Get the rotation matrix using the proper method
-        CvInvoke.GetRotationMatrix2D(center, skewAngle, 1.0, rotationMatrix);
-
-        // Apply the warp affine transformation to deskew the image
-        CvInvoke.WarpAffine(image, deskewedImage, rotationMatrix, image.Size);
-
-        if (deskewedImage.IsEmpty)
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        if (image.IsEmpty)
         {
-            Console.WriteLine("Image Deskew failed for " + imagePath);
+            throw new Exception("Failed to load image: " + imagePath);
         }
 
-        return deskewedImage;
+        Mat edges = new Mat();
+        CvInvoke.Canny(image, edges, 50, 150);  // Detect edges
+
+        // Detect lines using Hough Transform
+        LineSegment2D[] lines = CvInvoke.HoughLinesP(edges, 1, Math.PI / 180, 100, 100, 10);
+        
+        if (lines.Length == 0)
+        {
+            Console.WriteLine("No lines detected, returning original image.");
+            return image;
+        }
+
+        // Compute average angle of detected lines
+        double totalAngle = 0;
+        int count = 0;
+
+        foreach (var line in lines)
+        {
+            double angle = Math.Atan2(line.P2.Y - line.P1.Y, line.P2.X - line.P1.X) * 180 / Math.PI;
+            if (Math.Abs(angle) < 45)  // Ignore vertical lines
+            {
+                totalAngle += angle;
+                count++;
+            }
+        }
+
+        if (count == 0) return image; // If no valid angle found, return original
+
+        double skewAngle = totalAngle / count;
+        Console.WriteLine($"Calculated Skew Angle: {skewAngle} degrees");
+
+        // Rotate image to correct skew
+        return RotateImage(image, -skewAngle);
+    }
+
+    // Rotate image without distortion
+    private static Mat RotateImage(Mat src, double angle)
+    {
+        PointF center = new PointF(src.Width / 2f, src.Height / 2f);
+        Mat rotationMatrix = new Mat();
+        CvInvoke.GetRotationMatrix2D(center, angle, 1.0, rotationMatrix);
+        
+        Mat rotated = new Mat();
+        CvInvoke.WarpAffine(src, rotated, rotationMatrix, src.Size, Inter.Linear, Warp.Default, BorderType.Constant, new MCvScalar(255, 255, 255));
+
+        return rotated;
     }
 }
