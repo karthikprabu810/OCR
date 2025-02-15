@@ -1,31 +1,69 @@
-namespace ocrApplication;
+using System.Text.RegularExpressions;
 
-using System.Collections.Generic;
-using System.Linq;
-public class EnsembleOcr
+namespace ocrApplication
 {
-    public string CombineUsingMajorityVoting(List<string> ocrResults)
+    public class EnsembleOcr
     {
-        var wordFrequency = new Dictionary<string, int>();
-
-        foreach (var result in ocrResults)
+        // Main method to combine OCR results using Majority Voting based on word positions
+        public string CombineUsingMajorityVoting(List<string> ocrResults)
         {
-            var words = result.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var word in words)
+            // Split each result into lines
+            var lines = ocrResults.Select(result => result.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)).ToArray();
+
+            // Ensure all lines are of the same length (i.e., there is a consistent number of lines)
+            int lineCount = lines.Max(line => line.Length);
+            var finalLines = new List<string>();
+
+            // Iterate through each line's word positions
+            for (int i = 0; i < lineCount; i++)
             {
-                if (wordFrequency.ContainsKey(word))
+                var lineWords = new List<string>();
+
+                // Get the words at the current line and position across all OCR results
+                var wordVotes = new Dictionary<string, int>();
+
+                foreach (var result in lines)
                 {
-                    wordFrequency[word]++;
+                    if (i < result.Length)
+                    {
+                        // Tokenize the current line into words
+                        var words = TokenizeWords(result[i]);
+
+                        // For each word in the line, count its frequency
+                        foreach (var word in words)
+                        {
+                            if (wordVotes.ContainsKey(word))
+                            {
+                                wordVotes[word]++;
+                            }
+                            else
+                            {
+                                wordVotes[word] = 1;
+                            }
+                        }
+                    }
                 }
-                else
-                {
-                    wordFrequency[word] = 1;
-                }
+
+                // Determine the word with the maximum votes
+                var mostFrequentWord = wordVotes.OrderByDescending(w => w.Value).ThenBy(w => w.Key).FirstOrDefault().Key;
+                lineWords.Add(mostFrequentWord);
+
+                // Join the words in the line to form the final line and add it to the result
+                finalLines.Add(string.Join(" ", lineWords));
             }
+
+            // Combine all the lines into the final output
+            return string.Join("\n", finalLines);
         }
 
-        // Sort words by frequency and return the result with the most common words
-        var sortedWords = wordFrequency.OrderByDescending(w => w.Value).Select(w => w.Key).ToArray();
-        return string.Join(" ", sortedWords);
+        // Tokenize the OCR result into individual words
+        private List<string> TokenizeWords(string text)
+        {
+            // Use a regular expression to split the text by any non-word character (non-alphanumeric)
+            var words = Regex.Split(text.ToLower(), @"\W+");
+
+            // Filter out empty words and any words that are too short (less than 3 characters, for example)
+            return words.Where(w => !string.IsNullOrWhiteSpace(w) && w.Length > 2).ToList();
+        }
     }
 }
