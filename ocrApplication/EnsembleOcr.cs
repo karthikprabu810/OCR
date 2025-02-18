@@ -7,63 +7,60 @@ namespace ocrApplication
         // Main method to combine OCR results using Majority Voting based on word positions
         public string CombineUsingMajorityVoting(List<string> ocrResults)
         {
-            // Split each result into lines
-            var lines = ocrResults.Select(result => result.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)).ToArray();
+        // Step 1: Split the lines into words and determine the maximum number of words in any line.
+        var splitLines = ocrResults.Select(line => line.Split(new[] { ' ', '.', ',', '!', '?', ';', ':' }, StringSplitOptions.RemoveEmptyEntries).ToList()).ToList();
+        int maxLength = splitLines.Max(line => line.Count);
 
-            // Ensure all lines are of the same length (i.e., there is a consistent number of lines)
-            int lineCount = lines.Max(line => line.Length);
-            var finalLines = new List<string>();
+        // Step 2: Create a list to store the most frequent word for each position
+        List<string> mostFrequentWords = new List<string>();
 
-            // Iterate through each line's word positions
-            for (int i = 0; i < lineCount; i++)
+        // Step 3: Iterate over each position from 0 to maxLength - 1
+        for (int i = 0; i < maxLength; i++)
+        {
+            // Step 4: Use a dictionary to count the frequency of words at the current position across all lines
+            Dictionary<string, int> wordVotes = new Dictionary<string, int>();
+            bool allWordsPresent = true;
+            List<string> wordsAtPosition = new List<string>();
+
+            // Step 5: Iterate through each line and collect words at the current position
+            foreach (var line in splitLines)
             {
-                var lineWords = new List<string>();
-
-                // Get the words at the current line and position across all OCR results
-                var wordVotes = new Dictionary<string, int>();
-
-                foreach (var result in lines)
+                if (i < line.Count)
                 {
-                    if (i < result.Length)
-                    {
-                        // Tokenize the current line into words
-                        var words = TokenizeWords(result[i]);
-
-                        // For each word in the line, count its frequency
-                        foreach (var word in words)
-                        {
-                            if (wordVotes.ContainsKey(word))
-                            {
-                                wordVotes[word]++;
-                            }
-                            else
-                            {
-                                wordVotes[word] = 1;
-                            }
-                        }
-                    }
+                    wordsAtPosition.Add(line[i].ToLower());
                 }
-
-                // Determine the word with the maximum votes
-                var mostFrequentWord = wordVotes.OrderByDescending(w => w.Value).ThenBy(w => w.Key).FirstOrDefault().Key;
-                lineWords.Add(mostFrequentWord);
-
-                // Join the words in the line to form the final line and add it to the result
-                finalLines.Add(string.Join(" ", lineWords));
+                else
+                {
+                    allWordsPresent = false;  // If a word is missing, flag this position
+                    break;
+                }
             }
 
-            // Combine all the lines into the final output
-            return string.Join("\n", finalLines);
+            // Step 6: Only proceed if all lines have a word at the current position
+            if (allWordsPresent)
+            {
+                // Count the frequency of each word for this position
+                foreach (var word in wordsAtPosition)
+                {
+                    if (!wordVotes.ContainsKey(word))
+                    {
+                        wordVotes[word] = 0;
+                    }
+                    wordVotes[word]++;
+                }
+
+                // Find the most frequent word at this position
+                if (wordVotes.Any())
+                {
+                    var maxVoteWord = wordVotes.OrderByDescending(w => w.Value).First().Key;
+                    mostFrequentWords.Add(maxVoteWord);
+                }
+            }
         }
 
-        // Tokenize the OCR result into individual words
-        private List<string> TokenizeWords(string text)
-        {
-            // Use a regular expression to split the text by any non-word character (non-alphanumeric)
-            var words = Regex.Split(text.ToLower(), @"\W+");
-
-            // Filter out empty words and any words that are too short (less than 3 characters, for example)
-            return words.Where(w => !string.IsNullOrWhiteSpace(w) && w.Length > 2).ToList();
-        }
+        // Step 7: Join the updated words into a single string to return, with a space separating words
+        string result = string.Join(" ", mostFrequentWords);
+        return result;
+    }
     }
 }
