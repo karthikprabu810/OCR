@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="Emgu.CV.runtime.mini.macos" Version="4.9.0.5494" />
+      <PackageReference Include="EPPlus" Version="7.6.0" />
       <PackageReference Include="Google.Cloud.Vision.V1" Version="3.7.0" />
       <PackageReference Include="IronOcr.MacOs" Version="2025.1.2" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
