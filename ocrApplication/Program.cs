@@ -88,10 +88,14 @@ namespace ocrApplication
                 File.Copy(imagePath, originalImagePath, true); // Copy original image
 
                 // Excel file path
-                string excelFilePath = Path.Combine(imageOcrResultFolder, $"preprocessing_times_{fileNameWithoutExtension}.xlsx");
+                string excelFilePath = Path.Combine(imageOcrResultFolder, $"execution_times_{fileNameWithoutExtension}.xlsx");
 
                 // List to store execution time data
                 var executionTimes = new List<(string ImageName, string Method, double TimeTaken)>();
+                
+                // List to store execution times
+                var preprocessingTimes = new List<(string ImageName, string Method, double TimeTaken)>();
+                var ocrTimes = new List<(string ImageName, string OCRTool, double TimeTaken)>();
                 
                 // Process the original image with OCR tools
                 string originalOcrToolFolder = Path.Combine(imageOcrResultFolder, "original");
@@ -99,7 +103,11 @@ namespace ocrApplication
                 
                 
                 // OCR extraction for original image
+                Stopwatch ocrStopwatch = Stopwatch.StartNew();
                 OcrExtractionHelper.ProcessOcrForImage(originalImagePath, originalOcrToolFolder, ocrTool, isMacOs, isWindows);
+                ocrStopwatch.Stop();
+                ocrTimes.Add((fileNameWithoutExtension, "Original OCR", ocrStopwatch.Elapsed.TotalMilliseconds));
+
 
                 // Collect OCR results for original image
                 var ocrResults = new List<string>();
@@ -114,13 +122,12 @@ namespace ocrApplication
                 // Apply preprocessing methods and collect OCR results for each
                 foreach (var (methodName, method) in preprocessMethods)
                 {
-                    Stopwatch stopwatch = Stopwatch.StartNew();
+                    Stopwatch preprocessStopwatch = Stopwatch.StartNew();
                     string preprocessedImagePath = Path.Combine(imageProcessedFolder, $"{methodName}.jpg");
                     var preprocessedImage = method(imagePath); // Apply preprocessing technique
-                    stopwatch.Stop();
+                    preprocessStopwatch.Stop();
                     
-                    double executionTimeMs = stopwatch.Elapsed.TotalMilliseconds;
-                    executionTimes.Add((fileNameWithoutExtension, methodName, executionTimeMs));
+                    preprocessingTimes.Add((fileNameWithoutExtension, methodName, preprocessStopwatch.Elapsed.TotalMilliseconds));
 
                     if (!preprocessedImage.IsEmpty)
                     {
@@ -133,7 +140,10 @@ namespace ocrApplication
                     //Directory.CreateDirectory(ocrToolFolder);
 
                     // OCR extraction for preprocessed image
+                    Stopwatch ocrPreprocessStopwatch = Stopwatch.StartNew();
                     OcrExtractionHelper.ProcessOcrForImage(preprocessedImagePath, ocrToolFolder, ocrTool, isMacOs, isWindows);
+                    ocrPreprocessStopwatch.Stop();
+                    ocrTimes.Add((fileNameWithoutExtension, $"{methodName} OCR", ocrPreprocessStopwatch.Elapsed.TotalMilliseconds));
 
                     // Read OCR result and confidence for the preprocessed image
                     
@@ -159,7 +169,7 @@ namespace ocrApplication
                 }
                 
                 // Save execution times to an Excel file
-                ExecutionTimeLogger.SaveExecutionTimesToExcel(excelFilePath, executionTimes);
+                ExecutionTimeLogger.SaveExecutionTimesToExcel(excelFilePath, preprocessingTimes, ocrTimes);
                
                 // Save all OCR results to a file before sending to ensemble
                 string allOcrResultsFilePath = Path.Combine(imageOcrResultFolder, "all_ocr_results.txt");
