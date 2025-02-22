@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using System.Drawing;
@@ -80,20 +81,25 @@ public static class ImagePreprocessing
     }
     
     // 5. Gamma Correction (Used for correcting the image brightness)
+    
     public static Mat GammaCorrection(string imagePath)
     {
-        double gamma = 1.5;
-        Mat image = ConvertToGrayscale(imagePath);
+        Mat image = ConvertToGrayscale(imagePath);  // Convert to grayscale (if not already)
+        double gamma = EstimateGamma(image);  // Estimate gamma based on image lighting
         Mat gammaCorrectedImage = new Mat();
 
         // Create lookup table for gamma correction
-        Mat lookUpTable = new Mat(1, 256, DepthType.Cv8U, 1);
+        byte[] lut = new byte[256];
         for (int i = 0; i < 256; i++)
         {
-            byte[] values = new byte[] { (byte)(Math.Pow(i / 255.0, gamma) * 255.0) };
-            lookUpTable.SetTo(values);
+            lut[i] = (byte)(Math.Pow(i / 255.0, gamma) * 255.0);
         }
 
+        // Create the lookup table Mat using the lut array
+        Mat lookUpTable = new Mat(1, 256, DepthType.Cv8U, 1);
+        Marshal.Copy(lut, 0, lookUpTable.DataPointer, 256);
+
+        // Apply the LUT (gamma correction)
         CvInvoke.LUT(image, lookUpTable, gammaCorrectedImage);
 
         if (gammaCorrectedImage.IsEmpty)
@@ -102,6 +108,44 @@ public static class ImagePreprocessing
         }
 
         return gammaCorrectedImage;
+    }
+
+    public static double EstimateGamma(Mat image)
+    {
+        // Compute the histogram of the image
+        int[] hist = new int[256];
+    
+        // Convert image to a byte array (this avoids unsafe code)
+        byte[] imageData = image.ToImage<Gray, byte>().Bytes;
+    
+        // Loop through the byte array to access pixel values
+        for (int i = 0; i < imageData.Length; i++)
+        {
+            byte pixelValue = imageData[i];
+            hist[pixelValue]++;
+        }
+
+        // Compute the mean intensity
+        double totalIntensity = 0;
+        int totalPixels = imageData.Length;
+        for (int i = 0; i < 256; i++)
+        {
+            totalIntensity += hist[i] * i;
+        }
+        double meanIntensity = totalIntensity / totalPixels;
+
+        // Set gamma based on the mean intensity
+        double gamma = 1.5;  // Default value
+        if (meanIntensity < 85)
+        {
+            gamma = 2.0;  // Dark image, brighten it
+        }
+        else if (meanIntensity > 170)
+        {
+            gamma = 0.8;  // Bright image, darken it
+        }
+
+        return gamma;
     }
     
     // 6. Canny Edge Detection (Used to detect edges in an image)
@@ -212,7 +256,7 @@ public static class ImagePreprocessing
         if (count == 0) return image; // If no valid angle found, return original
 
         double skewAngle = totalAngle / count;
-        Console.WriteLine($"Calculated Skew Angle: {skewAngle} degrees");
+        //Console.WriteLine($"Calculated Skew Angle: {skewAngle} degrees");
 
         // Rotate image to correct skew
         return RotateImage(image, -skewAngle);

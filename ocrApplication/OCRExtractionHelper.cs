@@ -23,14 +23,14 @@ public static class OcrExtractionHelper
 // Move and rename the file to "original.txt" or "{method}.txt"
            // File.Move(targetOcrFilePath, targetOcrFilePath);
                 
-            Console.WriteLine($"Tesseract OCR processed: {imagePath}");
+            // Console.WriteLine($"Tesseract OCR processed: {imagePath}");
         }
 
         if (isWindows)
         {
             string tesseractText = ocrTool.ExtractTextUsingTesseractWindowsNuGet(imagePath);
             File.WriteAllText(Path.Combine(ocrToolFolder, "tesseract.txt"), tesseractText);
-            Console.WriteLine($"Tesseract OCR processed: {imagePath}");
+            // Console.WriteLine($"Tesseract OCR processed: {imagePath}");
         }
 /*
         // --- IronOCR OCR ---
