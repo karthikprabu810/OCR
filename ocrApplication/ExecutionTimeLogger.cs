@@ -1,4 +1,3 @@
-using System.Drawing;
 using OfficeOpenXml;
 using OfficeOpenXml.Drawing.Chart;
 
@@ -7,120 +6,258 @@ namespace ocrApplication;
 public static class ExecutionTimeLogger
 {
     public static void SaveExecutionTimesToExcel(string filePath, 
-        List<(string ImageName, string Method, double TimeTaken)> preprocessingTimes, 
-        List<(string ImageName, string OCRTool, double TimeTaken)> ocrExecutionTimes)
+        List<(string ImageName, string Method, double TimeTaken, long MemoryUsage)> preprocessingTimes, 
+        List<(string ImageName, string OCRTool, double TimeTaken, long MemoryUsage)> ocrExecutionTimes)
     {
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
         using (ExcelPackage package = new ExcelPackage())
         {
-            // **Sheet 1: Preprocessing Execution Times**
-            var preprocessingSheet = package.Workbook.Worksheets.Add("Preprocessing Times");
+            // **Sheet 1: Preprocessing and OCR Execution Times & Memory Usage**
+            var preprocessingSheet = package.Workbook.Worksheets.Add("Preprocessing Time");
 
             preprocessingSheet.Cells[1, 1].Value = "Preprocessing Method";
             preprocessingSheet.Cells[1, 2].Value = "Execution Time (ms)";
+            preprocessingSheet.Cells[1, 3].Value = "Memory Usage (bytes)";
+            //preprocessingSheet.Cells[1, 4].Value = "OCR Tool";
+            //preprocessingSheet.Cells[1, 5].Value = "Execution Time (ms)";
+            //preprocessingSheet.Cells[1, 6].Value = "Memory Usage (bytes)";
 
             for (int i = 0; i < preprocessingTimes.Count; i++)
             {
                 preprocessingSheet.Cells[i + 2, 1].Value = preprocessingTimes[i].Method;
                 preprocessingSheet.Cells[i + 2, 2].Value = preprocessingTimes[i].TimeTaken;
+                preprocessingSheet.Cells[i + 2, 3].Value = preprocessingTimes[i].MemoryUsage;
             }
+
+            //for (int i = 0; i < ocrExecutionTimes.Count; i++)
+            //{
+              //  preprocessingSheet.Cells[i + 2, 4].Value = ocrExecutionTimes[i].OCRTool;
+              //  preprocessingSheet.Cells[i + 2, 5].Value = ocrExecutionTimes[i].TimeTaken;
+              //  preprocessingSheet.Cells[i + 2, 6].Value = ocrExecutionTimes[i].MemoryUsage;
+            //}
 
             preprocessingSheet.Cells.AutoFitColumns();
 
-            // Add histogram for preprocessing methods
-            var preprocessingChart = preprocessingSheet.Drawings.AddChart("PreprocessingTimeHistogram", eChartType.ColumnClustered);
-            preprocessingChart.Title.Text = "Preprocessing Execution Time";
-            preprocessingChart.SetPosition(1, 0, 4, 0);
-            preprocessingChart.SetSize(800, 400);
+            // Add graph for Execution Time and Memory Usage (side by side)
+            // **Execution Time Graph**
+            var executionTimeChart = preprocessingSheet.Drawings.AddChart("ExecutionTimeChart", eChartType.ColumnClustered);
+            executionTimeChart.Title.Text = "Execution Time (Preprocessing and OCR)";
+            executionTimeChart.SetPosition(1, 0, 7, 0);
+            executionTimeChart.SetSize(800, 400);
 
-            var xRangePreprocess = preprocessingSheet.Cells[2, 1, preprocessingTimes.Count + 1, 1]; 
-            var yRangePreprocess = preprocessingSheet.Cells[2, 2, preprocessingTimes.Count + 1, 2];
+            var xRangeExecutionTime = preprocessingSheet.Cells[2, 1, preprocessingTimes.Count + 1, 1];
+            var yRangeExecutionTime = preprocessingSheet.Cells[2, 2, preprocessingTimes.Count + 1, 2];
 
-            var preprocessSeries = preprocessingChart.Series.Add(yRangePreprocess, xRangePreprocess);
-            preprocessSeries.Header = "Execution Time (ms)";
+            var execTimeSeries = executionTimeChart.Series.Add(yRangeExecutionTime, xRangeExecutionTime);
+            execTimeSeries.Header = "Execution Time (ms)";
 
-            preprocessingChart.YAxis.Title.Text = "Execution Time (ms)";
-            preprocessingChart.XAxis.Title.Text = "Preprocessing Technique";
-            preprocessingChart.YAxis.MinValue = 0;
-            preprocessingChart.Legend.Position = eLegendPosition.Bottom;
+            // **Memory Usage Graph**
+            var memoryUsageChart = preprocessingSheet.Drawings.AddChart("MemoryUsageChart", eChartType.ColumnClustered);
+            memoryUsageChart.Title.Text = "Memory Usage (Preprocessing and OCR)";
+            memoryUsageChart.SetPosition(22, 0, 7, 0);
+            memoryUsageChart.SetSize(800, 400);
+
+            var xRangeMemoryUsage = preprocessingSheet.Cells[2, 1, preprocessingTimes.Count + 1, 1];
+            var yRangeMemoryUsage = preprocessingSheet.Cells[2, 3, preprocessingTimes.Count + 1, 3];
+
+            var memUsageSeries = memoryUsageChart.Series.Add(yRangeMemoryUsage, xRangeMemoryUsage);
+            memUsageSeries.Header = "Memory Usage (bytes)";
+            // Change the color of the chart series
+            memUsageSeries.Fill.Color = System.Drawing.Color.Red; // Set to any color you prefer
             
-            // **Sheet 2: OCR Execution Times**
+            
+            // **Sheet 2: Detailed Graphs for Execution Time and Memory Usage**
             var ocrSheet = package.Workbook.Worksheets.Add("OCR Execution Times");
 
-            ocrSheet.Cells[1, 1].Value = "Image Filter";
+            //ocrSheet.Cells[1, 1].Value = "Preprocessing Method";
+            //ocrSheet.Cells[1, 2].Value = "Execution Time (ms)";
+            //ocrSheet.Cells[1, 3].Value = "Memory Usage (bytes)";
+            ocrSheet.Cells[1, 1].Value = "OCR Tool";
             ocrSheet.Cells[1, 2].Value = "Execution Time (ms)";
+            ocrSheet.Cells[1, 3].Value = "Memory Usage (bytes)";
+
+            // for (int i = 0; i < preprocessingTimes.Count; i++)
+            // {
+            //    ocrSheet.Cells[i + 2, 1].Value = preprocessingTimes[i].Method;
+            //    ocrSheet.Cells[i + 2, 2].Value = preprocessingTimes[i].TimeTaken;
+            //    ocrSheet.Cells[i + 2, 3].Value = preprocessingTimes[i].MemoryUsage;
+            //}
 
             for (int i = 0; i < ocrExecutionTimes.Count; i++)
             {
                 ocrSheet.Cells[i + 2, 1].Value = ocrExecutionTimes[i].OCRTool;
                 ocrSheet.Cells[i + 2, 2].Value = ocrExecutionTimes[i].TimeTaken;
+                ocrSheet.Cells[i + 2, 3].Value = ocrExecutionTimes[i].MemoryUsage;
             }
 
             ocrSheet.Cells.AutoFitColumns();
 
-            // Add histogram for OCR times
-            var ocrChart = ocrSheet.Drawings.AddChart("OCRTimeHistogram", eChartType.ColumnClustered);
-            ocrChart.Title.Text = "OCR Execution Time";
-            ocrChart.SetPosition(1, 0, 4, 0);
-            ocrChart.SetSize(800, 400);
+            // Add **Execution Time** Graph
+            var executionTimeChart2 = ocrSheet.Drawings.AddChart("ExecutionTimeChart2", eChartType.ColumnClustered);
+            executionTimeChart2.Title.Text = "Execution Time (Preprocessing and OCR)";
+            executionTimeChart2.SetPosition(1, 0, 7, 0);
+            executionTimeChart2.SetSize(800, 400);
 
-            var xRangeOcr = ocrSheet.Cells[2, 1, ocrExecutionTimes.Count + 1, 1]; 
-            var yRangeOcr = ocrSheet.Cells[2, 2, ocrExecutionTimes.Count + 1, 2];
+            var xRangeExecutionTime2 = ocrSheet.Cells[2, 1, ocrExecutionTimes.Count + 1, 1];
+            var yRangeExecutionTime2 = ocrSheet.Cells[2, 2, ocrExecutionTimes.Count + 1, 2];
 
-            var ocrSeries = ocrChart.Series.Add(yRangeOcr, xRangeOcr);
-            ocrSeries.Header = "Execution Time (ms)";
+            var execTimeSeries2 = executionTimeChart2.Series.Add(yRangeExecutionTime2, xRangeExecutionTime2);
+            execTimeSeries2.Header = "Execution Time (ms)";
 
-            // Set OCR bar graph color to orange
-            ocrSeries.Fill.Color = Color.Orange;
+            // Add **Memory Usage** Graph
+            var memoryUsageChart2 = ocrSheet.Drawings.AddChart("MemoryUsageChart2", eChartType.ColumnClustered);
+            memoryUsageChart2.Title.Text = "Memory Usage (Preprocessing and OCR)";
+            memoryUsageChart2.SetPosition(22, 0, 7, 0);
+            memoryUsageChart2.SetSize(800, 400);
 
-            ocrChart.YAxis.Title.Text = "Execution Time (ms)";
-            ocrChart.XAxis.Title.Text = "Image Filter";
-            ocrChart.YAxis.MinValue = 0;
-            ocrChart.Legend.Position = eLegendPosition.Bottom;
+            var xRangeMemoryUsage2 = ocrSheet.Cells[2, 1, ocrExecutionTimes.Count + 1, 1];
+            var yRangeMemoryUsage2 = ocrSheet.Cells[2, 3, ocrExecutionTimes.Count + 1, 3];
 
-            // **Sheet 3: Visualisation - Display Two Bar Graphs**
+            var memUsageSeries2 = memoryUsageChart2.Series.Add(yRangeMemoryUsage2, xRangeMemoryUsage2);
+            memUsageSeries2.Header = "Memory Usage (bytes)";
+            // Change the color of the chart series
+            memUsageSeries2.Fill.Color = System.Drawing.Color.Red; // Set to any color you prefer
+/*
+            // **Sheet 3: Visualisation - Display Four Graphs**
             var visualisationSheet = package.Workbook.Worksheets.Add("Visualisation");
 
-            // **Chart 1: Preprocessing Execution Time (Bar Graph)**
-            var preprocessingChartForVisualisation = visualisationSheet.Drawings.AddChart("PreprocessingTimeHistogramVisual", eChartType.ColumnClustered);
-            preprocessingChartForVisualisation.Title.Text = "Preprocessing Execution Time";
-            preprocessingChartForVisualisation.SetPosition(1, 0, 1, 0);
-            preprocessingChartForVisualisation.SetSize(800, 400);
+            // Preprocessing Execution Time and Memory Usage Graphs side by side
+            var executionTimeChartForVisualisation = visualisationSheet.Drawings.AddChart("ExecutionTimeForVisualisation", eChartType.ColumnClustered);
+            executionTimeChartForVisualisation.Title.Text = "Preprocessing Execution Time";
+            executionTimeChartForVisualisation.SetPosition(1, 0, 1, 0);
+            executionTimeChartForVisualisation.SetSize(800, 400);
 
-            var xRangePreprocessVisual = preprocessingSheet.Cells[2, 1, preprocessingTimes.Count + 1, 1]; 
+            var xRangePreprocessVisual = preprocessingSheet.Cells[2, 1, preprocessingTimes.Count + 1, 1];
             var yRangePreprocessVisual = preprocessingSheet.Cells[2, 2, preprocessingTimes.Count + 1, 2];
-
-            var preprocessSeriesForVisualisation = preprocessingChartForVisualisation.Series.Add(yRangePreprocessVisual, xRangePreprocessVisual);
+            var preprocessSeriesForVisualisation = executionTimeChartForVisualisation.Series.Add(yRangePreprocessVisual, xRangePreprocessVisual);
             preprocessSeriesForVisualisation.Header = "Execution Time (ms)";
 
-            preprocessingChartForVisualisation.YAxis.Title.Text = "Execution Time (ms)";
-            preprocessingChartForVisualisation.XAxis.Title.Text = "Preprocessing Technique";
-            preprocessingChartForVisualisation.YAxis.MinValue = 0;
-            preprocessingChartForVisualisation.Legend.Position = eLegendPosition.Bottom;
+            // Preprocessing Memory Usage
+            var memoryUsageChartForVisualisation = visualisationSheet.Drawings.AddChart("MemoryUsageForVisualisation", eChartType.ColumnClustered);
+            memoryUsageChartForVisualisation.Title.Text = "Preprocessing Memory Usage";
+            memoryUsageChartForVisualisation.SetPosition(1, 0, 8, 0);
+            memoryUsageChartForVisualisation.SetSize(800, 400);
 
-            // **Chart 2: OCR Execution Time (Bar Graph)**
-            var ocrChartForVisualisation = visualisationSheet.Drawings.AddChart("OCRExecutionTimeHistogramVisual", eChartType.ColumnClustered);
-            ocrChartForVisualisation.Title.Text = "OCR Execution Time";
-            ocrChartForVisualisation.SetPosition(22, 0, 1, 0);  // Placing it below the first chart
-            ocrChartForVisualisation.SetSize(800, 400);
+            var yRangePreprocessMemory = preprocessingSheet.Cells[2, 3, preprocessingTimes.Count + 1, 3];
+            var memorySeriesForVisualisation = memoryUsageChartForVisualisation.Series.Add(yRangePreprocessMemory, xRangePreprocessVisual);
+            memorySeriesForVisualisation.Header = "Memory Usage (bytes)";
 
-            var xRangeOcrVisual = ocrSheet.Cells[2, 1, ocrExecutionTimes.Count + 1, 1]; 
-            var yRangeOcrVisual = ocrSheet.Cells[2, 2, ocrExecutionTimes.Count + 1, 2];
+            // OCR Execution Time and Memory Usage Graphs side by side
+            var executionTimeChartForVisualisation2 = visualisationSheet.Drawings.AddChart("ExecutionTimeForVisualisation2", eChartType.ColumnClustered);
+            executionTimeChartForVisualisation2.Title.Text = "OCR Execution Time";
+            executionTimeChartForVisualisation2.SetPosition(22, 0, 1, 0);
+            executionTimeChartForVisualisation2.SetSize(800, 400);
 
-            var ocrSeriesForVisualisation = ocrChartForVisualisation.Series.Add(yRangeOcrVisual, xRangeOcrVisual);
+            var xRangeOcrVisual = ocrSheet.Cells[2, 1, ocrExecutionTimes.Count + 1, 1];
+            var yRangeOcrVisual = ocrSheet.Cells[2, 5, ocrExecutionTimes.Count + 1, 5];
+            var ocrSeriesForVisualisation = executionTimeChartForVisualisation2.Series.Add(yRangeOcrVisual, xRangeOcrVisual);
             ocrSeriesForVisualisation.Header = "Execution Time (ms)";
 
-            // Set OCR bar graph color to orange
-            ocrSeriesForVisualisation.Fill.Color = Color.Orange;
+            // OCR Memory Usage
+            var memoryUsageChartForVisualisation2 = visualisationSheet.Drawings.AddChart("MemoryUsageForVisualisation2", eChartType.ColumnClustered);
+            memoryUsageChartForVisualisation2.Title.Text = "OCR Memory Usage";
+            memoryUsageChartForVisualisation2.SetPosition(22, 0, 8, 0);
+            memoryUsageChartForVisualisation2.SetSize(800, 400);
 
-            ocrChartForVisualisation.YAxis.Title.Text = "Execution Time (ms)";
-            ocrChartForVisualisation.XAxis.Title.Text = "Image Filter";
-            ocrChartForVisualisation.YAxis.MinValue = 0;
-            ocrChartForVisualisation.Legend.Position = eLegendPosition.Bottom;
-
+            var yRangeOcrMemory = ocrSheet.Cells[2, 6, ocrExecutionTimes.Count + 1, 6];
+            var memorySeriesForVisualisation2 = memoryUsageChartForVisualisation2.Series.Add(yRangeOcrMemory, xRangeOcrVisual);
+            memorySeriesForVisualisation2.Header = "Memory Usage (bytes)";
+*/
             // Save the Excel file
             File.WriteAllBytes(filePath, package.GetAsByteArray());
         }
     }
+
+    public static void ComparisionPlot(string excelFilePath, List<double> levenshteinResult, List<double> cosineResult)
+    {
+        // Open the existing Excel file
+                FileInfo existingFile = new FileInfo(excelFilePath);
+                
+                List<string> ocrSteps = new List<string>
+                {
+                    "Original OCR",
+                    "grayscale OCR",
+                    "gaussian OCR",
+                    "median OCR",
+                    "adaptive_thresholding OCR",
+                    "gamma_correction OCR",
+                    "canny_edge OCR",
+                    "dilation OCR",
+                    "erosion OCR",
+                    "otsu_binarization OCR",
+                    "deskew OCR"
+                };
+                
+                using (var package = new ExcelPackage(existingFile))
+                {
+                    // Create a 4th sheet (index starts from 0)
+                    var worksheet = package.Workbook.Worksheets.Add("Similarity Index");
+
+                    // Write data to the 4th sheet
+                    worksheet.Cells[1, 1].Value = "X Reference";
+                    worksheet.Cells[1, 2].Value = "Levenshtein Similarity";
+                    worksheet.Cells[1, 3].Value = "Cosine Similarity";
+
+                    // Populate the sheet with data
+                    for (int i = 0; i < ocrSteps.Count; i++)
+                    {
+                        worksheet.Cells[i + 2, 1].Value = ocrSteps[i];
+                        worksheet.Cells[i + 2, 2].Value = levenshteinResult[i];
+                        worksheet.Cells[i + 2, 3].Value = cosineResult[i];
+                    }
+
+                    // Add a line chart for the data
+                    var chart = worksheet.Drawings.AddChart("LineChart", eChartType.Line);
+                    chart.SetPosition(2, 0, 6, 0); // Set position on the sheet
+                    chart.SetSize(700, 400); // Set size of the chart
+
+                    // Set data series for the chart
+                    var chart1= chart.Series.Add(worksheet.Cells["B2:B12"], worksheet.Cells["A2:A12"]); // Levenshtein
+                    var chart2= chart.Series.Add(worksheet.Cells["C2:C12"], worksheet.Cells["A2:A12"]); // Cosine
+
+                    // Customize chart title
+                    chart.Title.Text = "OCR Similarity Results";
+                    chart1.Header = "Levenshtein Similarity";
+                    chart2.Header = "Cosine Similarity";
+                    
+                    worksheet.Cells[20, 1].Value = "Result with more Similarity to Original Image based on ";
+                    worksheet.Cells[21, 1].Value = "Levenshtein Similarity";
+                    worksheet.Cells[21, 3].Value = $"{ocrSteps[IndexOfMaxValue(levenshteinResult)]}";
+                    worksheet.Cells[22, 1].Value = "Cosine Similarity";
+                    worksheet.Cells[22, 3].Value = $"{ocrSteps[IndexOfMaxValue(cosineResult)]}";
+                    
+
+                    // Save the changes to the Excel file
+                    package.Save();
+                }
+
+                Console.WriteLine("Excel file updated and saved successfully.");
+                
+    }
+    
+    public static int IndexOfMaxValue<T>(List<T> list) where T : IComparable<T>
+    {
+        if (list == null || list.Count == 0)
+        {
+            return -1; // Return -1 for empty or null list
+        }
+
+        int maxIndex = 0; // Start with the first element as the maximum
+        T maxValue = list[0];
+
+        // Iterate through the list to find the maximum value
+        for (int i = 1; i < list.Count; i++)
+        {
+            if (list[i].CompareTo(maxValue) > 0)
+            {
+                maxValue = list[i];
+                maxIndex = i;
+            }
+        }
+
+        return maxIndex; // Return the index of the element with the max value
+    }
+    
+    
 }
