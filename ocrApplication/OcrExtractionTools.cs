@@ -67,7 +67,7 @@ namespace ocrApplication
         // Method to extract text using Tesseract OCR
         public void ExtractTextUsingTesseract(string imagePath, string outputPath, string language = "eng")
         {
-            string tesseractCommand = $"\"{_tesseractPath}\" \"{imagePath}\" \"{outputPath}\" -l {language}";
+            string tesseractCommand = $"\"{_tesseractPath}\" \"{imagePath}\" \"{outputPath}\" ";
 
             ProcessStartInfo processStartInfo = new ProcessStartInfo
             {

@@ -164,19 +164,44 @@ public static class ImagePreprocessing
     // 7. Morphological Operations (Dilation)
     public static Mat Dilation(string imagePath)
     {
-        int kernelSize = 3;
-        Mat image = ConvertToGrayscale(imagePath);
-        Mat dilatedImage = new Mat();
-        
-        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
-        CvInvoke.Dilate(image, dilatedImage, kernel, new Point(-1, -1), 1, BorderType.Reflect, new MCvScalar(0));
-        
-        if (dilatedImage.IsEmpty)
+        int kernelSize = 3; // You can change this value based on your needs
+        if (kernelSize % 2 == 0) 
         {
-            Console.WriteLine("Dilation failed for " + imagePath);
+            kernelSize += 1; // Ensure kernel size is odd
         }
+
+        // Convert image to grayscale
+        Mat image = ConvertToGrayscale(imagePath);
+        if (image == null || image.IsEmpty)
+        {
+            Console.WriteLine("Error: Unable to load or convert image " + imagePath);
+            return null;
+        }
+
+        Mat dilatedImage = new Mat();
+
+        // Create a rectangular structuring element (kernel)
+        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
+
+        // Perform dilation
+        try
+        {
+            CvInvoke.Dilate(image, dilatedImage, kernel, new Point(-1, -1), 1, BorderType.Reflect, new MCvScalar(0));
+
+            // Check if dilation was successful
+            if (dilatedImage.IsEmpty)
+            {
+                Console.WriteLine("Dilation failed for " + imagePath);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error during dilation: " + ex.Message);
+            return null;
+        }
+
         return dilatedImage;
-        
     }
 
     // 8. Morphological Operations (Erosion)
@@ -274,4 +299,29 @@ public static class ImagePreprocessing
 
         return rotated;
     }
+    
+    
+    // 1. Grayscale Conversion Function
+    public static Mat Combo1(string imagePath)
+    {
+        // Load the image
+        Mat image = CvInvoke.Imread(imagePath); // Read image in color mode
+        // Mat image = CvInvoke.Imread(imagePath, ImreadModes.Color); // Read image in color mode
+        
+        // Convert to grayscale
+        Mat combo1Image = new Mat();
+        Mat combo2Image = new Mat();
+        CvInvoke.CvtColor(image, combo1Image, ColorConversion.Bgr2Gray);
+        CvInvoke.Threshold(combo1Image, combo2Image, 0, 255, ThresholdType.Otsu);
+
+        
+        if (combo1Image.IsEmpty)
+        {
+            Console.WriteLine("Error loading image: " + imagePath);
+        }
+        
+        return combo2Image;
+    }
+    
+    
 }
