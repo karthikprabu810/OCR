@@ -186,7 +186,8 @@ public static class ExecutionTimeLogger
                     "dilation OCR",
                     "erosion OCR",
                     "otsu_binarization OCR",
-                    "deskew OCR"
+                    "deskew OCR",
+                    "Combo1 OCR"
                 };
                 
                 using (var package = new ExcelPackage(existingFile))
@@ -195,7 +196,7 @@ public static class ExecutionTimeLogger
                     var worksheet = package.Workbook.Worksheets.Add("Similarity Index");
 
                     // Write data to the 4th sheet
-                    worksheet.Cells[1, 1].Value = "X Reference";
+                    worksheet.Cells[1, 1].Value = "Method for OCR";
                     worksheet.Cells[1, 2].Value = "Levenshtein Similarity";
                     worksheet.Cells[1, 3].Value = "Cosine Similarity";
 
@@ -213,8 +214,8 @@ public static class ExecutionTimeLogger
                     chart.SetSize(700, 400); // Set size of the chart
 
                     // Set data series for the chart
-                    var chart1= chart.Series.Add(worksheet.Cells["B2:B12"], worksheet.Cells["A2:A12"]); // Levenshtein
-                    var chart2= chart.Series.Add(worksheet.Cells["C2:C12"], worksheet.Cells["A2:A12"]); // Cosine
+                    var chart1= chart.Series.Add(worksheet.Cells["B2:B13"], worksheet.Cells["A2:A13"]); // Levenshtein
+                    var chart2= chart.Series.Add(worksheet.Cells["C2:C13"], worksheet.Cells["A2:A13"]); // Cosine
 
                     // Customize chart title
                     chart.Title.Text = "OCR Similarity Results";
