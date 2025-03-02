@@ -215,7 +215,7 @@ namespace ocrApplication
                 });
                 
                 // Save the matrix to Excel with heatmap formatting
-                SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap", headers);
+                SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_Cosine", headers);
                 
                 await Task.Delay(1000);
             }
@@ -267,7 +267,7 @@ namespace ocrApplication
                 });
                 
                 // Save the matrix to Excel with heatmap formatting
-                SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_Levinstein", headers);
+                SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_Levenshtein", headers);
                 
                 await Task.Delay(1000);
             }
