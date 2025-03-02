@@ -1,77 +1,25 @@
-namespace ocrApplication;
-
-using System;
-using System.Collections.Generic;
-
-public class OcrComparison
+namespace ocrApplication
 {
-    public (List<double> levenshteinResults, List<double> cosineResults) CompareOcrResults(List<string> ocrResults, string groundTruth)
+    using System;
+    using System.Collections.Generic;
+
+    public class OcrComparison
     {
-        // Initialize the lists to store results
-        List<double> levenshteinResults = new List<double>();
-        List<double> cosineResults = new List<double>();
-
-        foreach (var result in ocrResults)
-        {
-            // Calculate Levenshtein similarity for each OCR result
-            double levenshteinSimilarity = CalculateLevenshteinSimilarity(result, groundTruth) * 100;
-            levenshteinResults.Add(levenshteinSimilarity); // Add the result to the list
         
-            // Calculate Cosine similarity for each OCR result
-            double cosineSimilarity = CalculateCosineSimilarity(result, groundTruth) * 100;
-            cosineResults.Add(cosineSimilarity); // Add the result to the list
+        // Levenshtein Distance-based Similarity (non-static)
+        public double CalculateLevenshteinSimilarity(string ocrResult, string groundTruth)
+        {
+            double distance = LevenshteinDistance(ocrResult, groundTruth);
+            double maxLength = Math.Max(ocrResult.Length, groundTruth.Length);
+            return Math.Round((1.0 - (distance / maxLength))*100,3);
         }
 
-        // Return the lists of Levenshtein and Cosine similarities
-        return (levenshteinResults, cosineResults);
-    }
-    /*public (string levenshteinResult, string cosineResult) CompareOcrResults(List<string> ocrResults, string groundTruth)
-        {
-            // Initialize the lists to store results
-            List<double> levenshteinResults = new List<double>();
-            List<double> cosineResults = new List<double>();
-            
-            string levenshteinResult = "";
-            string cosineResult = "";
-            foreach (var result in ocrResults)
-            {
-                // Calculate Levenshtein similarity for each OCR result
-                double levenshteinSimilarity = CalculateLevenshteinSimilarity(result, groundTruth)*100;
-                //totalLevenshteinSimilarity += levenshteinSimilarity;
-                levenshteinResult += $"{levenshteinSimilarity:F4}\n";
-                
-                // Calculate Cosine similarity for each OCR result
-                double cosineSimilarity = CalculateCosineSimilarity(result, groundTruth)*100;
-                //totalCosineSimilarity += cosineSimilarity;
-                cosineResult += $"{cosineSimilarity:F4}\n";
-            }
-
-            // Calculate the average similarity for both methods
-            //double averageLevenshteinSimilarity = totalLevenshteinSimilarity / ocrResults.Count;
-            //double averageCosineSimilarity = totalCosineSimilarity / ocrResults.Count;
-
-            // Append average results to both strings
-            //levenshteinResult += $"\nAverage Levenshtein Similarity: {averageLevenshteinSimilarity:F4}\n";
-            //cosineResult += $"\nAverage Cosine Similarity: {averageCosineSimilarity:F4}\n";
-
-            return (levenshteinResult, cosineResult);
-        }*/
-
-        // Levenshtein Distance-based Similarity
-        private double CalculateLevenshteinSimilarity(string ocrResult, string groundTruth)
-        {
-            int distance = LevenshteinDistance(ocrResult, groundTruth);
-            int maxLength = Math.Max(ocrResult.Length, groundTruth.Length);
-
-            // A similarity score between 0 and 1, where 1 means identical strings.
-            return 1.0 - (double)distance / maxLength;
-        }
-
-        private int LevenshteinDistance(string s1, string s2)
+        // Levenshtein distance (non-static, double type)
+        private double LevenshteinDistance(string s1, string s2)
         {
             int n = s1.Length;
             int m = s2.Length;
-            int[,] d = new int[n + 1, m + 1];
+            double[,] d = new double[n + 1, m + 1];
 
             for (int i = 0; i <= n; i++) d[i, 0] = i;
             for (int j = 0; j <= m; j++) d[0, j] = j;
@@ -80,45 +28,27 @@ public class OcrComparison
             {
                 for (int j = 1; j <= m; j++)
                 {
-                    int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
+                    double cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
                     d[i, j] = Math.Min(Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1), d[i - 1, j - 1] + cost);
                 }
             }
             return d[n, m];
         }
 
-        // Cosine Similarity-based Calculation
-        private double CalculateCosineSimilarity(string ocrResult, string groundTruth)
+        // Cosine Similarity-based Calculation (non-static)
+        public double CalculateCosineSimilarity(string ocrResult, string groundTruth)
         {
             var ocrVector = GetWordVector(ocrResult);
             var truthVector = GetWordVector(groundTruth);
-
-            return CosineSimilarity(ocrVector, truthVector);
+            return Math.Round(CosineSimilarity(ocrVector, truthVector)*100,3);
         }
-
-        private Dictionary<string, int> GetWordVector(string text)
+        
+        // Calculate cosine similarity between two word vectors (non-static)
+        private double CosineSimilarity(Dictionary<string, double> vector1, Dictionary<string, double> vector2)
         {
-            var wordVector = new Dictionary<string, int>();
-            var words = text.Split(new[] { ' ', '.', ',', ';', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var word in words)
-            {
-                var cleanedWord = word.ToLower();
-                if (!wordVector.ContainsKey(cleanedWord))
-                {
-                    wordVector[cleanedWord] = 0;
-                }
-                wordVector[cleanedWord]++;
-            }
-
-            return wordVector;
-        }
-
-        private double CosineSimilarity(Dictionary<string, int> vector1, Dictionary<string, int> vector2)
-        {
-            var dotProduct = 0.0;
-            var norm1 = 0.0;
-            var norm2 = 0.0;
+            double dotProduct = 0.0;
+            double norm1 = 0.0;
+            double norm2 = 0.0;
 
             foreach (var word in vector1.Keys)
             {
@@ -140,4 +70,22 @@ public class OcrComparison
 
             return dotProduct / (Math.Sqrt(norm1) * Math.Sqrt(norm2));
         }
+        
+        // Convert a string into a word vector (non-static)
+        public Dictionary<string, double> GetWordVector(string text)
+        {
+            var wordVector = new Dictionary<string, double>();
+            var words = text.Split(new[] { ' ', '.', ',', ';', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var word in words)
+            {
+                var cleanedWord = word.ToLower();
+                if (!wordVector.ContainsKey(cleanedWord))
+                {
+                    wordVector[cleanedWord] = 0;
+                }
+                wordVector[cleanedWord]++;
+            }
+            return wordVector;
+        }
+    }
 }
