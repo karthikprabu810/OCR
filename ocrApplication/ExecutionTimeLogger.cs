@@ -261,4 +261,82 @@ public static class ExecutionTimeLogger
     }
     
     
+    public static void CreateEmbeddingVisualization(string excelFilePath, List<TextEmbedding> embeddings)
+    {
+        using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+        {
+            var worksheet = package.Workbook.Worksheets.Add("Text Embeddings");
+            
+            // Perform dimensionality reduction to 2D using simple PCA
+            var vectors = embeddings.Select(e => e.Vector).ToList();
+            var reduced = ReduceDimensionality(vectors);
+            
+            // Write the reduced coordinates and labels
+            worksheet.Cells[1, 1].Value = "X";
+            worksheet.Cells[1, 2].Value = "Y";
+            worksheet.Cells[1, 3].Value = "Label";
+            
+            for (int i = 0; i < reduced.Count; i++)
+            {
+                worksheet.Cells[i + 2, 1].Value = reduced[i][0];
+                worksheet.Cells[i + 2, 2].Value = reduced[i][1];
+                worksheet.Cells[i + 2, 3].Value = embeddings[i].Label;
+            }
+            
+            // Create scatter plot
+            var chart = worksheet.Drawings.AddChart("EmbeddingScatter", eChartType.XYScatter);
+            chart.SetPosition(2, 0, 5, 0);
+            chart.SetSize(800, 600);
+            
+            // Add data series
+            var series = chart.Series.Add(worksheet.Cells[2, 1, reduced.Count + 1, 2], 
+                                        worksheet.Cells[2, 1, reduced.Count + 1, 1]);
+            series.Header = "Text Embeddings";
+            
+            // Customize chart
+            chart.Title.Text = "OCR Results Embedding Visualization";
+            chart.XAxis.Title.Text = "Dimension 1";
+            chart.YAxis.Title.Text = "Dimension 2";
+            
+            package.Save();
+        }
+    }
+
+    private static List<double[]> ReduceDimensionality(List<double[]> vectors)
+    {
+        // Simple PCA implementation for 2D visualization
+        int n = vectors.Count;
+        int d = vectors[0].Length;
+        
+        // Center the data
+        var mean = new double[d];
+        for (int i = 0; i < d; i++)
+        {
+            mean[i] = vectors.Average(v => v[i]);
+        }
+        
+        var centered = vectors.Select(v => v.Zip(mean, (a, b) => a - b).ToArray()).ToList();
+        
+        // Calculate covariance matrix
+        var covariance = new double[d, d];
+        for (int i = 0; i < d; i++)
+        {
+            for (int j = 0; j < d; j++)
+            {
+                covariance[i, j] = centered.Average(v => v[i] * v[j]);
+            }
+        }
+        
+        // For simplicity, project onto first two principal components
+        // (In a production environment, you might want to use a proper linear algebra library)
+        var reduced = centered.Select(v => new double[]
+        {
+            v.Sum(x => x) / Math.Sqrt(d),  // Simplified projection
+            v.Select((x, i) => x * Math.Cos(2 * Math.PI * i / d)).Sum() // Simplified projection
+        }).ToList();
+        
+        return reduced;
+    }
+    
+    
 }
