@@ -289,7 +289,7 @@ public static class ExecutionTimeLogger
             chart.SetSize(800, 600);
             
             // Add data series
-            var series = chart.Series.Add(worksheet.Cells[2, 1, reduced.Count + 1, 2], 
+            var series = chart.Series.Add(worksheet.Cells[2, 2, reduced.Count + 1, 2], 
                                         worksheet.Cells[2, 1, reduced.Count + 1, 1]);
             series.Header = "Text Embeddings";
             
@@ -301,7 +301,137 @@ public static class ExecutionTimeLogger
             package.Save();
         }
     }
+    
+  /*  
+    public static void CreateEmbeddingVisualization(string excelFilePath, List<TextEmbedding> embeddings)
+{
+    using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+    {
+        var worksheet = package.Workbook.Worksheets.Add("Text Embeddings");
 
+        // Perform dimensionality reduction to 2D using PCA or another method
+        var vectors = embeddings.Select(e => e.Vector).ToList();
+        var reduced = ReduceDimensionality(vectors);
+
+        // Write the reduced coordinates and labels
+        worksheet.Cells[1, 1].Value = "X";
+        worksheet.Cells[1, 2].Value = "Y";
+        worksheet.Cells[1, 3].Value = "Label";
+
+        for (int i = 0; i < reduced.Count; i++)
+        {
+            worksheet.Cells[i + 2, 1].Value = reduced[i][0];
+            worksheet.Cells[i + 2, 2].Value = reduced[i][1];
+            worksheet.Cells[i + 2, 3].Value = embeddings[i].Label;
+        }
+
+        // Create scatter plot
+        var chart = worksheet.Drawings.AddChart("EmbeddingScatter", eChartType.XYScatter);
+        chart.SetPosition(2, 0, 5, 0);
+        chart.SetSize(800, 600);
+
+        // Group the data by label to create separate series for each label
+        var groupedData = embeddings.GroupBy(e => e.Label)
+                                   .ToDictionary(g => g.Key, g => g.ToList());
+
+        int seriesIndex = 0;
+
+        foreach (var labelGroup in groupedData)
+        {
+            var label = labelGroup.Key;
+            var labelEmbeddings = labelGroup.Value;
+
+            // Create a series for each label group
+            var xRange = worksheet.Cells[2, 1, labelEmbeddings.Count + 1, 1];  // X data
+            var yRange = worksheet.Cells[2, 2, labelEmbeddings.Count + 1, 2];  // Y data
+
+            var series = chart.Series.Add(yRange, xRange);
+            series.Header = label;
+
+            seriesIndex++;
+        }
+
+        // Customize chart
+        chart.Title.Text = "OCR Results Embedding Visualization";
+        chart.XAxis.Title.Text = "Dimension 1";
+        chart.YAxis.Title.Text = "Dimension 2";
+
+        // Set up the legend (using Legend property)
+        chart.Legend.Position = eLegendPosition.Bottom; // Position the legend at the bottom
+        chart.Legend.Font.Size = 10; // Adjust font size if needed
+        chart.Legend.Fill.Color = System.Drawing.Color.White; // Background color for the legend
+
+        package.Save();
+    }
+}
+*/
+  /*
+  public static void CreateEmbeddingVisualization(string excelFilePath, List<TextEmbedding> embeddings)
+{
+    using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
+    {
+        var worksheet = package.Workbook.Worksheets.Add("Text Embeddings");
+
+        // Perform dimensionality reduction to 2D using PCA or another method
+        var vectors = embeddings.Select(e => e.Vector).ToList();
+        var reduced = ReduceDimensionality(vectors);
+
+        // Write the reduced coordinates and labels
+        worksheet.Cells[1, 1].Value = "X";
+        worksheet.Cells[1, 2].Value = "Y";
+        worksheet.Cells[1, 3].Value = "Label";
+
+        for (int i = 0; i < reduced.Count; i++)
+        {
+            worksheet.Cells[i + 2, 1].Value = reduced[i][0];
+            worksheet.Cells[i + 2, 2].Value = reduced[i][1];
+            worksheet.Cells[i + 2, 3].Value = embeddings[i].Label;
+        }
+
+        // Create scatter plot
+        var chart = worksheet.Drawings.AddChart("EmbeddingScatter", eChartType.XYScatter);
+        chart.SetPosition(2, 0, 5, 0);
+        chart.SetSize(800, 600);
+
+        // Group the data by label to create separate series for each label
+        var groupedData = embeddings.GroupBy(e => e.Label)
+                                   .ToDictionary(g => g.Key, g => g.ToList());
+
+        int seriesIndex = 0;
+
+        // Loop through each label group and add it as a separate series
+        foreach (var labelGroup in groupedData)
+        {
+            var label = labelGroup.Key;
+            var labelEmbeddings = labelGroup.Value;
+
+            // Create the range for X and Y values for this label group
+            var xRange = worksheet.Cells[2, 1, labelEmbeddings.Count + 1, 1];  // X data range
+            var yRange = worksheet.Cells[2, 2, labelEmbeddings.Count + 1, 2];  // Y data range
+
+            // Add a series to the chart for this label
+            var series = chart.Series.Add(yRange, xRange);
+            series.Header = label;
+
+            seriesIndex++;
+        }
+
+        // Customize chart appearance
+        chart.Title.Text = "OCR Results Embedding Visualization";
+        chart.XAxis.Title.Text = "Dimension 1";
+        chart.YAxis.Title.Text = "Dimension 2";
+
+        // Set up the legend
+        chart.Legend.Position = eLegendPosition.Bottom; // Position the legend at the bottom
+        chart.Legend.Font.Size = 10; // Adjust font size if needed
+        chart.Legend.Fill.Color = System.Drawing.Color.White; // Background color for the legend
+
+        package.Save();
+    }
+}
+  
+  */
+  
     private static List<double[]> ReduceDimensionality(List<double[]> vectors)
     {
         // Simple PCA implementation for 2D visualization
