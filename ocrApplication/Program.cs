@@ -57,14 +57,14 @@ namespace ocrApplication
                 ("dilation", ImagePreprocessing.Dilation),
                 ("erosion", ImagePreprocessing.Erosion),
                 ("otsu_binarization", ImagePreprocessing.OtsuBinarization),
-                ("deskew", ImagePreprocessing.Deskew)
+                ("deskew", ImagePreprocessing.Deskew),
+                ("Combo1", ImagePreprocessing.Combo1)
             };
 
             // Initialize the OCR comparison and ensemble methods
             var ensembleOcr = new EnsembleOcr();
-            // var ensembleOCRWithConfidence = new EnsembleOcrWithConfidence();
-            var ocrComparison = new OcrComparison();
-            
+            var ocrComparison = new OcrComparison();  // Updated: Instantiate OcrComparison here
+
             // Process each image in parallel
             await Task.WhenAll(imageFiles.Select(async imagePath =>
             {
@@ -80,7 +80,7 @@ namespace ocrApplication
                 File.Copy(imagePath, originalImagePath, true); // Copy original image
 
                 // Excel file path
-                string excelFilePath = Path.Combine(imageOcrResultFolder, $"Comparitative_Analysis_{fileNameWithoutExtension}.xlsx");
+                string excelFilePath = Path.Combine(imageOcrResultFolder, $"Comparative_Analysis_{fileNameWithoutExtension}.xlsx");
 
                 // List to store execution time and memory usage data
                 var preprocessingTimes = new List<(string ImageName, string Method, double TimeTaken, long MemoryUsage)>();
@@ -91,7 +91,6 @@ namespace ocrApplication
 
                 // Process the original image with OCR tools
                 string originalOcrToolFolder = Path.Combine(imageOcrResultFolder, "original");
-                // Directory.CreateDirectory(originalOcrToolFolder);
                 
                 // OCR extraction for original image
                 Stopwatch ocrStopwatch = Stopwatch.StartNew();
@@ -117,7 +116,7 @@ namespace ocrApplication
                     preprocessStopwatch.Stop();
                     long memoryAfterPreprocess = GC.GetTotalMemory(true);  // Force garbage collection
                     
-                    preprocessingTimes.Add((fileNameWithoutExtension, methodName, preprocessStopwatch.Elapsed.TotalMilliseconds, memoryAfterPreprocess - memoryBeforePreprocess));
+                    preprocessingTimes.Add((fileNameWithoutExtension, methodName, preprocessStopwatch.Elapsed.TotalMilliseconds, Math.Abs(memoryAfterPreprocess - memoryBeforePreprocess)));
 
                     if (!preprocessedImage.IsEmpty)
                     {
@@ -126,8 +125,7 @@ namespace ocrApplication
 
                     // 2. Call OCR tools and save the results for each preprocessing technique
                     string ocrToolFolder = Path.Combine(imageOcrResultFolder, methodName);
-                    // Directory.CreateDirectory(ocrToolFolder);
-
+                    
                     // OCR extraction for preprocessed image
                     Stopwatch ocrPreprocessStopwatch = Stopwatch.StartNew();
                     long memoryBeforeOcrPreprocess = GC.GetTotalMemory(false);
@@ -138,37 +136,114 @@ namespace ocrApplication
 
                     // Collect OCR results for this method
                     var ocrResultsForMethod = OcrFileReader.ReadOcrResultsFromFiles(new List<string> { Path.Combine(imageOcrResultFolder, $"{methodName}.txt") });
-                    ocrResults.AddRange(ocrResultsForMethod);
+                        ocrResults.AddRange(ocrResultsForMethod);
                 }
 
                 // Save execution times to an Excel file
                 ExecutionTimeLogger.SaveExecutionTimesToExcel(excelFilePath, preprocessingTimes, ocrTimes);
-               
+
+                var ocrResultForGroundTruth = ocrResults.Where(item => !string.IsNullOrWhiteSpace(item)).ToList();
+                
                 // Save all OCR results to a file before sending to ensemble
                 string allOcrResultsFilePath = Path.Combine(imageOcrResultFolder, "all_ocr_results.txt");
                 File.WriteAllLines(allOcrResultsFilePath, ocrResults);
                 
                 // 3. Perform Ensemble OCR after all preprocessing is done
-                string groundTruth = ensembleOcr.CombineUsingMajorityVoting(ocrResults);
+                string groundTruth = ensembleOcr.CombineUsingMajorityVoting(ocrResultForGroundTruth);
 
                 // 4. Save the final result to a file
                 string groundTruthFilePath = Path.Combine(imageOcrResultFolder, "final_ocr_result.txt");
                 File.WriteAllText(groundTruthFilePath, groundTruth);
+                
+                // Generate the cosine similarity matrix and save to Excel
+                TextSimilarity.SimilarityMatrixGenerator similarityMatrixGenerator = new TextSimilarity.SimilarityMatrixGenerator();
 
-                // Optionally compare OCR result with ground truth (if available)
-                // Get both similarity results as strings
-                var (levenshteinResult, cosineResult) = ocrComparison.CompareOcrResults(ocrResults, groundTruth); 
-                /*
-                Console.WriteLine("Levenshtein Similarity Results:\n");
-                Console.WriteLine(levenshteinResult);
-                Console.WriteLine("\nCosine Similarity Results:\n");
-                Console.WriteLine(cosineResult);
-                */
-                ExecutionTimeLogger.ComparisionPlot(excelFilePath, levenshteinResult, cosineResult);
+                
+                
+                // Generate and visualize OCR similarity matrix with heatmap
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrix(ocrResults, groundTruth, excelFilePath);
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixLV(ocrResults, groundTruth, excelFilePath);
+                
+                // Generate preprocessing effectiveness report
+                await similarityMatrixGenerator.GeneratePreprocessingEffectivenessReport(ocrResults, groundTruth, excelFilePath);
+                
+                
+                
+                // Generate the Cosine Similarity matrix and save to Excel
+               // await similarityMatrixGenerator.CalculateAndSaveCosineSimilarityMatrix(ocrResults, excelFilePath);
+                
+                // Generate the Levenshtein Similarity matrix and save to Excel
+                //await similarityMatrixGenerator.CalculateAndSaveLevenshteinSimilarityMatrix(ocrResults, excelFilePath);
+                
+                // Get the similarity results
+                //var (levenshteinResult, cosineResult) = await ocrComparison.CompareOcrResults(ocrResults, groundTruth);
+
+                // Call the method to save the comparison plot (Levenshtein and Cosine)
+                //ExecutionTimeLogger.ComparisionPlot(excelFilePath, levenshteinResult, cosineResult);
+                
                 Console.WriteLine($"OCR processing complete for image: {imagePath}");
+                Console.WriteLine($"-----------------------------------------------------------");
+                
+                string sheetName1 = "Levenshtein_Similarity_Matrix";  // Name of the Levenshtein similarity matrix sheet
+                string sheetName2 = "Cosine_Similarity_Matrix";  // Name of the Cosine similarity matrix sheet
+
+                // Compare and highlight differences in the similarity matrices
+                //ExcelComparator.CompareAndColorCells(excelFilePath, sheetName1, sheetName2);
+                
+                var ocrSteps = new List<string>
+                {
+                    "Original OCR",
+                    "grayscale OCR",
+                    "gaussian OCR",
+                    "median OCR",
+                    "adaptive_thresholding OCR",
+                    "gamma_correction OCR",
+                    "canny_edge OCR",
+                    "dilation OCR",
+                    "erosion OCR",
+                    "otsu_binarization OCR",
+                    "deskew OCR",
+                    "Combo1 OCR"
+                };
+
+                // Generate embeddings and create visualization
+                var embeddings = similarityMatrixGenerator.GenerateTextEmbeddings(ocrResults, ocrSteps);
+                ExecutionTimeLogger.CreateEmbeddingVisualization(excelFilePath, embeddings);
+                
+                // Basic visualization
+                //ScatterPlotVisualization.CreateVisualization(excelFilePath, embeddings);
+
+// Visualization with ground truth comparison
+                // ScatterPlotVisualization.CreateComparisonVisualization(excelFilePath, embeddings, groundTruth);
+                
+                
             }));
 
             Console.WriteLine("OCR processing complete for all images in the folder and its subfolders.");
         }
+/*
+        public static int IndexOfMaxValue<T>(List<T> list) where T : IComparable<T>
+        {
+            if (list == null || list.Count == 0)
+            {
+                return -1; // Return -1 for empty or null list
+            }
+
+            int maxIndex = 0; // Start with the first element as the maximum
+            T maxValue = list[0];
+
+            // Iterate through the list to find the maximum value
+            for (int i = 1; i < list.Count; i++)
+            {
+                if (list[i].CompareTo(maxValue) > 0)
+                {
+                    maxValue = list[i];
+                    maxIndex = i;
+                }
+            }
+
+            return maxIndex; // Return the index of the element with the max value
+        }
+        */
     }
 }
