@@ -58,12 +58,50 @@ namespace ocrApplication
                 ("erosion", ImagePreprocessing.Erosion),
                 ("otsu_binarization", ImagePreprocessing.OtsuBinarization),
                 ("deskew", ImagePreprocessing.Deskew),
-                ("Combo1", ImagePreprocessing.Combo1)
+                ("HistogramEqualization", ImagePreprocessing.HistogramEqualization),
+                ("SobelEdgeDetection", ImagePreprocessing.SobelEdgeDetection),
+                ("BilateralFilter", ImagePreprocessing.BilateralFilter),
+                ("LaplacianEdgeDetection", ImagePreprocessing.LaplacianEdgeDetection),
+                ("NormalizeImage", ImagePreprocessing.NormalizeImage),
+                ("Opening", ImagePreprocessing.Opening),
+                ("Closing", ImagePreprocessing.Closing),
+                ("MorphologicalGradient", ImagePreprocessing.MorphologicalGradient),
+                ("LogTransform", ImagePreprocessing.LogTransform),
+                ("ConvertToHSV", ImagePreprocessing.ConvertToHSV),
+                ("TopHat", ImagePreprocessing.TopHat),
+                ("BlackHat", ImagePreprocessing.BlackHat)
+            };
+            
+            var ocrSteps = new List<string>
+            {
+                "Original OCR",
+                "grayscale OCR",
+                "gaussian OCR",
+                "median OCR",
+                "adaptive_thresholding OCR",
+                "gamma_correction OCR",
+                "canny_edge OCR",
+                "dilation OCR",
+                "erosion OCR",
+                "otsu_binarization OCR",
+                "deskew OCR",
+                "HistogramEqualization OCR",
+                "SobelEdgeDetection OCR",
+                "BilateralFilter OCR",
+                "LaplacianEdgeDetection OCR",
+                "NormalizeImage OCR",
+                "Opening OCR",
+                "Closing OCR",
+                "MorphologicalGradient OCR",
+                "LogTransform OCR",
+                "ConvertToHSV OCR",
+                "TopHat OCR",
+                "BlackHat OCR"
             };
 
             // Initialize the OCR comparison and ensemble methods
             var ensembleOcr = new EnsembleOcr();
-            var ocrComparison = new OcrComparison();  // Updated: Instantiate OcrComparison here
+            //var ocrComparison = new OcrComparison();  // Updated: Instantiate OcrComparison here
 
             // Process each image in parallel
             await Task.WhenAll(imageFiles.Select(async imagePath =>
@@ -91,6 +129,7 @@ namespace ocrApplication
 
                 // Process the original image with OCR tools
                 string originalOcrToolFolder = Path.Combine(imageOcrResultFolder, "original");
+                Directory.CreateDirectory(originalOcrToolFolder);
                 
                 // OCR extraction for original image
                 Stopwatch ocrStopwatch = Stopwatch.StartNew();
@@ -161,11 +200,11 @@ namespace ocrApplication
                 
                 
                 // Generate and visualize OCR similarity matrix with heatmap
-                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrix(ocrResults, groundTruth, excelFilePath);
-                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixLV(ocrResults, groundTruth, excelFilePath);
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrix(ocrResults, groundTruth, excelFilePath, ocrSteps);
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixLv(ocrResults, groundTruth, excelFilePath, ocrSteps);
                 
                 // Generate preprocessing effectiveness report
-                await similarityMatrixGenerator.GeneratePreprocessingEffectivenessReport(ocrResults, groundTruth, excelFilePath);
+                await similarityMatrixGenerator.GeneratePreprocessingEffectivenessReport(ocrResults, groundTruth, excelFilePath, ocrSteps);
                 
                 
                 
@@ -184,31 +223,22 @@ namespace ocrApplication
                 Console.WriteLine($"OCR processing complete for image: {imagePath}");
                 Console.WriteLine($"-----------------------------------------------------------");
                 
-                string sheetName1 = "Levenshtein_Similarity_Matrix";  // Name of the Levenshtein similarity matrix sheet
-                string sheetName2 = "Cosine_Similarity_Matrix";  // Name of the Cosine similarity matrix sheet
+                // string sheetName1 = "Levenshtein_Similarity_Matrix";  // Name of the Levenshtein similarity matrix sheet
+                // string sheetName2 = "Cosine_Similarity_Matrix";  // Name of the Cosine similarity matrix sheet
 
                 // Compare and highlight differences in the similarity matrices
                 //ExcelComparator.CompareAndColorCells(excelFilePath, sheetName1, sheetName2);
                 
-                var ocrSteps = new List<string>
-                {
-                    "Original OCR",
-                    "grayscale OCR",
-                    "gaussian OCR",
-                    "median OCR",
-                    "adaptive_thresholding OCR",
-                    "gamma_correction OCR",
-                    "canny_edge OCR",
-                    "dilation OCR",
-                    "erosion OCR",
-                    "otsu_binarization OCR",
-                    "deskew OCR",
-                    "Combo1 OCR"
-                };
-
+                
                 // Generate embeddings and create visualization
                 var embeddings = similarityMatrixGenerator.GenerateTextEmbeddings(ocrResults, ocrSteps);
-                ExecutionTimeLogger.CreateEmbeddingVisualization(excelFilePath, embeddings);
+                ExecutionTimeLogger.CreateEmbeddingVisualization(excelFilePath, embeddings, ocrSteps);
+                
+                
+                
+                
+                
+                
                 
                 // Basic visualization
                 //ScatterPlotVisualization.CreateVisualization(excelFilePath, embeddings);

@@ -4,80 +4,150 @@ using Emgu.CV.CvEnum;
 using System.Drawing;
 using Emgu.CV.Structure;
 
+
 namespace ocrApplication;
 
 public static class ImagePreprocessing
 {
-    // 1. Grayscale Conversion Function
+    // Cache for loaded images to prevent multiple disk reads
+    private static readonly Dictionary<string, Mat> ImageCache = new Dictionary<string, Mat>();
+    private static readonly object CacheLock = new object();
+
+    // Helper method to load or get cached image
+    private static Mat LoadImage(string imagePath, ImreadModes mode = ImreadModes.Color)
+    {
+        lock (CacheLock)
+        {
+            string cacheKey = $"{imagePath}_{mode}";
+            if (!ImageCache.TryGetValue(cacheKey, out Mat cachedImage))
+            {
+                cachedImage = CvInvoke.Imread(imagePath, mode);
+                if (!cachedImage.IsEmpty)
+                {
+                    ImageCache[cacheKey] = cachedImage;
+                }
+            }
+            return cachedImage.Clone(); // Return a clone to prevent modification of cached image
+        }
+    }
+
+    // Clear cache if memory usage is high
+    private static void ClearCacheIfNeeded()
+    {
+        lock (CacheLock)
+        {
+            if (ImageCache.Count > 100) // Arbitrary limit, adjust based on your needs
+            {
+                foreach (var image in ImageCache.Values)
+                {
+                    image.Dispose();
+                }
+                ImageCache.Clear();
+            }
+        }
+    }
+
+    // 1. Optimized Grayscale Conversion Function
     public static Mat ConvertToGrayscale(string imagePath)
     {
-        // Load the image
-        Mat image = CvInvoke.Imread(imagePath); // Read image in color mode
-        // Mat image = CvInvoke.Imread(imagePath, ImreadModes.Color); // Read image in color mode
-        
-        // Convert to grayscale
-        Mat grayImage = new Mat();
-        CvInvoke.CvtColor(image, grayImage, ColorConversion.Bgr2Gray);
-        
-        if (grayImage.IsEmpty)
+        try
         {
-            Console.WriteLine("Error loading image: " + imagePath);
+            // Load image directly in grayscale mode to avoid color conversion
+            Mat grayImage = LoadImage(imagePath, ImreadModes.Grayscale);
+            
+            if (grayImage.IsEmpty)
+            {
+                Console.WriteLine("Error loading image: " + imagePath);
+                return new Mat();
+            }
+            
+            ClearCacheIfNeeded();
+            return grayImage;
         }
-        
-        return grayImage;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in grayscale conversion: {ex.Message}");
+            return new Mat();
+        }
     }
     
-    // 2. Noise Removal: Gaussian Blur
+    // 2. Gaussian Blur
     public static Mat RemoveNoiseUsingGaussian(string imagePath)
     {
-
-        int kernelSize = 5;
-        Mat image = ConvertToGrayscale(imagePath); // First convert to grayscale if not done
-        Mat denoisedImage = new Mat();
-
-        // Apply Gaussian Blur to reduce noise
-        CvInvoke.GaussianBlur(image, denoisedImage, new Size(kernelSize, kernelSize), 0);
-        
-        if (denoisedImage.IsEmpty)
+        try
         {
-            Console.WriteLine("Gaussian blur failed for " + imagePath);
+            // Load directly in grayscale
+            Mat image = LoadImage(imagePath, ImreadModes.Grayscale);
+            if (image.IsEmpty)
+            {
+                Console.WriteLine("Error loading image for Gaussian blur: " + imagePath);
+                return new Mat();
+            }
+
+            Mat denoisedImage = new Mat();
+            CvInvoke.GaussianBlur(image, denoisedImage, new Size(5, 5), 0);
+            
+            ClearCacheIfNeeded();
+            return denoisedImage;
         }
-        
-        return denoisedImage;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in Gaussian blur: {ex.Message}");
+            return new Mat();
+        }
     }
     
-    // 3. Noise Removal: Median Filtering
+    // 3.  Median Blur
     public static Mat RemoveNoiseUsingMedian(string imagePath)
     {
-        int kernelSize = 3;
-        Mat image = ConvertToGrayscale(imagePath); // First convert to grayscale if not done
-        Mat denoisedImage = new Mat();
-
-        // Apply Median Filtering to reduce noise
-        CvInvoke.MedianBlur(image, denoisedImage, kernelSize);
-        
-        if (denoisedImage.IsEmpty)
+        try
         {
-            Console.WriteLine("Median filtering failed for " + imagePath);
+            // Load directly in grayscale
+            Mat image = LoadImage(imagePath, ImreadModes.Grayscale);
+            if (image.IsEmpty)
+            {
+                Console.WriteLine("Error loading image for median blur: " + imagePath);
+                return new Mat();
+            }
+
+            Mat denoisedImage = new Mat();
+            CvInvoke.MedianBlur(image, denoisedImage, 3);
+            
+            ClearCacheIfNeeded();
+            return denoisedImage;
         }
-        
-        return denoisedImage;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in median blur: {ex.Message}");
+            return new Mat();
+        }
     }
     
-    // 4. Adaptive Thresholding (Used when lighting varies across the image)
+    // 4. Optimized Adaptive Thresholding
     public static Mat AdaptiveThresholding(string imagePath)
     {
-        Mat image = ConvertToGrayscale(imagePath);
-        Mat thresholdImage = new Mat();
-        
-        CvInvoke.AdaptiveThreshold(image, thresholdImage, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 11, 2);
-        
-        if (thresholdImage.IsEmpty)
+        try
         {
-            Console.WriteLine("Adaptive thresholding failed for " + imagePath);
+            // Load directly in grayscale
+            Mat image = LoadImage(imagePath, ImreadModes.Grayscale);
+            if (image.IsEmpty)
+            {
+                Console.WriteLine("Error loading image for adaptive threshold: " + imagePath);
+                return new Mat();
+            }
+
+            Mat thresholdImage = new Mat();
+            CvInvoke.AdaptiveThreshold(image, thresholdImage, 255,
+                AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 11, 2);
+            
+            ClearCacheIfNeeded();
+            return thresholdImage;
         }
-        
-        return thresholdImage;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in adaptive thresholding: {ex.Message}");
+            return new Mat();
+        }
     }
     
     // 5. Gamma Correction (Used for correcting the image brightness)
@@ -300,28 +370,174 @@ public static class ImagePreprocessing
         return rotated;
     }
     
-    
-    // 1. Grayscale Conversion Function
-    public static Mat Combo1(string imagePath)
+    // 12. Histogram Equilisation
+    public static Mat HistogramEqualization(string imagePath)
     {
-        // Load the image
-        Mat image = CvInvoke.Imread(imagePath); // Read image in color mode
-        // Mat image = CvInvoke.Imread(imagePath, ImreadModes.Color); // Read image in color mode
-        
-        // Convert to grayscale
-        Mat combo1Image = new Mat();
-        Mat combo2Image = new Mat();
-        CvInvoke.CvtColor(image, combo1Image, ColorConversion.Bgr2Gray);
-        CvInvoke.Threshold(combo1Image, combo2Image, 0, 255, ThresholdType.Otsu);
-
-        
-        if (combo1Image.IsEmpty)
-        {
-            Console.WriteLine("Error loading image: " + imagePath);
-        }
-        
-        return combo2Image;
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        if (image.IsEmpty) return image;
+        Mat equalizedImage = new Mat();
+        CvInvoke.EqualizeHist(image, equalizedImage);
+        return equalizedImage;
     }
+    
+    
+
+    // 14 Bilateral filtering
+    
+    public static Mat BilateralFilter(string imagePath)
+    {
+        Mat image = CvInvoke.Imread(imagePath);
+        if (image.IsEmpty) return image;
+        Mat filteredImage = new Mat();
+        CvInvoke.BilateralFilter(image, filteredImage, 9, 75, 75);
+        return filteredImage;
+    }
+    
+    // 16. Edge Detection (Sobel)
+    
+    public static Mat SobelEdgeDetection(string imagePath)
+    {
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        if (image.IsEmpty) return image;
+        Mat edges = new Mat();
+        CvInvoke.Sobel(image, edges, DepthType.Cv8U, 1, 0, 3, 1, 0,BorderType.Reflect);
+        return edges;
+    }
+
+    
+    // 17. Edge Detection (Laplacian)
+    
+    public static Mat LaplacianEdgeDetection(string imagePath)
+    {
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        if (image.IsEmpty) return image;
+        Mat edges = new Mat();
+        CvInvoke.Laplacian(image, edges, DepthType.Cv8U, 3, 1, 0, BorderType.Reflect);
+        return edges;
+    }
+
+    // 18. Image Normalization
+    
+    public static Mat NormalizeImage(string imagePath)
+    {
+        double newMin = 0; 
+        double newMax = 1;
+        Mat image = CvInvoke.Imread(imagePath);
+        if (image.IsEmpty) return image;
+    
+        Mat normalizedImage = new Mat();
+        CvInvoke.Normalize(image, normalizedImage, newMin, newMax, NormType.MinMax, DepthType.Cv8U, null);
+        return normalizedImage;
+    }
+    
+    // 19. Morphological Operations (Opening)
+    
+    public static Mat Opening(string imagePath)
+    {
+        int kernelSize = 5;
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        Mat openedImage = new Mat();
+        
+        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
+   
+        if (image.IsEmpty) return image;
+        CvInvoke.MorphologyEx(image, openedImage, MorphOp.Open, kernel, new Point(-1, -1), 1, Emgu.CV.CvEnum.BorderType.Reflect, new MCvScalar(0));
+        return openedImage;
+    }
+    
+    // 20. Morphological Operations (Closing)
+    
+    public static Mat Closing(string imagePath)
+    {
+        int kernelSize = 5;
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        Mat closedImage = new Mat();
+        
+        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
+   
+        if (image.IsEmpty) return image;
+        CvInvoke.MorphologyEx(image, closedImage, MorphOp.Close, kernel, new Point(-1, -1), 1, BorderType.Reflect, new MCvScalar(0));
+
+        return closedImage;
+    }
+
+    // 21. Morphological Gradient
+    public static Mat MorphologicalGradient(string imagePath)
+    {
+        int kernelSize = 5;
+        // Load image in grayscale
+        Mat image = CvInvoke.Imread(imagePath, Emgu.CV.CvEnum.ImreadModes.Grayscale);
+        if (image.IsEmpty) return image;
+
+        Mat gradientImage = new Mat();
+    
+        // Create structuring element (5x5 rectangle)
+        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
+
+        // Corrected MorphologyEx with 8 parameters
+        CvInvoke.MorphologyEx(image, gradientImage, Emgu.CV.CvEnum.MorphOp.Gradient, kernel, new System.Drawing.Point(-1, -1), 1, Emgu.CV.CvEnum.BorderType.Reflect, new MCvScalar(0));
+    
+        return gradientImage;
+    }
+    
+    // 22. Log Transform
+    public static Mat LogTransform(string imagePath)
+    {
+        Mat image = CvInvoke.Imread(imagePath, Emgu.CV.CvEnum.ImreadModes.Grayscale);
+        if (image.IsEmpty) return image;
+    
+        Mat logImage = new Mat();
+        image.ConvertTo(logImage, DepthType.Cv32F);
+        CvInvoke.Pow(logImage + 1, 1.0, logImage);  // Apply log transformation
+        logImage.ConvertTo(logImage, DepthType.Cv8U); // Convert back to original depth
+        return logImage;
+    }
+    
+    // 23. Color Space Transformation (BGR to HSV)
+    public static Mat ConvertToHSV(string imagePath)
+    {
+        Mat image = CvInvoke.Imread(imagePath, Emgu.CV.CvEnum.ImreadModes.Color);
+        if (image.IsEmpty) return image;
+        Mat hsvImage = new Mat();
+        CvInvoke.CvtColor(image, hsvImage, Emgu.CV.CvEnum.ColorConversion.Bgr2Hsv);
+        return hsvImage;
+    }
+    
+    // 24. Top-Hat Morphological Operations
+    public static Mat TopHat(string imagePath)
+    {
+        int kernelSize = 5;
+        
+        Mat image = CvInvoke.Imread(imagePath, Emgu.CV.CvEnum.ImreadModes.Grayscale);
+        if (image.IsEmpty) return image;
+        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
+        
+        Mat openedImage = new Mat();
+        CvInvoke.MorphologyEx(image, openedImage, Emgu.CV.CvEnum.MorphOp.Open, kernel, new System.Drawing.Point(-1, -1), 1, Emgu.CV.CvEnum.BorderType.Reflect, new MCvScalar(0));
+
+        // Subtract the opened image from the original image to get the TopHat result
+        Mat topHatImage = new Mat();
+        CvInvoke.Subtract(image, openedImage, topHatImage);
+        
+        return topHatImage;
+    }
+    // 25. Black-Hat Morphological Operations
+    public static Mat BlackHat(string imagePath)
+    {
+        int kernelSize = 5;
+        Mat image = CvInvoke.Imread(imagePath, Emgu.CV.CvEnum.ImreadModes.Grayscale);
+        if (image.IsEmpty) return image;
+        Mat kernel = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(kernelSize, kernelSize), new Point(-1, -1));
+        Mat closedImage = new Mat();
+        CvInvoke.MorphologyEx(image, closedImage, Emgu.CV.CvEnum.MorphOp.Close, kernel, new System.Drawing.Point(-1, -1), 1, Emgu.CV.CvEnum.BorderType.Reflect, new MCvScalar(0));
+        // Subtract the original image from the closed image to get the BlackHat result
+        Mat blackHatImage = new Mat();
+        CvInvoke.Subtract(closedImage, image, blackHatImage);
+        return blackHatImage;
+    }
+
+    
+
     
     
 }
