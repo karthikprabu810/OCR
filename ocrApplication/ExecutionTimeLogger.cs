@@ -262,25 +262,10 @@ public static class ExecutionTimeLogger
     }
     
     
-    public static void CreateEmbeddingVisualization(string excelFilePath, List<TextEmbedding> embeddings)
+    public static void CreateEmbeddingVisualization(string excelFilePath, List<TextEmbedding> embeddings, List<string> ocrSteps)
     {
         using (var package = new ExcelPackage(new FileInfo(excelFilePath)))
         {
-            List<string> ocrSteps = new List<string>
-            {
-                "Original OCR",
-                "grayscale OCR",
-                "gaussian OCR",
-                "median OCR",
-                "adaptive_thresholding OCR",
-                "gamma_correction OCR",
-                "canny_edge OCR",
-                "dilation OCR",
-                "erosion OCR",
-                "otsu_binarization OCR",
-                "deskew OCR",
-                "Combo1 OCR"
-            };
             var worksheet = package.Workbook.Worksheets.Add("Text Embeddings");
             
             // Perform dimensionality reduction to 2D using simple PCA
