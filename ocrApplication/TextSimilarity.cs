@@ -18,133 +18,6 @@ namespace ocrApplication
                 _ocrComparison = new OcrComparison();
             }
 
-            /*
-             // This method saves the matrix to an existing Excel file with headers
-             public static void SaveMatrixToExistingExcel(double[,] matrix, string filePath, string newSheetName,
-                 List<string> headers)
-             {
-                 using (var package = new ExcelPackage(new FileInfo(filePath)))
-                 {
-                     var worksheet = package.Workbook.Worksheets[newSheetName];
-
-                     if (worksheet != null)
-                     {
-                         // If the worksheet exists, remove it
-                         package.Workbook.Worksheets.Delete(newSheetName);
-                     }
-
-                     // Create a new worksheet with the provided name
-                     worksheet = package.Workbook.Worksheets.Add(newSheetName);
-
-                     int rows = matrix.GetLength(0);
-                     int cols = matrix.GetLength(1);
-
-                     // Add the headers to the first row and first column
-                     for (int i = 0; i < cols; i++)
-                     {
-                         worksheet.Cells[1, i + 2].Value = headers[i]; // Column headers (start from column 2)
-                     }
-
-                     for (int i = 0; i < rows; i++)
-                     {
-                         worksheet.Cells[i + 2, 1].Value = headers[i]; // Row headers (start from row 2)
-                     }
-
-                     // Populate the matrix starting from row 2, column 2
-                     for (int i = 0; i < rows; i++)
-                     {
-                         for (int j = 0; j < cols; j++)
-                         {
-                             worksheet.Cells[i + 2, j + 2].Value = matrix[i, j];
-                         }
-                     }
-
-                     // Save the modified Excel file
-                     package.Save();
-                 }
-
-                 Console.WriteLine("Matrix has been saved to the new sheet in the existing Excel file.");
-             }
-
-
-             // This method calculates the cosine similarity matrix and saves it to the specified Excel file
-             public async Task CalculateAndSaveCosineSimilarityMatrix(List<string> ocrResults, string outputFilePath)
-             {
-                 int n = ocrResults.Count;
-                 double[,] similarityMatrix = new double[n, n];
-
-                 // Calculate cosine similarity for each pair of OCR results
-                 for (int i = 0; i < n; i++)
-                 {
-                     for (int j = 0; j < n; j++)
-                     {
-                         // Call the non-static method CalculateCosineSimilarity via the OcrComparison instance
-                         similarityMatrix[i, j] = _ocrComparison.CalculateCosineSimilarity(ocrResults[i], ocrResults[j]);
-                     }
-                 }
-
-                 List<string> ocrSteps = new List<string>
-                 {
-                     "Original OCR",
-                     "grayscale OCR",
-                     "gaussian OCR",
-                     "median OCR",
-                     "adaptive_thresholding OCR",
-                     "gamma_correction OCR",
-                     "canny_edge OCR",
-                     "dilation OCR",
-                     "erosion OCR",
-                     "otsu_binarization OCR",
-                     "deskew OCR",
-                     "Combo1 OCR"
-                 };
-
-                 string newSheetName = "Cosine_Similarity_Matrix";
-                 SaveMatrixToExistingExcel(similarityMatrix, outputFilePath, newSheetName, ocrSteps);
-                 await Task.Delay(1000);
-             }
-
-             // This method calculates the Levenshtein similarity matrix and saves it to the specified Excel file
-             public async Task CalculateAndSaveLevenshteinSimilarityMatrix(List<string> ocrResults, string outputFilePath)
-             {
-                 int n = ocrResults.Count;
-                 double[,] similarityMatrix = new double[n, n];
-
-                 // Calculate cosine similarity for each pair of OCR results
-                 for (int i = 0; i < n; i++)
-                 {
-                     for (int j = 0; j < n; j++)
-                     {
-                         // Call the non-static method CalculateCosineSimilarity via the OcrComparison instance
-                         similarityMatrix[i, j] = _ocrComparison.CalculateLevenshteinSimilarity(ocrResults[i], ocrResults[j]);
-                     }
-                 }
-
-                 List<string> ocrSteps = new List<string>
-                 {
-                     "Original OCR",
-                     "grayscale OCR",
-                     "gaussian OCR",
-                     "median OCR",
-                     "adaptive_thresholding OCR",
-                     "gamma_correction OCR",
-                     "canny_edge OCR",
-                     "dilation OCR",
-                     "erosion OCR",
-                     "otsu_binarization OCR",
-                     "deskew OCR",
-                     "Combo1 OCR"
-                 };
-
-                 string newSheetName = "Levenshtein_Similarity_Matrix";
-                 SaveMatrixToExistingExcel(similarityMatrix, outputFilePath, newSheetName, ocrSteps);
-                 await Task.Delay(1000);
-             }
-             */
-            
-            
-            
-            
             public List<TextEmbedding> GenerateTextEmbeddings(List<string> texts, List<string> labels)
             {
                 var embeddings = new List<TextEmbedding>();
@@ -169,7 +42,7 @@ namespace ocrApplication
                 return embeddings;
             }
 
-            public async Task GenerateAndVisualizeOcrSimilarityMatrix(List<string> ocrResults, string groundTruth, string outputFilePath)
+            public async Task GenerateAndVisualizeOcrSimilarityMatrix(List<string> ocrResults, string groundTruth, string outputFilePath, List<string> ocrSteps)
             {
                 int n = ocrResults.Count;
                 double[,] similarityMatrix = new double[n + 1, n + 1]; // +1 for ground truth
@@ -198,21 +71,7 @@ namespace ocrApplication
                 
                 // Create headers with "Ground Truth" as the first element
                 var headers = new List<string> { "Ground Truth" };
-                headers.AddRange(new List<string>
-                {
-                    "Original OCR",
-                    "grayscale OCR",
-                    "gaussian OCR",
-                    "median OCR",
-                    "adaptive_thresholding OCR",
-                    "gamma_correction OCR",
-                    "canny_edge OCR",
-                    "dilation OCR",
-                    "erosion OCR",
-                    "otsu_binarization OCR",
-                    "deskew OCR",
-                    "Combo1 OCR"
-                });
+                headers.AddRange(ocrSteps);
                 
                 // Save the matrix to Excel with heatmap formatting
                 SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_Cosine", headers);
@@ -221,7 +80,7 @@ namespace ocrApplication
             }
             
             
-            public async Task GenerateAndVisualizeOcrSimilarityMatrixLV(List<string> ocrResults, string groundTruth, string outputFilePath)
+            public async Task GenerateAndVisualizeOcrSimilarityMatrixLv(List<string> ocrResults, string groundTruth, string outputFilePath, List<string> ocrSteps)
             {
                 int n = ocrResults.Count;
                 double[,] similarityMatrix = new double[n + 1, n + 1]; // +1 for ground truth
@@ -250,21 +109,7 @@ namespace ocrApplication
                 
                 // Create headers with "Ground Truth" as the first element
                 var headers = new List<string> { "Ground Truth" };
-                headers.AddRange(new List<string>
-                {
-                    "Original OCR",
-                    "grayscale OCR",
-                    "gaussian OCR",
-                    "median OCR",
-                    "adaptive_thresholding OCR",
-                    "gamma_correction OCR",
-                    "canny_edge OCR",
-                    "dilation OCR",
-                    "erosion OCR",
-                    "otsu_binarization OCR",
-                    "deskew OCR",
-                    "Combo1 OCR"
-                });
+                headers.AddRange(ocrSteps);
                 
                 // Save the matrix to Excel with heatmap formatting
                 SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_Levenshtein", headers);
@@ -313,14 +158,14 @@ namespace ocrApplication
                                 // Green gradient for higher similarity (0.5-1.0)
                                 byte greenIntensity = (byte)(155 + (normalizedValue - 0.5) * 200);
                                 cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(255, 255 - greenIntensity, 255, 255 - greenIntensity));
+                                cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 255 - greenIntensity, 255, 255 - greenIntensity));
                             }
                             else
                             {
                                 // Red gradient for lower similarity (0-0.5)
                                 byte redIntensity = (byte)(155 + (0.5 - normalizedValue) * 200);
                                 cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                                cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(255, 255, 255 - redIntensity, 255 - redIntensity));
+                                cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 255, 255 - redIntensity, 255 - redIntensity));
                             }
                         }
                     }
@@ -330,14 +175,14 @@ namespace ocrApplication
                     {
                         range.Style.Font.Bold = true;
                         range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                        range.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
                     }
                     
                     using (var range = worksheet.Cells[1, 1, rows + 1, 1])
                     {
                         range.Style.Font.Bold = true;
                         range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                        range.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
                     }
                     
                     // Auto-fit columns
@@ -376,28 +221,11 @@ namespace ocrApplication
                 Console.WriteLine($"Similarity matrix heatmap has been saved to {sheetName} in the Excel file.");
             }
 
-            public async Task GeneratePreprocessingEffectivenessReport(List<string> ocrResults, string groundTruth, string outputFilePath)
+            public async Task GeneratePreprocessingEffectivenessReport(List<string> ocrResults, string groundTruth, string outputFilePath, List<string> preprocessingMethods)
             {
                 using (var package = new ExcelPackage(new FileInfo(outputFilePath)))
                 {
                     var worksheet = package.Workbook.Worksheets.Add("Preprocessing_Effectiveness");
-                    
-                    // Define preprocessing methods
-                    var preprocessingMethods = new List<string>
-                    {
-                        "Original OCR",
-                        "grayscale OCR",
-                        "gaussian OCR",
-                        "median OCR",
-                        "adaptive_thresholding OCR",
-                        "gamma_correction OCR",
-                        "canny_edge OCR",
-                        "dilation OCR",
-                        "erosion OCR",
-                        "otsu_binarization OCR",
-                        "deskew OCR",
-                        "Combo1 OCR"
-                    };
                     
                     // Set up headers
                     worksheet.Cells[1, 1].Value = "Preprocessing Method";
@@ -412,7 +240,7 @@ namespace ocrApplication
                     {
                         range.Style.Font.Bold = true;
                         range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                        range.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
                     }
 
                     double maxCosine=0;
@@ -457,7 +285,6 @@ namespace ocrApplication
                             maxLevenshtein=levenshteinSimilarity;
                             maxLevenshteinIndex = i;
                         }
-                        
                     }
                     
                     // Add ground truth statistics (using the actual ground truth)
@@ -491,7 +318,7 @@ namespace ocrApplication
                     worksheet.Cells.AutoFitColumns();
                     
                     // Add a summary section
-                    int rows = 14;
+                    int rows = preprocessingMethods.Count + 3;
                     int summaryRow = rows + 2;
                     worksheet.Cells[summaryRow, 1].Value = "Similarity Analysis Summary";
                     worksheet.Cells[summaryRow, 1].Style.Font.Bold = true;
