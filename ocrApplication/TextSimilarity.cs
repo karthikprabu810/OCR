@@ -5,122 +5,174 @@ using OfficeOpenXml.Drawing.Chart;
 
 namespace ocrApplication
 {
-    public class TextSimilarity
+    /// <summary>
+    /// Base abstract class for text similarity functionality.
+    /// Made abstract to prevent direct instantiation as it only serves as a container for related classes.
+    /// </summary>
+    public abstract class TextSimilarity
     {
+        /// <summary>
+        /// Generates and visualizes similarity matrices between OCR results and ground truth.
+        /// Provides tools for comparing different OCR methods and preprocessing techniques
+        /// using similarity metrics and Excel-based visualizations.
+        /// </summary>
         public class SimilarityMatrixGenerator
         {
-            // Instance of OcrComparison class to access non-static methods
-            private readonly OcrComparison _ocrComparison;
-
-            // Constructor to initialize OcrComparison instance
-            public SimilarityMatrixGenerator()
-            {
-                _ocrComparison = new OcrComparison();
-            }
-
+            /// <summary>
+            /// Instance of OcrComparison class to access text similarity calculation methods.
+            /// Used for calculating Levenshtein and Cosine similarity between texts.
+            /// </summary>
+            private readonly OcrComparison _ocrComparison = new();
+            
+            /// <summary>
+            /// Converts a list of text samples into vector embeddings for visualization and comparison.
+            /// Creates a consistent vector representation for each text based on word frequency.
+            /// </summary>
+            /// <param name="texts">List of OCR result texts to convert to embeddings</param>
+            /// <param name="labels">Labels for each text (e.g., OCR method names)</param>
+            /// <returns>List of TextEmbedding objects containing vector representations and labels</returns>
             public List<TextEmbedding> GenerateTextEmbeddings(List<string> texts, List<string> labels)
             {
                 var embeddings = new List<TextEmbedding>();
                 
                 for (int i = 0; i < texts.Count; i++)
                 {
+                    // Convert each text to a word frequency vector
                     var wordVector = _ocrComparison.GetWordVector(texts[i]);
                     
-                    // Convert dictionary to array for visualization
+                    // Convert dictionary of word frequencies to a simple array for visualization
                     var vector = wordVector.Values.ToArray();
                     
-                    // If vectors have different dimensions, pad with zeros
+                    // Ensure all vectors have the same dimension by padding with zeros if needed
+                    // This is necessary for visualization and comparison
                     int maxDim = texts.Select(t => _ocrComparison.GetWordVector(t).Count).Max();
                     if (vector.Length < maxDim)
                     {
                         Array.Resize(ref vector, maxDim);
                     }
                     
+                    // Create a TextEmbedding with the vector and its label
                     embeddings.Add(new TextEmbedding(vector, labels[i]));
                 }
                 
                 return embeddings;
             }
 
+            /// <summary>
+            /// Generates a similarity matrix comparing OCR results against ground truth and each other
+            /// using Cosine similarity. Creates a heatmap visualization in Excel for easy analysis.
+            /// </summary>
+            /// <param name="ocrResults">List of OCR result texts from different methods</param>
+            /// <param name="groundTruth">The correct text to compare against</param>
+            /// <param name="outputFilePath">Path to save the Excel visualization</param>
+            /// <param name="ocrSteps">Names of the OCR methods for labeling</param>
+            /// <returns>Task representing the asynchronous operation</returns>
             public async Task GenerateAndVisualizeOcrSimilarityMatrix(List<string> ocrResults, string groundTruth, string outputFilePath, List<string> ocrSteps)
             {
                 int n = ocrResults.Count;
+                // Create matrix with space for ground truth plus all OCR results
                 double[,] similarityMatrix = new double[n + 1, n + 1]; // +1 for ground truth
                 
-                // Create a list with ground truth as the first element, followed by OCR results
+                // Create a single list with ground truth as the first element, followed by OCR results
+                // This simplifies the matrix calculation
                 var allTexts = new List<string> { groundTruth };
                 allTexts.AddRange(ocrResults);
                 
-                // Calculate cosine similarity for each pair of texts
+                // Calculate cosine similarity for each pair of texts in the matrix
                 for (int i = 0; i < allTexts.Count; i++)
                 {
                     for (int j = 0; j < allTexts.Count; j++)
                     {
-                        // When comparing with ground truth (first row/column), use actual similarity
+                        // When comparing with ground truth (first row/column), use cosine similarity
+                        // This measures how similar the word frequency distributions are
                         if (i == 0 || j == 0)
                         {
                             similarityMatrix[i, j] = _ocrComparison.CalculateCosineSimilarity(allTexts[i], allTexts[j]);
                         }
                         else
                         {
-                            // For other comparisons, calculate normally
+                            // For comparing OCR methods with each other
                             similarityMatrix[i, j] = _ocrComparison.CalculateCosineSimilarity(allTexts[i], allTexts[j]);
                         }
                     }
                 }
                 
-                // Create headers with "Ground Truth" as the first element
+                // Create headers with "Ground Truth" as the first element, followed by OCR method names
                 var headers = new List<string> { "Ground Truth" };
                 headers.AddRange(ocrSteps);
                 
                 // Save the matrix to Excel with heatmap formatting
+                // Heatmap uses color intensity to show similarity strength
                 SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_Cosine", headers);
                 
+                // Brief delay to ensure file saving completes
                 await Task.Delay(1000);
             }
             
             
+            /// <summary>
+            /// Generates a similarity matrix comparing OCR results against ground truth and each other
+            /// using Levenshtein similarity. Creates a heatmap visualization in Excel for easy analysis.
+            /// </summary>
+            /// <param name="ocrResults">List of OCR result texts from different methods</param>
+            /// <param name="groundTruth">The correct text to compare against</param>
+            /// <param name="outputFilePath">Path to save the Excel visualization</param>
+            /// <param name="ocrSteps">Names of the OCR methods for labeling</param>
+            /// <returns>Task representing the asynchronous operation</returns>
             public async Task GenerateAndVisualizeOcrSimilarityMatrixLv(List<string> ocrResults, string groundTruth, string outputFilePath, List<string> ocrSteps)
             {
                 int n = ocrResults.Count;
+                // Create matrix with space for ground truth plus all OCR results
                 double[,] similarityMatrix = new double[n + 1, n + 1]; // +1 for ground truth
                 
-                // Create a list with ground truth as the first element, followed by OCR results
+                // Create a single list with ground truth as the first element, followed by OCR results
                 var allTexts = new List<string> { groundTruth };
                 allTexts.AddRange(ocrResults);
                 
-                // Calculate cosine similarity for each pair of texts
+                // Calculate Levenshtein similarity for each pair of texts in the matrix
                 for (int i = 0; i < allTexts.Count; i++)
                 {
                     for (int j = 0; j < allTexts.Count; j++)
                     {
-                        // When comparing with ground truth (first row/column), use actual similarity
+                        // When comparing with ground truth (first row/column), use Levenshtein similarity
+                        // This measures character-level edit distance, good for detecting spelling errors
                         if (i == 0 || j == 0)
                         {
                             similarityMatrix[i, j] = _ocrComparison.CalculateLevenshteinSimilarity(allTexts[i], allTexts[j]);
                         }
                         else
                         {
-                            // For other comparisons, calculate normally
+                            // For comparing OCR methods with each other
                             similarityMatrix[i, j] = _ocrComparison.CalculateLevenshteinSimilarity(allTexts[i], allTexts[j]);
                         }
                     }
                 }
                 
-                // Create headers with "Ground Truth" as the first element
+                // Create headers with "Ground Truth" as the first element, followed by OCR method names
                 var headers = new List<string> { "Ground Truth" };
                 headers.AddRange(ocrSteps);
                 
                 // Save the matrix to Excel with heatmap formatting
                 SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_Levenshtein", headers);
                 
+                // Brief delay to ensure file saving completes
                 await Task.Delay(1000);
             }
 
+            /// <summary>
+            /// Saves a similarity matrix to an Excel file with heatmap color formatting
+            /// to visualize the strength of similarity between different texts.
+            /// Higher similarity values appear green, lower values appear red.
+            /// </summary>
+            /// <param name="matrix">The similarity matrix to visualize</param>
+            /// <param name="filePath">Path to the Excel file</param>
+            /// <param name="sheetName">Name for the worksheet in Excel</param>
+            /// <param name="headers">Labels for rows and columns</param>
             private void SaveSimilarityMatrixWithHeatmap(double[,] matrix, string filePath, string sheetName, List<string> headers)
             {
                 using (var package = new ExcelPackage(new FileInfo(filePath)))
                 {
+                    // Check if the sheet already exists, and delete it if it does
                     var worksheet = package.Workbook.Worksheets[sheetName];
                     
                     if (worksheet != null)
@@ -128,19 +180,20 @@ namespace ocrApplication
                         package.Workbook.Worksheets.Delete(sheetName);
                     }
                     
+                    // Create a new worksheet
                     worksheet = package.Workbook.Worksheets.Add(sheetName);
                     
                     int rows = matrix.GetLength(0);
                     int cols = matrix.GetLength(1);
                     
-                    // Add headers to the first row and column
+                    // Add headers to the first row and column for labeling
                     for (int i = 0; i < headers.Count; i++)
                     {
                         worksheet.Cells[1, i + 2].Value = headers[i]; // Column headers
                         worksheet.Cells[i + 2, 1].Value = headers[i]; // Row headers
                     }
                     
-                    // Populate the matrix
+                    // Populate the matrix with similarity values and apply color formatting
                     for (int i = 0; i < rows; i++)
                     {
                         for (int j = 0; j < cols; j++)
@@ -156,6 +209,7 @@ namespace ocrApplication
                             if (normalizedValue >= 0.5)
                             {
                                 // Green gradient for higher similarity (0.5-1.0)
+                                // More similar = more intense green color
                                 byte greenIntensity = (byte)(155 + (normalizedValue - 0.5) * 200);
                                 cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
                                 cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 255 - greenIntensity, 255, 255 - greenIntensity));
@@ -163,6 +217,7 @@ namespace ocrApplication
                             else
                             {
                                 // Red gradient for lower similarity (0-0.5)
+                                // Less similar = more intense red color
                                 byte redIntensity = (byte)(155 + (0.5 - normalizedValue) * 200);
                                 cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
                                 cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 255, 255 - redIntensity, 255 - redIntensity));
@@ -170,7 +225,7 @@ namespace ocrApplication
                         }
                     }
                     
-                    // Format the header row and column
+                    // Format the header row and column with bold text and gray background
                     using (var range = worksheet.Cells[1, 1, 1, cols + 1])
                     {
                         range.Style.Font.Bold = true;
@@ -185,16 +240,17 @@ namespace ocrApplication
                         range.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
                     }
                     
-                    // Auto-fit columns
+                    // Auto-fit columns for better readability
                     worksheet.Cells.AutoFitColumns();
                     
-                    // Add a summary section
+                    // Add a summary section below the matrix
                     int summaryRow = rows + 4;
                     worksheet.Cells[summaryRow, 1].Value = "Similarity Analysis Summary";
                     worksheet.Cells[summaryRow, 1].Style.Font.Bold = true;
                     worksheet.Cells[summaryRow, 1].Style.Font.Size = 14;
                     
-                    // Find the preprocessing method with highest similarity to ground truth
+                    // Find the preprocessing method with the highest similarity to ground truth
+                    // This helps identify the most effective OCR method
                     int bestMethodIndex = 0;
                     double bestSimilarity = 0;
                     for (int i = 1; i < rows; i++)
@@ -206,10 +262,12 @@ namespace ocrApplication
                         }
                     }
                     
+                    // Add the best method information to the summary
                     worksheet.Cells[summaryRow + 2, 1].Value = "Best Preprocessing Method:";
                     worksheet.Cells[summaryRow + 2, 2].Value = headers[bestMethodIndex + 1];
                     worksheet.Cells[summaryRow + 2, 1].Style.Font.Bold = true;
                     
+                    // Add similarity score information to the summary
                     worksheet.Cells[summaryRow + 3, 1].Value = "Similarity to Ground Truth:";
                     worksheet.Cells[summaryRow + 3, 2].Value = $"{bestSimilarity:F2}%";
                     worksheet.Cells[summaryRow + 3, 1].Style.Font.Bold = true;
@@ -221,13 +279,24 @@ namespace ocrApplication
                 Console.WriteLine($"Similarity matrix heatmap has been saved to {sheetName} in the Excel file.");
             }
 
+            /// <summary>
+            /// Generates a comprehensive report on the effectiveness of different preprocessing methods
+            /// by comparing OCR results against ground truth using multiple metrics.
+            /// Creates an Excel report with detailed statistics and performance indicators.
+            /// </summary>
+            /// <param name="ocrResults">List of OCR result texts from different preprocessing methods</param>
+            /// <param name="groundTruth">The correct text to compare against</param>
+            /// <param name="outputFilePath">Path to save the Excel report</param>
+            /// <param name="preprocessingMethods">Names of the preprocessing methods for labeling</param>
+            /// <returns>Task representing the asynchronous operation</returns>
             public async Task GeneratePreprocessingEffectivenessReport(List<string> ocrResults, string groundTruth, string outputFilePath, List<string> preprocessingMethods)
             {
                 using (var package = new ExcelPackage(new FileInfo(outputFilePath)))
                 {
+                    // Create a new worksheet for the preprocessing effectiveness report
                     var worksheet = package.Workbook.Worksheets.Add("Preprocessing_Effectiveness");
                     
-                    // Set up headers
+                    // Set up column headers for different metrics
                     worksheet.Cells[1, 1].Value = "Preprocessing Method";
                     worksheet.Cells[1, 2].Value = "Cosine Similarity (%)";
                     worksheet.Cells[1, 3].Value = "Levenshtein Similarity (%)";
@@ -235,7 +304,7 @@ namespace ocrApplication
                     worksheet.Cells[1, 5].Value = "Character Count";
                     worksheet.Cells[1, 6].Value = "Unique Words";
                     
-                    // Style headers
+                    // Style headers with bold text and gray background
                     using (var range = worksheet.Cells[1, 1, 1, 6])
                     {
                         range.Style.Font.Bold = true;
@@ -243,10 +312,12 @@ namespace ocrApplication
                         range.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
                     }
 
+                    // Track the best performing methods for highlighting
                     double maxCosine=0;
                     double maxLevenshtein=0;
                     int maxCosineIndex=0;
                     int maxLevenshteinIndex=0;
+                    
                     // Calculate metrics for each preprocessing method
                     for (int i = 0; i < ocrResults.Count; i++)
                     {
@@ -343,50 +414,51 @@ namespace ocrApplication
                     
                     
                     // Save the Excel file
-                    package.Save();
+                    await package.SaveAsync();
                 }
                 
                 Console.WriteLine("Preprocessing effectiveness report has been generated.");
                 await Task.Delay(1000);
             }
 
+            // Apply Color formatting for the cells based on the similarity percentage
             private void ApplyConditionalFormatting(ExcelRange cell, double value)
             {
                 cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
                 
-                if (value >= 91 && value <= 100)
+                if (value >= 91)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.Green); // 91-100: Green
                 }
-                else if (value >= 81 && value <= 90)
+                else if (value >= 81)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.LawnGreen);  // 81-90: Yellow
                 }
-                else if (value >= 71 && value <= 80)
+                else if (value >= 71)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.PaleGreen);  // 71-80: Orange
                 }
-                else if (value >= 61 && value <= 70)
+                else if (value >= 61)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.LightYellow); // 61-70: Orange Red
                 }
-                else if (value >= 51 && value <= 60)
+                else if (value >= 51)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.Yellow);  // 51-60: Yellow
                 }
-                else if (value >= 41 && value <= 50)
+                else if (value >= 41)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.LightSalmon);  // 41-50: Orange
                 }
-                else if (value >= 31 && value <= 40)
+                else if (value >= 31)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.LightCoral); // 31-40: Orange Red
                 }
-                else if (value >= 21 && value <= 30)
+                else if (value >= 21)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.Coral); // 21-30: Orange Red
                 }
-                else if (value >= 11 && value <= 20)
+                else if (value >= 11)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.OrangeRed); // 11-20: Orange Red
                 }
@@ -418,11 +490,32 @@ namespace ocrApplication
         }
     }
 
+    /// <summary>
+    /// Represents a vector embedding of a text fragment for similarity analysis.
+    /// Used to convert textual OCR results into numerical vector representations
+    /// that can be analyzed, compared, and visualized in multidimensional space.
+    /// </summary>
     public class TextEmbedding
     {
+        /// <summary>
+        /// The numerical vector representation of the text.
+        /// Each element typically represents the frequency or importance of a word/feature.
+        /// Higher-dimensional vectors capture more nuanced text characteristics.
+        /// </summary>
         public double[] Vector { get; set; }
+        
+        /// <summary>
+        /// A descriptive label for the embedding, typically identifying the OCR method
+        /// or preprocessing technique that generated the text.
+        /// Used for visualization and reference in comparison reports.
+        /// </summary>
         public string Label { get; set; }
 
+        /// <summary>
+        /// Creates a new text embedding with the specified vector and label.
+        /// </summary>
+        /// <param name="vector">Numerical representation of text features</param>
+        /// <param name="label">Descriptive label for the embedding</param>
         public TextEmbedding(double[] vector, string label)
         {
             Vector = vector;
