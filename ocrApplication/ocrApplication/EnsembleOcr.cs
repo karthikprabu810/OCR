@@ -313,7 +313,7 @@ namespace ocrApplication
             for (int j = 0; j <= s2.Length; j++)
                 distance[0, j] = j;
 
-            // Fill the rest of the matrix using dynamic programming
+            // Fill the rest with the matrix using dynamic programming
             for (int i = 1; i <= s1.Length; i++)
             {
                 for (int j = 1; j <= s2.Length; j++)

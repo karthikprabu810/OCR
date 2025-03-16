@@ -15,7 +15,8 @@ public static class OcrExtractionHelper
     /// <param name="ocrTool">Configured OCR service provider</param>
     /// <param name="isMacOs">True if running on macOS</param>
     /// <param name="isWindows">True if running on Windows</param>
-    public static void ProcessOcrForImage(string imagePath, string ocrToolFolder, OcrExtractionTools ocrTool, bool isMacOs, bool isWindows)
+    /// <param name="methodName">Method name to save the file</param>
+    public static void ProcessOcrForImage(string imagePath, string ocrToolFolder, OcrExtractionTools ocrTool, bool isMacOs, bool isWindows, string methodName)
     {
         // --- Tesseract OCR ---
         // Use command-line Tesseract on macOS (typically available through Homebrew)
@@ -35,13 +36,13 @@ public static class OcrExtractionHelper
             // Returns the extracted text as a string
             string tesseractText = ocrTool.ExtractTextUsingTesseractWindowsNuGet(imagePath);
             // Manually save the result to a file
-            File.WriteAllText(Path.Combine(ocrToolFolder, "tesseract.txt"), tesseractText);
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(ocrToolFolder), $"{methodName}.txt"), tesseractText);
             // Commented out to reduce console output
             // Console.WriteLine($"Tesseract OCR processed: {imagePath}");
         } 
         
         
-        /*
+         /*
          /// <summary>
          /// Alternate OCR implementations (currently disabled)
          /// </summary>
@@ -53,10 +54,11 @@ public static class OcrExtractionHelper
         string ironOcrText = ocrTool.ExtractTextUsingIronOcr(imagePath);
 
         // Save the IronOCR result to a separate file
-        File.WriteAllText(Path.Combine(ocrToolFolder, "iron-ocr.txt"), ironOcrText);
+        File.WriteAllText(Path.Combine(ocrToolFolder, $"{methodName}_iron_ocr.txt"), ironOcrText);
 
         // Log the completion of IronOCR processing
         Console.WriteLine($"IronOCR processed: {imagePath}");
+
 
 
 
