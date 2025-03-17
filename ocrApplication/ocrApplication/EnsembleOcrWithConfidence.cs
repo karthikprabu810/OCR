@@ -1,7 +1,14 @@
 namespace ocrApplication;
-
+/// <summary>
+/// Combines multiple OCR results into an optimized text using confidence scores.
+/// Processes text sentence by sentence and selects the most likely correct version of each word.
+/// </summary>
 public class EnsembleOcrWithConfidence
 {
+    /// <summary>
+    /// Implements ensemble techniques based on confidence score to combine results from multiple OCR engines.
+    /// Uses enhanced majority voting with text similarity analysis to improve recognition accuracy.
+    /// </summary>
     public string CombineWithConfidence(List<string> ocrResults, List<double> confidences)
     {
         var weightedResults = new Dictionary<string, double>();

@@ -1,10 +1,7 @@
-using System.Text;
-
 namespace ocrApplication
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -85,7 +82,7 @@ namespace ocrApplication
                 return 0;
 
             // Calculate cosine similarity
-            return dotProduct / (float)(Math.Sqrt(magnitude1) * Math.Sqrt(magnitude2));
+            return (dotProduct / (float)(Math.Sqrt(magnitude1) * Math.Sqrt(magnitude2)))*100;
         }
         
         /// <summary>
@@ -199,7 +196,7 @@ namespace ocrApplication
 
             // Convert distance to similarity score (1 - normalized distance)
             float maxLength = Math.Max(text1.Length, text2.Length);
-            return maxLength == 0 ? 1.0f : 1.0f - (distance / maxLength);
+            return (maxLength == 0 ? 1.0f : 1.0f - (distance / maxLength))*100;
         }
 
         /// <summary>

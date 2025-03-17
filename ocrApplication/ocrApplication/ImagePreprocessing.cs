@@ -221,6 +221,172 @@ public static class ImagePreprocessing
         }
     }
     
+    
+    
+    // Applies gamma correction to reduce brightness by 20%.
+    public static Mat GammaCorrectionRed20(string imagePath)
+    {
+        try
+        {
+            // Load grayscale image
+            Mat image = LoadImage(imagePath, ImreadModes.Grayscale);
+            if (image.IsEmpty)
+            {
+                Console.WriteLine("Error loading image for gamma correction: " + imagePath);
+                return new Mat();
+            }
+
+            // Estimate optimal gamma value based on image properties
+            double gamma = EstimateGamma(image);
+            
+            // Convert to 32-bit float for processing
+            Mat normalizedImage = new Mat();
+            image.ConvertTo(normalizedImage, DepthType.Cv32F, 1.0 / 255.0);
+            
+            // Apply gamma correction: pixel = pixel^(1/gamma)
+            Mat correctedImage = new Mat();
+            CvInvoke.Pow(normalizedImage, 1.0 / gamma, correctedImage);
+            correctedImage *= 0.8;
+            // Convert back to 8-bit format
+            Mat resultImage = new Mat();
+            correctedImage.ConvertTo(resultImage, DepthType.Cv8U, 255.0);
+            
+            normalizedImage.Dispose();
+            correctedImage.Dispose();
+            
+            ClearCacheIfNeeded();
+            return resultImage;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in gamma correction: {ex.Message}");
+            return new Mat();
+        }
+    }
+    
+    // Applies gamma correction to reduce brightness by 40%.
+    public static Mat GammaCorrectionRed40(string imagePath)
+    {
+        try
+        {
+            // Load grayscale image
+            Mat image = LoadImage(imagePath, ImreadModes.Grayscale);
+            if (image.IsEmpty)
+            {
+                Console.WriteLine("Error loading image for gamma correction: " + imagePath);
+                return new Mat();
+            }
+
+            // Estimate optimal gamma value based on image properties
+            double gamma = EstimateGamma(image);
+            
+            // Convert to 32-bit float for processing
+            Mat normalizedImage = new Mat();
+            image.ConvertTo(normalizedImage, DepthType.Cv32F, 1.0 / 255.0);
+            
+            // Apply gamma correction: pixel = pixel^(1/gamma)
+            Mat correctedImage = new Mat();
+            CvInvoke.Pow(normalizedImage, 1.0 / gamma, correctedImage);
+            correctedImage *= 0.6;
+            // Convert back to 8-bit format
+            Mat resultImage = new Mat();
+            correctedImage.ConvertTo(resultImage, DepthType.Cv8U, 255.0);
+            
+            normalizedImage.Dispose();
+            correctedImage.Dispose();
+            
+            ClearCacheIfNeeded();
+            return resultImage;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in gamma correction: {ex.Message}");
+            return new Mat();
+        }
+    }
+    
+    // Applies gamma correction to reduce brightness by 60%.
+    public static Mat GammaCorrectionRed60(string imagePath)
+    {
+        try
+        {
+            // Load grayscale image
+            Mat image = LoadImage(imagePath, ImreadModes.Grayscale);
+            if (image.IsEmpty)
+            {
+                Console.WriteLine("Error loading image for gamma correction: " + imagePath);
+                return new Mat();
+            }
+
+            // Estimate optimal gamma value based on image properties
+            double gamma = EstimateGamma(image);
+            
+            // Convert to 32-bit float for processing
+            Mat normalizedImage = new Mat();
+            image.ConvertTo(normalizedImage, DepthType.Cv32F, 1.0 / 255.0);
+            
+            // Apply gamma correction: pixel = pixel^(1/gamma)
+            Mat correctedImage = new Mat();
+            CvInvoke.Pow(normalizedImage, 1.0 / gamma, correctedImage);
+            correctedImage *= 0.4;
+            // Convert back to 8-bit format
+            Mat resultImage = new Mat();
+            correctedImage.ConvertTo(resultImage, DepthType.Cv8U, 255.0);
+            
+            normalizedImage.Dispose();
+            correctedImage.Dispose();
+            
+            ClearCacheIfNeeded();
+            return resultImage;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in gamma correction: {ex.Message}");
+            return new Mat();
+        }
+    }
+    
+    // Applies gamma correction to reduce brightness by 80%.
+    public static Mat GammaCorrectionRed80(string imagePath)
+    {
+        try
+        {
+            // Load grayscale image
+            Mat image = LoadImage(imagePath, ImreadModes.Grayscale);
+            if (image.IsEmpty)
+            {
+                Console.WriteLine("Error loading image for gamma correction: " + imagePath);
+                return new Mat();
+            }
+
+            // Estimate optimal gamma value based on image properties
+            double gamma = EstimateGamma(image);
+            
+            // Convert to 32-bit float for processing
+            Mat normalizedImage = new Mat();
+            image.ConvertTo(normalizedImage, DepthType.Cv32F, 1.0 / 255.0);
+            
+            // Apply gamma correction: pixel = pixel^(1/gamma)
+            Mat correctedImage = new Mat();
+            CvInvoke.Pow(normalizedImage, 1.0 / gamma, correctedImage);
+            correctedImage *= 0.2;
+            // Convert back to 8-bit format
+            Mat resultImage = new Mat();
+            correctedImage.ConvertTo(resultImage, DepthType.Cv8U, 255.0);
+            
+            normalizedImage.Dispose();
+            correctedImage.Dispose();
+            
+            ClearCacheIfNeeded();
+            return resultImage;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in gamma correction: {ex.Message}");
+            return new Mat();
+        }
+    }
+    
     // Estimates optimal gamma value based on image histogram.
     // <returns>Estimated gamma value</returns>
     private static double EstimateGamma(Mat image)
@@ -316,7 +482,6 @@ public static class ImagePreprocessing
         if (image.IsEmpty)
         {
             Console.WriteLine("Error: Unable to load or convert image " + imagePath);
-            return null;
         }
 
         Mat dilatedImage = new Mat();
@@ -333,13 +498,11 @@ public static class ImagePreprocessing
             if (dilatedImage.IsEmpty)
             {
                 Console.WriteLine("Dilation failed for " + imagePath);
-                return null;
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine("Error during dilation: " + ex.Message);
-            return null;
         }
 
         return dilatedImage;
@@ -464,6 +627,79 @@ public static class ImagePreprocessing
         // Negative angle to counter-rotate the detected skew
         return RotateImage(image, -skewAngle);
     }
+    
+    //  Rotates the image by 45 degree
+    public static Mat Rotate_45(string imagePath)
+    {
+        // Load the image in grayscale
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        if (image.IsEmpty)
+        {
+            throw new Exception("Failed to load image: " + imagePath);
+        }
+        
+        // Calculate average skew angle
+        double skewAngle = 45;
+
+        // Rotate image to correct skew
+        // Negative angle to counter-rotate the detected skew
+        return RotateImage(image, -skewAngle);
+    }
+    
+    //  Rotates the image by 90 degree
+    public static Mat Rotate_90(string imagePath)
+    {
+        // Load the image in grayscale
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        if (image.IsEmpty)
+        {
+            throw new Exception("Failed to load image: " + imagePath);
+        }
+
+        // Calculate average skew angle
+        double skewAngle = 90;
+
+        // Rotate image to correct skew
+        // Negative angle to counter-rotate the detected skew
+        return RotateImage(image, -skewAngle);
+    }
+    
+    //  Rotates the image by 135 degree
+    public static Mat Rotate_135(string imagePath)
+    {
+        // Load the image in grayscale
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        if (image.IsEmpty)
+        {
+            throw new Exception("Failed to load image: " + imagePath);
+        }
+        
+        // Calculate average skew angle
+        double skewAngle = 135;
+
+        // Rotate image to correct skew
+        // Negative angle to counter-rotate the detected skew
+        return RotateImage(image, -skewAngle);
+    }
+    
+    //  Rotates the image by 180 degree
+    public static Mat Rotate_180(string imagePath)
+    {
+        // Load the image in grayscale
+        Mat image = CvInvoke.Imread(imagePath, ImreadModes.Grayscale);
+        if (image.IsEmpty)
+        {
+            throw new Exception("Failed to load image: " + imagePath);
+        }
+        // Calculate average skew angle
+        double skewAngle = 180;
+        // Rotate image to correct skew
+        // Negative angle to counter-rotate the detected skew
+        return RotateImage(image, -skewAngle);
+    }
+    
+    
+    
 
     /// <summary>
     /// Rotates an image by the specified angle around its center.

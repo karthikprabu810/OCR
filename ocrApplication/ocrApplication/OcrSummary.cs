@@ -1,8 +1,5 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+
 
 namespace ocrApplication
 {
@@ -48,9 +45,9 @@ namespace ocrApplication
         /// </summary>
         /// <param name="imageFiles">Array of image file paths that were processed.</param>
         /// <param name="ocrResultsFolder">Path to the folder containing OCR results.</param>
-        /// <returns>Tuple containing dictionaries of best methods by cosine similarity and Levenshtein distance.</returns>
+        /// <returns>A tuple containing dictionaries of best methods by cosine similarity and Levenshtein distance.</returns>
         /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
-        public static (ConcurrentDictionary<string, string>, ConcurrentDictionary<string, string>) 
+        public static (ConcurrentDictionary<string, string>, ConcurrentDictionary<string, string>, ConcurrentDictionary<string, string>) 
             ReadBestMethodsFromExcelFiles(string[] imageFiles, string ocrResultsFolder)
         {
             if (imageFiles == null)
@@ -59,44 +56,51 @@ namespace ocrApplication
             if (string.IsNullOrEmpty(ocrResultsFolder))
                 throw new ArgumentNullException(nameof(ocrResultsFolder));
                 
-            // Create thread-safe collections to store the best methods
+            // Create thread-safe dictionaries to store best methods
             var excelBestMethodsByCosine = new ConcurrentDictionary<string, string>();
             var excelBestMethodsByLevenshtein = new ConcurrentDictionary<string, string>();
+            var excelBestMethodsByClustering = new ConcurrentDictionary<string, string>();
             
-            Console.WriteLine("\nReading best preprocessing methods from Excel files...");
-            
-            // Process each image file to read its corresponding Excel file
-            foreach (string imagePath in imageFiles)
+            // Attempt to read Excel files for each image
+            foreach (var imagePath in imageFiles)
             {
                 try
                 {
-                    // Get the image name without extension to use as folder/file identifier
-                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(imagePath);
+                    // Get image name without extension
+                    string imageName = Path.GetFileNameWithoutExtension(imagePath);
                     
-                    // Construct the paths to the OCR results folder and Excel file
-                    string imageOcrResultFolder = Path.Combine(ocrResultsFolder, fileNameWithoutExtension);
-                    string excelFilePath = Path.Combine(imageOcrResultFolder, $"Comparative_Analysis_{fileNameWithoutExtension}.xlsx");
+                    // Construct path to the Excel file with comparative analysis
+                    string excelFilePath = Path.Combine(ocrResultsFolder, imageName, $"Comparative_Analysis_{imageName}.xlsx");
                     
-                    // Only proceed if the Excel file exists
+                    // Check if Excel file exists
                     if (File.Exists(excelFilePath))
                     {
-                        // Read the best methods from the Excel file using ExportUtilities
-                        (string? bestCosine, string? bestLevenshtein) = ExportUtilities.ReadBestMethodsFromExcel(excelFilePath);
+                        // Create instance of ExcelFileReader
+                        var fileData = new ExportUtilities.ExcelFileReader();
                         
-                        // Store the best method by cosine similarity if it was found
-                        if (!string.IsNullOrEmpty(bestCosine))
+                        // Read the best methods from Excel
+                        var bestCosineSimilarityMethod = fileData.ReadBestCosineSimilarityMethodFromExcel(excelFilePath);
+                        var bestLevenshteinMethod = fileData.ReadBestLevenshteinMethodFromExcel(excelFilePath);
+                        var bestClusteringMethod = fileData.ReadBestClusteringMethodFromExcel(excelFilePath);
+                        
+                        // Add to dictionaries if not null or empty
+                        if (!string.IsNullOrEmpty(bestCosineSimilarityMethod))
                         {
-                            excelBestMethodsByCosine[fileNameWithoutExtension] = bestCosine;
+                            excelBestMethodsByCosine[imageName] = bestCosineSimilarityMethod;
                         }
                         
-                        // Store the best method by Levenshtein distance if it was found
-                        if (!string.IsNullOrEmpty(bestLevenshtein))
+                        if (!string.IsNullOrEmpty(bestLevenshteinMethod))
                         {
-                            excelBestMethodsByLevenshtein[fileNameWithoutExtension] = bestLevenshtein;
+                            excelBestMethodsByLevenshtein[imageName] = bestLevenshteinMethod;
+                        }
+                        
+                        if (!string.IsNullOrEmpty(bestClusteringMethod))
+                        {
+                            excelBestMethodsByClustering[imageName] = bestClusteringMethod;
                         }
                     }
                 }
-                catch (Exception)
+                catch
                 {
                     // If there's an error reading from Excel, continue with the next file
                     // Errors might include file access issues, corrupted Excel files, etc.
@@ -104,22 +108,24 @@ namespace ocrApplication
                 }
             }
             
-            // Return both dictionaries as a tuple
-            return (excelBestMethodsByCosine, excelBestMethodsByLevenshtein);
+            // Return all three dictionaries as a tuple
+            return (excelBestMethodsByCosine, excelBestMethodsByLevenshtein, excelBestMethodsByClustering);
         }
         
         /// <summary>
         /// Displays a summary table of the best preprocessing methods for each image.
-        /// Shows a comparison of methods determined by cosine similarity and Levenshtein distance,
-        /// along with the overall best method combining both approaches.
+        /// Shows a comparison of methods determined by cosine similarity, Levenshtein distance,
+        /// and clustering analysis, along with the overall best method combining all approaches.
         /// </summary>
         /// <param name="bestCosineMethods">Dictionary of best methods by cosine similarity.</param>
         /// <param name="bestLevenshteinMethods">Dictionary of best methods by Levenshtein distance.</param>
-        /// <returns>Dictionary of overall best methods determined by combining both metrics.</returns>
+        /// <param name="bestClusteringMethods">Dictionary of best methods by clustering analysis.</param>
+        /// <returns>Dictionary of overall best methods determined by combining all metrics.</returns>
         /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
         public static Dictionary<string, string> DisplayBestMethodsSummary(
             ConcurrentDictionary<string, string> bestCosineMethods,
-            ConcurrentDictionary<string, string> bestLevenshteinMethods)
+            ConcurrentDictionary<string, string> bestLevenshteinMethods,
+            ConcurrentDictionary<string, string> bestClusteringMethods)
         {
             if (bestCosineMethods == null)
                 throw new ArgumentNullException(nameof(bestCosineMethods));
@@ -127,15 +133,19 @@ namespace ocrApplication
             if (bestLevenshteinMethods == null)
                 throw new ArgumentNullException(nameof(bestLevenshteinMethods));
                 
+            if (bestClusteringMethods == null)
+                throw new ArgumentNullException(nameof(bestClusteringMethods));
+                
             // Header for the best methods summary section
             Console.WriteLine("\n==================================================");
             Console.WriteLine("BEST PREPROCESSING METHODS SUMMARY");
             Console.WriteLine("==================================================");
             
-            // Get all unique image names from both dictionaries
+            // Get all unique image names from all dictionaries
             var allImageNames = new HashSet<string>(
                 bestCosineMethods.Keys
                 .Union(bestLevenshteinMethods.Keys)
+                .Union(bestClusteringMethods.Keys)
             );
             
             // Create an instance of OcrComparison for determining overall best method
@@ -145,19 +155,20 @@ namespace ocrApplication
             var overallBestMethods = new Dictionary<string, string>();
             
             // Print a formatted table header with column alignment
-            Console.WriteLine("\n{0,-30} | {1,-25} | {2,-25} | {3,-25}", 
-                "Image", "Best by Cosine", "Best by Levenshtein", "Overall Best Method");
-            Console.WriteLine(new string('-', 115));
+            Console.WriteLine("\n{0,-25} | {1,-18} | {2,-18} | {3,-18} | {4,-18}", 
+                "Image", "Best by Cosine", "Best by Levenshtein", "Best by Clustering", "Overall Best");
+            Console.WriteLine(new string('-', 108));
             
             // Process each image and display its best methods
             foreach (var imageName in allImageNames)
             {
-                // Try to get the best methods from both dictionaries
+                // Try to get the best methods from all dictionaries
                 bestCosineMethods.TryGetValue(imageName, out string bestCosine);
                 bestLevenshteinMethods.TryGetValue(imageName, out string bestLevenshtein);
+                bestClusteringMethods.TryGetValue(imageName, out string bestClustering);
                 
-                // Determine overall best method using OcrComparison
-                string overallBestMethod = ocrComparisonForOverall.DetermineOverallBestMethod(bestCosine, bestLevenshtein);
+                // Determine overall best method using a simple voting mechanism
+                string overallBestMethod = DetermineOverallBestMethod(bestCosine, bestLevenshtein, bestClustering);
                 
                 // Store the overall best method if it's not null or empty
                 if (!string.IsNullOrEmpty(overallBestMethod))
@@ -167,17 +178,50 @@ namespace ocrApplication
                 
                 // Display the row in the table with proper formatting
                 // Use "N/A" as fallback if a method is not available
-                Console.WriteLine("{0,-30} | {1,-25} | {2,-25} | {3,-25}", 
+                Console.WriteLine("{0,-25} | {1,-18} | {2,-18} | {3,-18} | {4,-18}", 
                     imageName, 
                     bestCosine ?? "N/A", 
                     bestLevenshtein ?? "N/A",
+                    bestClustering ?? "N/A",
                     overallBestMethod ?? "N/A");
             }
             
             // Add a closing line to the table
-            Console.WriteLine(new string('-', 115));
+            Console.WriteLine(new string('-', 108));
             
             return overallBestMethods;
+        }
+        
+        /// <summary>
+        /// Determines the overall best preprocessing method based on results from multiple approaches.
+        /// </summary>
+        /// <param name="bestCosineSimilarityMethod">Best method by cosine similarity.</param>
+        /// <param name="bestLevenshteinMethod">Best method by Levenshtein distance.</param>
+        /// <param name="bestClusteringMethod">Best method by clustering analysis.</param>
+        /// <returns>The overall best preprocessing method.</returns>
+        private static string DetermineOverallBestMethod(string bestCosineSimilarityMethod, string bestLevenshteinMethod, string bestClusteringMethod)
+        {
+            // Count occurrences of each method
+            var methodCounts = new Dictionary<string, int>();
+            
+            // Add methods that are not null or empty
+            if (!string.IsNullOrEmpty(bestCosineSimilarityMethod))
+            {
+                methodCounts[bestCosineSimilarityMethod] = methodCounts.GetValueOrDefault(bestCosineSimilarityMethod) + 1;
+            }
+            
+            if (!string.IsNullOrEmpty(bestLevenshteinMethod))
+            {
+                methodCounts[bestLevenshteinMethod] = methodCounts.GetValueOrDefault(bestLevenshteinMethod) + 1;
+            }
+            
+            if (!string.IsNullOrEmpty(bestClusteringMethod))
+            {
+                methodCounts[bestClusteringMethod] = methodCounts.GetValueOrDefault(bestClusteringMethod) + 1;
+            }
+            
+            // Return the method with the highest count, or the first if tied
+            return methodCounts.OrderByDescending(x => x.Value).FirstOrDefault().Key ?? "N/A";
         }
         
         /// <summary>
@@ -213,10 +257,10 @@ namespace ocrApplication
             DisplayExtractedTexts(extractedTexts);
             
             // Step 2: Read best methods from Excel files
-            var (bestCosineMethods, bestLevenshteinMethods) = ReadBestMethodsFromExcelFiles(imageFiles, ocrResultsFolder);
+            var (bestCosineMethods, bestLevenshteinMethods, bestClusteringMethods) = ReadBestMethodsFromExcelFiles(imageFiles, ocrResultsFolder);
             
             // Step 3: Display best methods summary and get overall best methods
-            var overallBestMethods = DisplayBestMethodsSummary(bestCosineMethods, bestLevenshteinMethods);
+            var overallBestMethods = DisplayBestMethodsSummary(bestCosineMethods, bestLevenshteinMethods, bestClusteringMethods);
             
             // Step 4: Export results including overall best methods
             ExportUtilities.ExportResults(
@@ -224,6 +268,7 @@ namespace ocrApplication
                 extractedTexts, 
                 bestCosineMethods, 
                 bestLevenshteinMethods, 
+                bestClusteringMethods,
                 overallBestMethods);
             
             Console.WriteLine("\nSummary generated and exported successfully.");

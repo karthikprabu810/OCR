@@ -130,7 +130,7 @@ namespace ocrApplication
                 // Select the best word for this position
                 if (wordsAtPosition.Any())
                 {
-                    // Choose word with highest frequency, preferring shorter words when tied
+                    // Choose word with the highest frequency, preferring shorter words when tied
                     // OCR errors tend to add characters rather than remove them
                     var bestWord = wordsAtPosition
                         .OrderByDescending(w => w.Value.Frequency)
@@ -328,9 +328,7 @@ namespace ocrApplication
             return distance[s1.Length, s2.Length];
         }
 
-        /// <summary>
-        /// Tracks word frequency for the ensemble voting process.
-        /// </summary>
+        /// Tracks word frequency for the ensemble voting process
         private class WordScore
         {
             public string Word { get; set; } = string.Empty;

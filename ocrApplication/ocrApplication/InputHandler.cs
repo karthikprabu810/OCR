@@ -82,6 +82,10 @@ namespace ocrApplication
                 
                 // Enhancement methods
                 ("Gamma_Correction", ImagePreprocessing.GammaCorrection),                 // Gamma correction for brightness adjustment
+                ("Brightness_80%", ImagePreprocessing.GammaCorrectionRed20),              // Reduce brightness to 80%
+                ("Brightness_60%", ImagePreprocessing.GammaCorrectionRed40),              // Reduce brightness to 60%
+                ("Brightness_40%", ImagePreprocessing.GammaCorrectionRed60),              // Reduce brightness to 40%
+                ("Brightness_20%", ImagePreprocessing.GammaCorrectionRed80),              // Reduce brightness to 20%
                 ("Histogram_Equalization", ImagePreprocessing.HistogramEqualization),     // Contrast improvement
                 ("LogTransform", ImagePreprocessing.LogTransform),                        // Enhance details in dark regions
                 ("Normalize_Image", ImagePreprocessing.NormalizeImage),                   // Normalize pixel value range
@@ -102,6 +106,10 @@ namespace ocrApplication
                 
                 // Other transformations
                 ("Deskew", ImagePreprocessing.Deskew),                                    // Rotation correction
+                ("Rotate_45", ImagePreprocessing.Rotate_45),                              // Rotates the image by 45 degree
+                ("Rotate_90", ImagePreprocessing.Rotate_90),                              // Rotates the image by 90 degree
+                ("Rotate_135", ImagePreprocessing.Rotate_135),                            // Rotates the image by 135 degree
+                ("Rotate_180", ImagePreprocessing.Rotate_180),                            // Rotates the image by 180 degree
                 ("BilateralFilter", ImagePreprocessing.BilateralFilter),                  // Edge-preserving smoothing
                 ("ConvertToHSV", ImagePreprocessing.ConvertToHsv)                         // Alternative color representation
             };
@@ -130,7 +138,7 @@ namespace ocrApplication
             
             // Explain input options to the user
             Console.WriteLine("\nEnter the numbers of preprocessing techniques you want to use (comma-separated, e.g., 1,3,5):");
-            Console.WriteLine("Enter 'all' to use all techniques, or '0' to skip preprocessing and only use the original image:");
+            Console.WriteLine("Enter 'all' to use all techniques, 'default' to use basic techniques, or '0' to skip preprocessing and only use the original image:");
             
             // Get user input and initialize the result list
             string? userInput = Console.ReadLine();
@@ -151,6 +159,26 @@ namespace ocrApplication
                 Console.WriteLine("\nNo preprocessing will be applied, only the original images will be processed.");
                 Console.WriteLine("\nInitiating extraction...");
             }
+            // Handle "default" option: use to preprocess basic techniques
+            else if (userInput?.Trim() == "default")
+            {
+                var selectedIndices = new[] {0,1,2,3,4,5,10,11,23};
+                // Add the selected methods to the result list
+                foreach (var index in selectedIndices)
+                {
+                    preprocessMethods.Add(allPreprocessMethods[index]);
+                }
+                    
+                // Show the selected methods to the user
+                Console.WriteLine("\nSelected preprocessing techniques:");
+                foreach (var method in preprocessMethods)
+                {
+                    Console.WriteLine($"- {method.Name}");
+                }
+                Console.WriteLine("\nInitiating preprocessing techniques and extraction...");
+            }
+
+
             // Handle specific method selection
             else
             {

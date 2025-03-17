@@ -41,60 +41,63 @@ public static class OcrExtractionHelper
             // Console.WriteLine($"Tesseract OCR processed: {imagePath}");
         } 
         
-        
+         
          /*
-         /// <summary>
-         /// Alternate OCR implementations (currently disabled)
-         /// </summary>
+          
+          /// <summary>
+          /// Alternate OCR implementations (currently disabled)
+          /// </summary>
+            
+            
+            
+      // --- IronOCR OCR ---
+      // Use IronOCR on all platforms (commercial OCR library)
 
-        // --- IronOCR OCR ---
-        // Use IronOCR on all platforms (commercial OCR library)
+      // Process the image with IronOCR and get the extracted text
+      string ironOcrText = ocrTool.ExtractTextUsingIronOcr(imagePath);
 
-        // Process the image with IronOCR and get the extracted text
-        string ironOcrText = ocrTool.ExtractTextUsingIronOcr(imagePath);
+      // Save the IronOCR result to a separate file
+      File.WriteAllText(Path.Combine(ocrToolFolder, $"{methodName}_iron_ocr.txt"), ironOcrText);
 
-        // Save the IronOCR result to a separate file
-        File.WriteAllText(Path.Combine(ocrToolFolder, $"{methodName}_iron_ocr.txt"), ironOcrText);
-
-        // Log the completion of IronOCR processing
-        Console.WriteLine($"IronOCR processed: {imagePath}");
-
-
-
-
-       // --- Google Vision OCR ---
-       // Use Google Cloud Vision API on all platforms
-
-       // Call the Google Vision OCR API asynchronously but wait for the result
-       string googleVisionOcrText = ocrTool.ExtractTextUsingGoogleVisionAsync(imagePath).Result;
-
-       // Save the Google Vision result to a separate file
-       File.WriteAllText(Path.Combine(ocrToolFolder, "google-vision.txt"), googleVisionOcrText);
-
-       // Log the completion of Google Vision processing
-       Console.WriteLine($"Google Vision OCR processed: {imagePath}");
+      // Log the completion of IronOCR processing
+      Console.WriteLine($"IronOCR processed: {imagePath}");
 
 
 
 
-       // --- OCR.Space API ---
-       // Use OCR.Space API on all platforms
+     // --- Google Vision OCR ---
+     // Use Google Cloud Vision API on all platforms
 
-       // Call the OCR.Space API asynchronously but wait for the result
-       string ocrSpaceOcrText = ocrTool.ExtractTextUsingOcrSpaceAsync(imagePath).Result;
+     // Call the Google Vision OCR API asynchronously but wait for the result
+     string googleVisionOcrText = ocrTool.ExtractTextUsingGoogleVisionAsync(imagePath).Result;
 
-       // Save the OCR.Space result to a separate file
-       File.WriteAllText(Path.Combine(ocrToolFolder, "ocr-space.txt"), ocrSpaceOcrText);
+     // Save the Google Vision result to a separate file
+     File.WriteAllText(Path.Combine(ocrToolFolder, "google-vision.txt"), googleVisionOcrText);
 
-       // Log the completion of OCR.Space processing
-       Console.WriteLine($"OCR.Space processed: {imagePath}");
+     // Log the completion of Google Vision processing
+     Console.WriteLine($"Google Vision OCR processed: {imagePath}");
 
-       // Combine all OCR results into a single file for easier access
-       // This combines the outputs from all OCR engines for ensemble processing
-       string combinedText = $"IronOCR:\n{ironOcrText}\n\nGoogle Vision:\n{googleVisionOcrText}\n\nOCR.Space:\n{ocrSpaceOcrText}";
 
-       // Save the combined result to the output folder
-       File.WriteAllText(Path.Combine(ocrToolFolder, "ocr_result.txt"), combinedText);
-       */
+
+
+     // --- OCR.Space API ---
+     // Use OCR.Space API on all platforms
+
+     // Call the OCR.Space API asynchronously but wait for the result
+     string ocrSpaceOcrText = ocrTool.ExtractTextUsingOcrSpaceAsync(imagePath).Result;
+
+     // Save the OCR.Space result to a separate file
+     File.WriteAllText(Path.Combine(ocrToolFolder, "ocr-space.txt"), ocrSpaceOcrText);
+
+     // Log the completion of OCR.Space processing
+     Console.WriteLine($"OCR.Space processed: {imagePath}");
+
+     // Combine all OCR results into a single file for easier access
+     // This combines the outputs from all OCR engines for ensemble processing
+     string combinedText = $"IronOCR:\n{ironOcrText}\n\nGoogle Vision:\n{googleVisionOcrText}\n\nOCR.Space:\n{ocrSpaceOcrText}";
+
+     // Save the combined result to the output folder
+     File.WriteAllText(Path.Combine(ocrToolFolder, "ocr_result.txt"), combinedText);
+     */
     }
 }

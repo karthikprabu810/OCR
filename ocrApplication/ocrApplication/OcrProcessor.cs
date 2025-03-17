@@ -1,6 +1,7 @@
 using Emgu.CV;
 using ShellProgressBar;
 using System.Diagnostics;
+using System.Collections.Concurrent;
 
 namespace ocrApplication
 {
@@ -20,16 +21,20 @@ namespace ocrApplication
         private readonly ProgressBar _progressBar;       // Progress bar for displaying processing status in the console
         
         // Dictionary to store extracted text for each image (thread-safe)
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _extractedTexts = 
-            new System.Collections.Concurrent.ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _extractedTexts = 
+            new ConcurrentDictionary<string, string>();
             
         // Dictionary to track best preprocessing method by cosine similarity for each image (thread-safe)
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _bestPreprocessingMethods = 
-            new System.Collections.Concurrent.ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _bestPreprocessingMethods = 
+            new ConcurrentDictionary<string, string>();
             
         // Dictionary to track best preprocessing method by Levenshtein distance for each image (thread-safe)
-        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _bestLevenshteinMethods = 
-            new System.Collections.Concurrent.ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, string> _bestLevenshteinMethods = 
+            new ConcurrentDictionary<string, string>();
+            
+        // Dictionary to track best preprocessing method by clustering for each image (thread-safe)
+        private readonly ConcurrentDictionary<string, string> _bestClusteringMethods = 
+            new ConcurrentDictionary<string, string>();
             
         /// <summary>
         /// Initializes a new instance of the OcrProcessor class.
@@ -63,7 +68,7 @@ namespace ocrApplication
         /// <param name="ocrResultsFolder">Folder to save OCR results.</param>
         /// <returns>Dictionary containing extracted text for each image.</returns>
         /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
-        public async Task<System.Collections.Concurrent.ConcurrentDictionary<string, string>> ProcessImagesAsync(
+        public async Task<ConcurrentDictionary<string, string>> ProcessImagesAsync(
             string[] imageFiles,
             List<(string Name, Func<string, Mat> Method)> preprocessMethods,
             string processedImagesFolder,
@@ -213,33 +218,95 @@ namespace ocrApplication
                 // Find the best preprocessing method based on cosine similarity
                 string bestPreprocessingMethod = await ocrComparison.FindBestPreprocessingMethod(ocrResults, groundTruth, ocrSteps);
                 
-                // Store the best method for later use if it's not the original image
-                if (!string.IsNullOrEmpty(bestPreprocessingMethod) && bestPreprocessingMethod != "Original")
+                // Store the best method for later use (even if it's "Original")
+                if (!string.IsNullOrEmpty(bestPreprocessingMethod))
                 {
                     // Use concurrent dictionary to avoid thread issues
                     _bestPreprocessingMethods.AddOrUpdate(
                         fileNameWithoutExtension,
                         bestPreprocessingMethod,
-                        (_, existing) => bestPreprocessingMethod
+                        (_, _) => bestPreprocessingMethod
                     );
                 }
                 
                 // Find the best preprocessing method based on Levenshtein distance
                 string bestLevenshteinMethod = await ocrComparison.FindBestLevenshteinMethod(ocrResults, groundTruth, ocrSteps);
                 
-                // Store the best Levenshtein method if it's not the original image
-                if (!string.IsNullOrEmpty(bestLevenshteinMethod) && bestLevenshteinMethod != "Original")
+                // Store the best Levenshtein method (even if it's "Original")
+                if (!string.IsNullOrEmpty(bestLevenshteinMethod))
                 {
                     _bestLevenshteinMethods.AddOrUpdate(
                         fileNameWithoutExtension,
                         bestLevenshteinMethod,
-                        (_, existing) => bestLevenshteinMethod
+                        (_, _) => bestLevenshteinMethod
                     );
                 }
                 
                 // Generate and visualize text embeddings for comparing OCR results
                 var embeddings = similarityMatrixGenerator.GenerateTextEmbeddings(ocrResults, ocrSteps);
                 ExecutionTimeLogger.CreateEmbeddingVisualization(excelFilePath, embeddings, ocrSteps);
+                
+                // Perform clustering analysis on preprocessed images
+                try
+                {
+                    var clusterAnalysis = new ClusterAnalysis();
+                    var featureVectors = new List<double[]>();
+                    
+                    // Extract feature vectors for "Original" image
+                    string originalImgPath = Path.Combine(imageProcessedFolder, "original.jpg");
+                    Mat originalImage = CvInvoke.Imread(originalImgPath);
+                    double[] originalFeatures = ExtractFeatures(originalImage);
+                    featureVectors.Add(originalFeatures);
+                    
+                    // Extract features from each preprocessed image
+                    var preprocessingMethodNames = new List<string> { "Original" };
+                    foreach (var (methodName, _) in preprocessMethods)
+                    {
+                        preprocessingMethodNames.Add(methodName);
+                        string preprocessedImagePath = Path.Combine(imageProcessedFolder, $"{methodName}.jpg");
+                        
+                        if (File.Exists(preprocessedImagePath))
+                        {
+                            Mat preprocessedImage = CvInvoke.Imread(preprocessedImagePath);
+                            double[] features = ExtractFeatures(preprocessedImage);
+                            featureVectors.Add(features);
+                        }
+                    }
+                    
+                    // Perform clustering and get results
+                    var (clusterLabels, silhouetteScore) = clusterAnalysis.PerformClustering(featureVectors, 
+                        numClusters: Math.Min(3, preprocessingMethodNames.Count));
+                    
+                    // Determine best preprocessing method based on clustering
+                    string bestClusterMethod = DetermineBestClusterMethod(
+                        clusterLabels.Skip(1).ToArray(), // Skip original image's cluster
+                        preprocessMethods,
+                        bestPreprocessingMethod,
+                        bestLevenshteinMethod);
+                    
+                    // Save clustering results to Excel
+                    ExecutionTimeLogger.SaveClusteringResultsToExcel(
+                        excelFilePath, 
+                        clusterLabels, 
+                        silhouetteScore, 
+                        "clusterAnalysis", 
+                        bestClusterMethod, 
+                        preprocessingMethodNames);
+                        
+                    // Store the best clustering method in the dictionary
+                    if (!string.IsNullOrEmpty(bestClusterMethod))
+                    {
+                        _bestClusteringMethods.AddOrUpdate(
+                            fileNameWithoutExtension,
+                            bestClusterMethod,
+                            (_, _) => bestClusterMethod
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error during clustering analysis: {ex.Message}");
+                }
             
                 // Store the extracted text in the results dictionary
                 _extractedTexts[imagePath] = groundTruth;
@@ -268,7 +335,7 @@ namespace ocrApplication
         /// Gets the dictionary of best preprocessing methods determined by cosine similarity.
         /// </summary>
         /// <returns>A concurrent dictionary mapping image names to their best preprocessing methods based on cosine similarity.</returns>
-        public System.Collections.Concurrent.ConcurrentDictionary<string, string> GetBestPreprocessingMethods()
+        public ConcurrentDictionary<string, string> GetBestPreprocessingMethods()
         {
             return _bestPreprocessingMethods;
         }
@@ -277,9 +344,85 @@ namespace ocrApplication
         /// Gets the dictionary of best preprocessing methods determined by Levenshtein distance.
         /// </summary>
         /// <returns>A concurrent dictionary mapping image names to their best preprocessing methods based on Levenshtein distance.</returns>
-        public System.Collections.Concurrent.ConcurrentDictionary<string, string> GetBestLevenshteinMethods()
+        public ConcurrentDictionary<string, string> GetBestLevenshteinMethods()
         {
             return _bestLevenshteinMethods;
+        }
+
+        /// <summary>
+        /// Gets the dictionary of best preprocessing methods determined by clustering analysis.
+        /// </summary>
+        /// <returns>A concurrent dictionary mapping image names to their best preprocessing methods based on clustering.</returns>
+        public ConcurrentDictionary<string, string> GetBestClusteringMethods()
+        {
+            return _bestClusteringMethods;
+        }
+
+        /// <summary>
+        /// Extracts feature vectors from an image.
+        /// </summary>
+        /// <param name="image">The image to extract features from.</param>
+        /// <returns>A feature vector representing the image.</returns>
+        private double[] ExtractFeatures(Mat image)
+        {
+            var clusterAnalysis = new ClusterAnalysis();
+            return clusterAnalysis.ExtractFeatures(image);
+        }
+
+        /// <summary>
+        /// Determines the best preprocessing method based on clustering results.
+        /// </summary>
+        /// <param name="clusterLabels">Cluster labels for each preprocessing method.</param>
+        /// <param name="preprocessMethods">List of preprocessing methods.</param>
+        /// <param name="bestCosineSimilarityMethod">Best preprocessing method based on cosine similarity.</param>
+        /// <param name="bestLevenshteinMethod">Best preprocessing method based on Levenshtein distance.</param>
+        /// <returns>The name of the best preprocessing method.</returns>
+        private string DetermineBestClusterMethod(
+            int[] clusterLabels, 
+            List<(string Name, Func<string, Mat> Method)> preprocessMethods,
+            string bestCosineSimilarityMethod,
+            string bestLevenshteinMethod)
+        {
+            // If we have a bestCosineSimilarityMethod or bestLevenshteinMethod
+            if (!string.IsNullOrEmpty(bestCosineSimilarityMethod))
+            {
+                return bestCosineSimilarityMethod;
+            }
+            
+            if (!string.IsNullOrEmpty(bestLevenshteinMethod))
+            {
+                return bestLevenshteinMethod;
+            }
+            
+            // If no best method is determined yet, pick the method with the most frequently occurring cluster
+            if (clusterLabels.Length > 0)
+            {
+                // Find the most frequent cluster
+                var clusterCounts = new Dictionary<int, int>();
+                for (int i = 0; i < clusterLabels.Length; i++)
+                {
+                    if (!clusterCounts.ContainsKey(clusterLabels[i]))
+                    {
+                        clusterCounts[clusterLabels[i]] = 0;
+                    }
+                    clusterCounts[clusterLabels[i]]++;
+                }
+                
+                // Get the cluster with the most elements
+                int mostFrequentCluster = clusterCounts.OrderByDescending(kv => kv.Value).First().Key;
+                
+                // Return the first preprocessing method in that cluster
+                for (int i = 0; i < clusterLabels.Length && i < preprocessMethods.Count; i++)
+                {
+                    if (clusterLabels[i] == mostFrequentCluster)
+                    {
+                        return preprocessMethods[i].Name;
+                    }
+                }
+            }
+            
+            // Default to first method if something goes wrong
+            return preprocessMethods.Count > 0 ? preprocessMethods[0].Name : "Original";
         }
     }
 } 

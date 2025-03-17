@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
-using System.Text;
 using OfficeOpenXml;
 
 namespace ocrApplication
@@ -102,61 +101,176 @@ namespace ocrApplication
             ConcurrentDictionary<string, string> extractedTexts,
             ConcurrentDictionary<string, string> bestCosineMethods,
             ConcurrentDictionary<string, string> bestLevenshteinMethods,
+            ConcurrentDictionary<string, string> bestClusteringMethods,
             Dictionary<string, string> overallBestMethods)
         {
-            // Call the original method to handle basic export
-            ExportResults(outputPath, extractedTexts);
+            // Create output directory if it doesn't exist
+            Directory.CreateDirectory(outputPath);
+
+            // Ask user if they want to export the ground truth OCR results
+            Console.WriteLine("\nDo you want to export the ground truth OCR results?");
+            Console.WriteLine("0. No export");
+            Console.WriteLine("1. Export as plain text (.txt)");
+            Console.WriteLine("2. Export as PDF (.pdf)");
+            Console.WriteLine("3. Export in both formats");
             
-            // Export the best methods summary to a separate file
-            ExportBestMethodsSummary(outputPath + "_best_methods.txt", bestCosineMethods, bestLevenshteinMethods, 
-                overallBestMethods);
+            bool validChoice = false;
+            while (!validChoice)
+            {
+                Console.Write("Enter your choice (0-3): ");
+                string? input = Console.ReadLine();
+                
+                switch (input?.Trim())
+                {
+                    case "0":
+                        Console.WriteLine("No export selected.");
+                        validChoice = true;
+                        break;
+                    case "1":
+                        ExportToPlainText(Path.Combine(outputPath, "OCR_Results.txt"), extractedTexts);
+                        Console.WriteLine("Ground truth exported as plain text successfully.");
+                        validChoice = true;
+                        break;
+                    case "2":
+                        ExportToPdf(Path.Combine(outputPath, "OCR_Results.pdf"), extractedTexts);
+                        Console.WriteLine("Ground truth exported as PDF successfully.");
+                        validChoice = true;
+                        break;
+                    case "3":
+                        ExportToPlainText(Path.Combine(outputPath, "OCR_Results.txt"), extractedTexts);
+                        ExportToPdf(Path.Combine(outputPath, "OCR_Results.pdf"), extractedTexts);
+                        Console.WriteLine("Ground truth exported in both formats successfully.");
+                        validChoice = true;
+                        break;
+                    default:
+                        Console.WriteLine("Invalid choice. Please enter a number between 0 and 3.");
+                        break;
+                }
+            }
+            
+            // Best methods summaries are not exported as per user request
         }
         
-        /// <summary>
-        /// Export best preprocessing methods summary to a text file
-        /// </summary>
+        // Exports the summary of best preprocessing methods to various file formats.
         private static void ExportBestMethodsSummary(
             string outputPath,
             ConcurrentDictionary<string, string> bestCosineMethods,
             ConcurrentDictionary<string, string> bestLevenshteinMethods,
+            ConcurrentDictionary<string, string> bestClusteringMethods,
             Dictionary<string, string> overallBestMethods)
         {
             try
             {
-                // Create a string builder to collect the text
-                StringBuilder sb = new StringBuilder();
-                
-                // Add a header
-                sb.AppendLine("BEST PREPROCESSING METHODS SUMMARY");
-                sb.AppendLine("==================================");
-                sb.AppendLine();
-                
-                // Collect all unique image names
+                // Get all unique image names
                 var allImageNames = new HashSet<string>(
                     bestCosineMethods.Keys
                     .Union(bestLevenshteinMethods.Keys)
+                    .Union(bestClusteringMethods.Keys)
+                    .Union(overallBestMethods.Keys)
                 );
                 
-                // Add a table header
-                sb.AppendLine($"{"Image",-30} | {"Best by Cosine",-25} | {"Best by Levenshtein",-25} | {"Overall Best Method",-25}");
-                sb.AppendLine(new string('-', 115));
-                
-                // Add a row for each image
-                foreach (var imageName in allImageNames)
+                // Export to plain text
+                using (StreamWriter writer = new StreamWriter(Path.Combine(outputPath, "Best_Methods_Summary.txt")))
                 {
-                    // Get methods for this image
-                    bestCosineMethods.TryGetValue(imageName, out string bestCosine);
-                    bestLevenshteinMethods.TryGetValue(imageName, out string bestLev);
-                    overallBestMethods.TryGetValue(imageName, out string overallBest);
+                    writer.WriteLine("BEST PREPROCESSING METHODS SUMMARY");
+                    writer.WriteLine("==================================================\n");
                     
-                    // Add a row to the table
-                    sb.AppendLine($"{imageName,-30} | {bestCosine ?? "N/A",-25} | {bestLev ?? "N/A",-25} | {overallBest ?? "N/A",-25}");
+                    writer.WriteLine(string.Format("{0,-25} | {1,-18} | {2,-18} | {3,-18} | {4,-18}", 
+                        "Image", "Best by Cosine", "Best by Levenshtein", "Best by Clustering", "Overall Best"));
+                    writer.WriteLine(new string('-', 108));
+                    
+                    foreach (var imageName in allImageNames)
+                    {
+                        bestCosineMethods.TryGetValue(imageName, out string bestCosine);
+                        bestLevenshteinMethods.TryGetValue(imageName, out string bestLevenshtein);
+                        bestClusteringMethods.TryGetValue(imageName, out string bestClustering);
+                        overallBestMethods.TryGetValue(imageName, out string overallBest);
+                        
+                        writer.WriteLine(string.Format("{0,-25} | {1,-18} | {2,-18} | {3,-18} | {4,-18}", 
+                            imageName, 
+                            bestCosine ?? "N/A", 
+                            bestLevenshtein ?? "N/A",
+                            bestClustering ?? "N/A",
+                            overallBest ?? "N/A"));
+                    }
                 }
                 
-                // Write the summary to the output file
-                File.WriteAllText(outputPath, sb.ToString());
+                // Export to PDF
+                using (PdfWriter writer = new PdfWriter(Path.Combine(outputPath, "Best_Methods_Summary.pdf")))
+                using (PdfDocument pdf = new PdfDocument(writer))
+                {
+                    Document document = new Document(pdf);
+                    
+                    // Add title without using SetBold method
+                    Paragraph titleParagraph = new Paragraph("BEST PREPROCESSING METHODS SUMMARY");
+                    document.Add(titleParagraph);
+                    document.Add(new Paragraph("==================================================\n"));
+                    
+                    // Create a table for the summary
+                    iText.Layout.Element.Table table = new iText.Layout.Element.Table(5);
+                    table.AddHeaderCell("Image");
+                    table.AddHeaderCell("Best by Cosine");
+                    table.AddHeaderCell("Best by Levenshtein");
+                    table.AddHeaderCell("Best by Clustering");
+                    table.AddHeaderCell("Overall Best");
+                    
+                    foreach (var imageName in allImageNames)
+                    {
+                        bestCosineMethods.TryGetValue(imageName, out string bestCosine);
+                        bestLevenshteinMethods.TryGetValue(imageName, out string bestLevenshtein);
+                        bestClusteringMethods.TryGetValue(imageName, out string bestClustering);
+                        overallBestMethods.TryGetValue(imageName, out string overallBest);
+                        
+                        table.AddCell(imageName);
+                        table.AddCell(bestCosine ?? "N/A");
+                        table.AddCell(bestLevenshtein ?? "N/A");
+                        table.AddCell(bestClustering ?? "N/A");
+                        table.AddCell(overallBest ?? "N/A");
+                    }
+                    
+                    document.Add(table);
+                }
                 
-                Console.WriteLine($"Best methods summary exported to: {outputPath}");
+                // Export to Excel
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using (ExcelPackage package = new ExcelPackage())
+                {
+                    ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Best Methods Summary");
+                    
+                    // Add headers
+                    worksheet.Cells[1, 1].Value = "Image";
+                    worksheet.Cells[1, 2].Value = "Best by Cosine";
+                    worksheet.Cells[1, 3].Value = "Best by Levenshtein";
+                    worksheet.Cells[1, 4].Value = "Best by Clustering";
+                    worksheet.Cells[1, 5].Value = "Overall Best";
+                    
+                    // Style headers
+                    worksheet.Cells[1, 1, 1, 5].Style.Font.Bold = true;
+                    
+                    // Add data
+                    int row = 2;
+                    foreach (var imageName in allImageNames)
+                    {
+                        bestCosineMethods.TryGetValue(imageName, out string bestCosine);
+                        bestLevenshteinMethods.TryGetValue(imageName, out string bestLevenshtein);
+                        bestClusteringMethods.TryGetValue(imageName, out string bestClustering);
+                        overallBestMethods.TryGetValue(imageName, out string overallBest);
+                        
+                        worksheet.Cells[row, 1].Value = imageName;
+                        worksheet.Cells[row, 2].Value = bestCosine ?? "N/A";
+                        worksheet.Cells[row, 3].Value = bestLevenshtein ?? "N/A";
+                        worksheet.Cells[row, 4].Value = bestClustering ?? "N/A";
+                        worksheet.Cells[row, 5].Value = overallBest ?? "N/A";
+                        
+                        row++;
+                    }
+                    
+                    // Auto-size columns
+                    worksheet.Cells[1, 1, row - 1, 5].AutoFitColumns();
+                    
+                    // Save the Excel file
+                    package.SaveAs(new FileInfo(Path.Combine(outputPath, "Best_Methods_Summary.xlsx")));
+                }
             }
             catch (Exception ex)
             {
@@ -223,6 +337,122 @@ namespace ocrApplication
             }
             
             return (bestCosineMethod, bestLevenshteinMethod);
+        }
+
+        /// <summary>
+        /// Provides functionality for reading data from Excel files.
+        /// </summary>
+        public class ExcelFileReader
+        {
+            /// <summary>
+            /// Reads the best preprocessing method based on cosine similarity from an Excel file.
+            /// </summary>
+            /// <param name="excelFilePath">Path to the Excel file.</param>
+            /// <returns>The best preprocessing method or null if not found.</returns>
+            public string? ReadBestCosineSimilarityMethodFromExcel(string excelFilePath)
+            {
+                try
+                {
+                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                    using var package = new ExcelPackage(new FileInfo(excelFilePath));
+                    var worksheet = package.Workbook.Worksheets["CosineDistance"];
+                    if (worksheet == null) return null;
+                    
+                    // Best method is in the second column, 3 rows after the last data row
+                    for (int row = worksheet.Dimension.End.Row - 2; row <= worksheet.Dimension.End.Row; row++)
+                    {
+                        var label = worksheet.Cells[row, 1].Text;
+                        if (label.Contains("Best", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return worksheet.Cells[row, 2].Text;
+                        }
+                    }
+                    
+                    return null;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            /// <summary>
+            /// Reads the best preprocessing method based on Levenshtein distance from an Excel file.
+            /// </summary>
+            /// <param name="excelFilePath">Path to the Excel file.</param>
+            /// <returns>The best preprocessing method or null if not found.</returns>
+            public string? ReadBestLevenshteinMethodFromExcel(string excelFilePath)
+            {
+                try
+                {
+                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                    using var package = new ExcelPackage(new FileInfo(excelFilePath));
+                    var worksheet = package.Workbook.Worksheets["Levenshtein"];
+                    if (worksheet == null) return null;
+                    
+                    // Best method is in the second column, 3 rows after the last data row
+                    for (int row = worksheet.Dimension.End.Row - 2; row <= worksheet.Dimension.End.Row; row++)
+                    {
+                        var label = worksheet.Cells[row, 1].Text;
+                        if (label.Contains("Best", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return worksheet.Cells[row, 2].Text;
+                        }
+                    }
+                    
+                    return null;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            /// <summary>
+            /// Reads the best preprocessing method based on clustering analysis from an Excel file.
+            /// </summary>
+            /// <param name="excelFilePath">Path to the Excel file.</param>
+            /// <returns>The best preprocessing method or null if not found.</returns>
+            public string? ReadBestClusteringMethodFromExcel(string excelFilePath)
+            {
+                try
+                {
+                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                    using var package = new ExcelPackage(new FileInfo(excelFilePath));
+                    var worksheet = package.Workbook.Worksheets["clusterAnalysis"];
+                    if (worksheet == null) return null;
+                    
+                    // Find the best preprocessing method in the clustering worksheet
+                    // First look for a cell with "Best Preprocessing Method" label
+                    for (int row = 1; row <= worksheet.Dimension.End.Row; row++)
+                    {
+                        var label = worksheet.Cells[row, 1].Text;
+                        if (label.Contains("Best Preprocessing Method", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return worksheet.Cells[row, 2].Text;
+                        }
+                    }
+                    
+                    // If not found by label, try looking for a cell with "Yes" in the "Is Best Method" column
+                    for (int row = 2; row <= worksheet.Dimension.End.Row; row++)
+                    {
+                        if (worksheet.Dimension.End.Column >= 3)
+                        {
+                            var isBest = worksheet.Cells[row, 3].Text;
+                            if (isBest.Equals("Yes", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return worksheet.Cells[row, 1].Text;
+                            }
+                        }
+                    }
+                    
+                    return null;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
         }
     }
 } 

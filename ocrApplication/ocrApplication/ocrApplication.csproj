@@ -24,6 +24,8 @@
       <PackageReference Include="TensorFlowSharp.ARM" Version="1.7.0-preview1" />
       <PackageReference Include="Tesseract" Version="5.2.0" />
       <PackageReference Include="XUCore.ShellProgressBar" Version="6.10.14-preview1" />
+      <PackageReference Include="Accord.MachineLearning" Version="3.8.0" />
+      <PackageReference Include="Accord.Statistics" Version="3.8.0" />
     </ItemGroup>
 
 </Project>

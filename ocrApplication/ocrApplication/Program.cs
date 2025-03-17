@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using ShellProgressBar;
 using OfficeOpenXml;
+using System.Collections.Concurrent;
 
 namespace ocrApplication
 {
@@ -106,11 +107,30 @@ namespace ocrApplication
                     processedImagesFolder, 
                     ocrResultsFolder);
             
-            // Log completion for all images
-            Console.WriteLine("OCR processing complete for all images in the folder and its subfolders.");
+                // Log completion for all images
+                Console.WriteLine("\n\n\nOCR processing complete for all images in the folder and its subfolders.");
             
+                // Get best preprocessing methods from OcrProcessor for use in summary
+                ConcurrentDictionary<string, string> bestPreprocessingMethods = ocrProcessor.GetBestPreprocessingMethods();
+                ConcurrentDictionary<string, string> bestLevenshteinMethods = ocrProcessor.GetBestLevenshteinMethods();
+                ConcurrentDictionary<string, string> bestClusteringMethods = ocrProcessor.GetBestClusteringMethods();
+                
+                // Display the extracted text summary
+                OcrSummary.DisplayExtractedTexts(extractedTexts);
+                
                 // Use the OcrSummary class to generate and display summary information
-                OcrSummary.GenerateAndExportSummary(imageFiles, ocrResultsFolder, outputFolderPath, extractedTexts);
+                // Pass the best methods directly from OcrProcessor instead of reading from Excel
+                OcrSummary.DisplayBestMethodsSummary(bestPreprocessingMethods, bestLevenshteinMethods, bestClusteringMethods);
+                
+                // Export only the OCR results, not the best methods summary
+                ExportUtilities.ExportResults(
+                    outputFolderPath + "/OCR_Results", 
+                    extractedTexts, 
+                    bestPreprocessingMethods, 
+                    bestLevenshteinMethods, 
+                    bestClusteringMethods,
+                    new Dictionary<string, string>() // Empty dictionary as we're not using it
+                );
             }
 
             // Final message to indicate all processing is complete

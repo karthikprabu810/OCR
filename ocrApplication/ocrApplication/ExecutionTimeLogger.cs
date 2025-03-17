@@ -146,7 +146,7 @@ public static class ExecutionTimeLogger
             
         // Reduce the high-dimensional embeddings to 2D for visualization
         var vectors = embeddings.Select(e => e.Vector).ToList();
-        var reduced = ReduceDimensionality(vectors);
+        var reduced = (vectors);
             
         // Set up column headers for the reduced coordinates
         worksheet.Cells[1, 1].Value = "X";
@@ -242,5 +242,123 @@ public static class ExecutionTimeLogger
         }).ToList();
         
         return reduced;
+    }
+
+    /// <summary>
+    /// Saves clustering analysis results to an Excel file.
+    /// </summary>
+    /// <param name="excelFilePath">Path to the Excel file.</param>
+    /// <param name="clusterLabels">Array of cluster labels for each preprocessing method.</param>
+    /// <param name="silhouetteScore">Silhouette score indicating clustering quality.</param>
+    /// <param name="worksheetName">Name of the worksheet to create.</param>
+    /// <param name="bestPreprocessingMethod">The best preprocessing method determined by clustering.</param>
+    /// <param name="preprocessingMethodNames">Names of the preprocessing methods.</param>
+    public static void SaveClusteringResultsToExcel(
+        string excelFilePath,
+        int[] clusterLabels,
+        double silhouetteScore,
+        string worksheetName,
+        string bestPreprocessingMethod,
+        List<string> preprocessingMethodNames)
+    {
+        // Set EPPlus license context to non-commercial to avoid licensing issues
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+        // Create or open the Excel package
+        FileInfo fileInfo = new FileInfo(excelFilePath);
+        using ExcelPackage package = new ExcelPackage(fileInfo);
+
+        // Remove existing worksheet if it exists
+        var existingSheet = package.Workbook.Worksheets.FirstOrDefault(s => s.Name == worksheetName);
+        if (existingSheet != null)
+        {
+            package.Workbook.Worksheets.Delete(existingSheet);
+        }
+
+        // Create a new worksheet for clustering results
+        var clusteringSheet = package.Workbook.Worksheets.Add(worksheetName);
+
+        // Set headers
+        clusteringSheet.Cells[1, 1].Value = "Preprocessing Method";
+        clusteringSheet.Cells[1, 2].Value = "Cluster ID";
+        clusteringSheet.Cells[1, 3].Value = "Is Best Method";
+
+        // Bold the headers
+        clusteringSheet.Cells[1, 1, 1, 3].Style.Font.Bold = true;
+
+        // Handle potential mismatch between clusterLabels and preprocessingMethodNames
+        int dataLength = Math.Min(
+            preprocessingMethodNames?.Count ?? 0, 
+            clusterLabels?.Length ?? 0);
+
+        // Add data rows
+        for (int i = 0; i < dataLength; i++)
+        {
+            int row = i + 2; // +2 because we start data from row 2 (after headers)
+
+            // Preprocessing method name
+            clusteringSheet.Cells[row, 1].Value = preprocessingMethodNames[i];
+
+            // Cluster ID
+            clusteringSheet.Cells[row, 2].Value = clusterLabels[i];
+
+            // Is this the best method
+            bool isBest = preprocessingMethodNames[i] == bestPreprocessingMethod;
+            clusteringSheet.Cells[row, 3].Value = isBest ? "Yes" : "No";
+
+            // Highlight the best method
+            if (isBest)
+            {
+                // Highlight the entire row
+                clusteringSheet.Cells[row, 1, row, 3].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                clusteringSheet.Cells[row, 1, row, 3].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGreen);
+            }
+        }
+
+        // Add a section for clustering metrics
+        clusteringSheet.Cells[dataLength + 3, 1].Value = "Clustering Metrics";
+        clusteringSheet.Cells[dataLength + 3, 1].Style.Font.Bold = true;
+
+        clusteringSheet.Cells[dataLength + 4, 1].Value = "Silhouette Score";
+        clusteringSheet.Cells[dataLength + 4, 2].Value = silhouetteScore;
+
+        clusteringSheet.Cells[dataLength + 5, 1].Value = "Best Preprocessing Method";
+        clusteringSheet.Cells[dataLength + 5, 2].Value = bestPreprocessingMethod;
+
+        // Auto-size columns for better readability
+        clusteringSheet.Cells[1, 1, dataLength + 5, 3].AutoFitColumns();
+
+        // Create a pie chart to visualize cluster distribution only if we have sufficient data
+        if (clusterLabels != null && clusterLabels.Length > 0)
+        {
+            var pieChart = clusteringSheet.Drawings.AddChart("Cluster Distribution", eChartType.Pie3D);
+
+            // Set chart data source - count members in each cluster
+            var uniqueClusters = clusterLabels.Distinct().ToList();
+            var clusterCounts = uniqueClusters.Select(c => clusterLabels.Count(l => l == c)).ToList();
+
+            // Create a temporary data section for the chart
+            int charDataStartRow = dataLength + 7;
+            clusteringSheet.Cells[charDataStartRow, 1].Value = "Cluster";
+            clusteringSheet.Cells[charDataStartRow, 2].Value = "Count";
+
+            for (int i = 0; i < uniqueClusters.Count; i++)
+            {
+                clusteringSheet.Cells[charDataStartRow + i + 1, 1].Value = $"Cluster {uniqueClusters[i]}";
+                clusteringSheet.Cells[charDataStartRow + i + 1, 2].Value = clusterCounts[i];
+            }
+
+            // Configure the chart
+            pieChart.SetPosition(dataLength + 3, 0, 3, 0);
+            pieChart.SetSize(400, 300);
+            pieChart.Series.Add(
+                ExcelCellBase.GetAddress(charDataStartRow + 1, 2, charDataStartRow + uniqueClusters.Count, 2),
+                ExcelCellBase.GetAddress(charDataStartRow + 1, 1, charDataStartRow + uniqueClusters.Count, 1)
+            );
+            pieChart.Title.Text = "Cluster Distribution";
+        }
+
+        // Save the changes
+        package.Save();
     }
 }
