@@ -3,16 +3,24 @@ using Emgu.CV;
 
 namespace unitTestProject
 {
+    /// <summary>
+    /// Integration tests for the OCR application workflow.
+    /// Tests the complete OCR processing pipeline from image preprocessing to text extraction and comparison.
+    /// </summary>
     [TestClass]
     public class IntegrationTests
     {
-        private string _testImagePath;
-        private string _testConfigPath;
-        private OcrExtractionTools _ocrTools;
-        private OcrComparison _ocrComparison;
-        private EnsembleOcr _ensembleOcr;
-        private string _tempOutputDir;
+        private string _testImagePath;                  /// <summary>Path to the test image used for OCR testing</summary>
+        private string _testConfigPath;                 /// <summary>Path to the test configuration file</summary>
+        private OcrExtractionTools _ocrTools;           /// <summary>OCR extraction tools instance for processing images</summary>
+        private OcrComparison _ocrComparison;           /// <summary>OCR comparison utility for analyzing results</summary>
+        private EnsembleOcr _ensembleOcr;               /// <summary>Ensemble OCR processor for combining multiple OCR results</summary>
+        private string _tempOutputDir;                  /// <summary>Temporary output directory for processed files</summary>
 
+        /// <summary>
+        /// Initializes the test environment by creating test images, configuration files,
+        /// and initializing all necessary OCR components.
+        /// </summary>
         [TestInitialize]
         public void Setup()
         {
@@ -30,6 +38,10 @@ namespace unitTestProject
             Directory.CreateDirectory(_tempOutputDir);
         }
 
+        /// <summary>
+        /// Cleans up all test resources after test execution.
+        /// Removes test images, temporary files, and output directories.
+        /// </summary>
         [TestCleanup]
         public void Cleanup()
         {
@@ -39,16 +51,17 @@ namespace unitTestProject
                 TestHelpers.CleanupTestFiles(_testImagePath);
             }
             
-            // Dispose OCR tools
-            if (_ocrTools != null)
+            // Clean up temporary output directory
+            if (Directory.Exists(_tempOutputDir))
             {
-                _ocrTools.Dispose();
-            }
-            
-            // Delete temporary output directory
-            if (_tempOutputDir != null && Directory.Exists(_tempOutputDir))
-            {
-                Directory.Delete(_tempOutputDir, true);
+                try
+                {
+                    Directory.Delete(_tempOutputDir, true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error cleaning up temporary directory: {ex.Message}");
+                }
             }
         }
 

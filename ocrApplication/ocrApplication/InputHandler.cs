@@ -131,6 +131,7 @@ namespace ocrApplication
             // Display available preprocessing methods with numbering
             Console.WriteLine("\nAvailable preprocessing techniques:");
             Console.WriteLine("-------------------------------------");
+            
             for (int i = 0; i < allPreprocessMethods.Length; i++)
             {
                 Console.WriteLine($"{i + 1}. {allPreprocessMethods[i].Name}");

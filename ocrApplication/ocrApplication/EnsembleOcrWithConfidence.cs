@@ -1,24 +1,37 @@
 namespace ocrApplication;
 /// <summary>
-/// Combines multiple OCR results into an optimized text using confidence scores.
-/// Processes text sentence by sentence and selects the most likely correct version of each word.
+/// This class provides an alternative ensemble approach that weighs OCR results based on their
+/// confidence scores to produce more accurate final text output.
 /// </summary>
 public class EnsembleOcrWithConfidence
 {
-    /// <summary>
-    /// Implements ensemble techniques based on confidence score to combine results from multiple OCR engines.
-    /// Uses enhanced majority voting with text similarity analysis to improve recognition accuracy.
-    /// </summary>
+
+    /// <param name="ocrResults">List of text results from different OCR engines or preprocessing methods</param>
+    /// <param name="confidences">List of confidence scores corresponding to each OCR result</param>
+    /// <returns>Combined text output with highest confidence words</returns>
+    /// <remarks>
+    /// The algorithm works by assigning weights to each word based on the confidence score
+    /// of the OCR result it came from. Words that appear in multiple results with high confidence
+    /// will have higher accumulated weights and are more likely to be included in the final output.
+    /// 
+    /// The method assumes that the ocrResults and confidences lists have matching indices,
+    /// where the confidence at index i corresponds to the OCR result at index i.
+    /// </remarks>
     public string CombineWithConfidence(List<string> ocrResults, List<double> confidences)
     {
+        // Dictionary to track words and their accumulated confidence scores
         var weightedResults = new Dictionary<string, double>();
 
+        // Process each OCR result along with its confidence score
         for (int i = 0; i < ocrResults.Count; i++)
         {
             var result = ocrResults[i];
             var confidence = confidences[i];
+            
+            // Split the OCR result into individual words
             var words = result.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
 
+            // Accumulate confidence scores for each word
             foreach (var word in words)
             {
                 if (weightedResults.ContainsKey(word))

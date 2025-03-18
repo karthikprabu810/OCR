@@ -23,63 +23,103 @@ namespace ocrGui
     /// </summary>
     public partial class MainWindow : Window
     {
-        // UI Controls
+        #region UI Controls
+        /// <summary>TextBox for displaying and entering the input folder path</summary>
         private TextBox? _inputFolderTextBox;
+        
+        /// <summary>TextBox for displaying and entering the output folder path</summary>
         private TextBox? _outputFolderTextBox;
+        
+        /// <summary>Button for browsing and selecting the input folder</summary>
         private Button? _browseInputButton;
+        
+        /// <summary>Button for browsing and selecting the output folder</summary>
         private Button? _browseOutputButton;
+        
+        /// <summary>Button to start the OCR processing</summary>
         private Button? _processButton;
+        
+        /// <summary>Button to exit the application</summary>
         private Button? _exitButton;
+        
+        /// <summary>TextBox that displays OCR processing output and messages</summary>
         private TextBox? _outputTextBox;
+        
+        /// <summary>TextBox for entering user input during interactive prompts</summary>
         private TextBox? _userInputTextBox;
+        
+        /// <summary>Button to send user input to the OCR process</summary>
         private Button? _sendInputButton;
+        
+        /// <summary>ProgressBar showing OCR processing completion percentage</summary>
         private ProgressBar? _progressBar;
+        
+        /// <summary>TextBlock displaying the current processing stage description</summary>
         private TextBlock? _progressNameTextBlock;
+        
+        /// <summary>TextBlock showing elapsed processing time</summary>
         private TextBlock? _durationTextBlock;
+        
+        /// <summary>Button to view generated Excel results after processing</summary>
         private Button? _viewExcelButton;
+        
+        /// <summary>Button to view processed images after processing</summary>
         private Button? _viewImagesButton;
+        
+        /// <summary>Button to view text results after processing</summary>
         private Button? _viewTextButton;
+        
+        /// <summary>Stores the current output folder path for accessing results</summary>
         private string _currentOutputFolder = string.Empty;
+        #endregion
         
-        // Process vars
-        private Process? _currentProcess;
-        private bool _waitingForUserInput = false;
-        private string _lastPrompt = string.Empty;
-        private bool _isProcessing = false;
-        private int _totalImagesToProcess = 0;
-        private int _imagesProcessed = 0;
-        private int _stepsCompleted = 0;
-        private int _totalSteps = 0;
-        private DateTime _processStartTime;
-        private bool _isProcessingCompleted = false;
-        // Add a protection time to prevent re-enabling the button too quickly
-        private DateTime _lastInputSentTime = DateTime.MinValue;
-        private const int INPUT_PROTECTION_MS = 1000; // 1 second protection
+        #region Process State Variables
+        private Process? _currentProcess;               /// <summary>Reference to the current OCR process being executed</summary>
+        private bool _waitingForUserInput;              /// <summary>Flag indicating if the application is waiting for user input</summary>
+        private string _lastPrompt = string.Empty;      /// <summary>Stores the last input prompt shown to the user</summary>
+        private bool _isProcessing;                     /// <summary>Flag indicating if OCR processing is currently active</summary>
+        private int _totalImagesToProcess;              /// <summary>Total number of images that will be processed</summary>
+        private int _imagesProcessed;                   /// <summary>Number of images that have been processed so far</summary>
+        private int _stepsCompleted;                    /// <summary>Number of processing steps completed</summary>
+        private int _totalSteps;                        /// <summary>Total number of processing steps to complete</summary>    
+        private DateTime _processStartTime;             /// <summary>Timestamp when processing started for duration calculation</summary>
+        private bool _isProcessingCompleted;            /// <summary>Flag indicating if processing has been completed</summary>
+        private DateTime _lastInputSentTime = DateTime.MinValue;              /// <summary>Timestamp of when the last user input was sent to prevent rapid input</summary>
+        private const int INPUT_PROTECTION_MS = 1000; // 1 second protection  /// <summary>Minimum time in milliseconds between allowed user inputs</summary>
+        private DateTime _processingStartTime = DateTime.MinValue;            /// <summary>Timestamp when current processing phase started</summary>
+        private TimeSpan _processingDuration = TimeSpan.Zero;                 /// <summary>Duration of the current processing phase</summary>
+        private bool _processingTimerActive;                                  /// <summary>Flag indicating if the processing timer is active</summary>
+        private System.Timers.Timer? _uiUpdateTimer;                          /// <summary>Timer for updating UI elements like duration during processing</summary>
+                                                                              /// <summary>Flag indicating if the progress bar is locked at a specific value</summary>
+        private bool _progressBarLocked;
+        #endregion
         
-        // Timer variables for processing duration
-        private DateTime _processingStartTime = DateTime.MinValue;
-        private TimeSpan _processingDuration = TimeSpan.Zero;
-        private bool _processingTimerActive = false;
-        private System.Timers.Timer? _uiUpdateTimer;
-
-        // Common OCR prompts that require user input
+        /// <summary>
+        /// Array of regex patterns used to detect input prompts from the OCR application.
+        /// These patterns help identify when the application is waiting for user input.
+        /// </summary>
         private static readonly string[] _inputPromptPatterns = new string[]
         {
-            @"Select preprocessing method",
-            @"Choose report type",
-            @"Do you want to",
-            @"Enter your choice",
-            @"Enter option",
-            @"(\[y/n\])",
-            @"\([0-9]+\-[0-9]+\):",
-            @"Press any key to continue",
-            @"Enter the input folder path:",  // Add input folder prompt
-            @"Enter the output folder path:"  // Add output folder prompt
+            @"Enter.+path",                            // For path requests
+            @"Enter.+choice",                          // For choice inputs
+            @"Select.+method",                         // For method selection
+            @"Enter.+number",                          // For numeric inputs
+            @"Do you want to.+\?",                     // For yes/no questions
+            @"Enter your choice",                      // For menu selections
+            @"Would you like to.+\?",                  // For yes/no questions
+            @"Please enter",                           // Generic request for input
+            @"Choose.+options?",                       // For selection from options
+            @"Press.+to.+",                            // For key press prompts
+            @"Specify.+",                              // For specific input requests
+            @"Enter.+option",                          // For option selection
+            @"Enter.+value",                           // For value inputs
+            @"Select.+option"                          // For option selection
         };
 
-        // Add a progress bar lock flag
-        private bool _progressBarLocked = false;
-
+        /// <summary>
+        /// Initializes a new instance of the MainWindow class.
+        /// Sets up the UI components, event handlers, and initial application state.
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -103,17 +143,17 @@ namespace ocrGui
             // Explicitly disable input controls at startup
             SetInputControlsEnabled(false);
             
-            // Show exit button
+            // Exit button remains hidden - not visible in this version
             if (_exitButton != null)
             {
-                _exitButton.IsVisible = true;
+                _exitButton.IsVisible = false;
                 // Add hover effect using Avalonia input events
-                _exitButton.AddHandler(PointerEnteredEvent, (s, e) => {
+                _exitButton.AddHandler(PointerEnteredEvent, (_, _) => {
                     if (_exitButton.Background != null)
                         _exitButton.Background = new SolidColorBrush(Color.Parse("#ffebee"));
                 }, RoutingStrategies.Direct);
                 
-                _exitButton.AddHandler(PointerExitedEvent, (s, e) => {
+                _exitButton.AddHandler(PointerExitedEvent, (_, _) => {
                     if (_exitButton.Background != null)
                         _exitButton.Background = new SolidColorBrush(Colors.Transparent);
                 }, RoutingStrategies.Direct);
@@ -145,7 +185,7 @@ namespace ocrGui
             // Handle Enter key in input box
             if (_userInputTextBox != null) 
             {
-                _userInputTextBox.KeyDown += (sender, e) => 
+                _userInputTextBox.KeyDown += (_, e) => 
                 {
                     if (e.Key == Key.Enter && _sendInputButton != null && _sendInputButton.IsEnabled)
                     {
@@ -176,6 +216,10 @@ namespace ocrGui
             AvaloniaXamlLoader.Load(this);
         }
         
+        /// <summary>
+        /// Handles changes in the input and output folder text boxes.
+        /// Updates the process button state based on the text content.
+        /// </summary>
         private void InputOutputFolder_Changed(object? sender, AvaloniaPropertyChangedEventArgs e)
         {
             if (e.Property.Name == "Text")
@@ -184,6 +228,9 @@ namespace ocrGui
             }
         }
         
+        /// <summary>
+        /// Updates the state of the process button based on the validity of input and output folder paths.
+        /// </summary>
         private void UpdateProcessButtonState()
         {
             if (_processButton != null && _inputFolderTextBox != null && _outputFolderTextBox != null)
@@ -195,6 +242,10 @@ namespace ocrGui
             }
         }
 
+        /// <summary>
+        /// Handles the click event for the Browse Input button.
+        /// Opens a folder picker dialog to select the input folder.
+        /// </summary>
         private async void BrowseInputButton_Click(object? sender, RoutedEventArgs e)
         {
             try
@@ -231,6 +282,9 @@ namespace ocrGui
             }
         }
         
+        /// <summary>
+        /// Counts the number of image files in the specified directory.
+        /// </summary>
         private int CountImageFilesInDirectory(string directory)
         {
             try
@@ -252,6 +306,10 @@ namespace ocrGui
             }
         }
 
+        /// <summary>
+        /// Handles the click event for the Browse Output button.
+        /// Opens a folder picker dialog to select the output folder.
+        /// </summary>
         private async void BrowseOutputButton_Click(object? sender, RoutedEventArgs e)
         {
             try
@@ -279,6 +337,10 @@ namespace ocrGui
             }
         }
 
+        /// <summary>
+        /// Handles the click event for the Process button.
+        /// Initiates the OCR processing.
+        /// </summary>
         private async void ProcessButton_Click(object? sender, RoutedEventArgs e)
         {
             // Disable process button to prevent multiple simultaneous processes
@@ -400,11 +462,18 @@ namespace ocrGui
             }
         }
         
+        /// <summary>
+        /// Handles the click event for the Send Input button.
+        /// Sends user input to the OCR process.
+        /// </summary>
         private async void SendInputButton_Click(object? sender, RoutedEventArgs e)
         {
             await SendUserInput(); // Now properly awaited
         }
         
+        /// <summary>
+        /// Sends user input to the OCR process.
+        /// </summary>
         private async Task<bool> SendUserInput()
         {
             if (_currentProcess == null || _currentProcess.HasExited || 
@@ -449,6 +518,9 @@ namespace ocrGui
             }
         }
         
+        /// <summary>
+        /// Checks the output for user input prompts and enables input controls if a prompt is detected.
+        /// </summary>
         private void CheckForUserInputPrompt(string output)
         {
             // If processing is completed, don't process any more prompts
@@ -538,7 +610,9 @@ namespace ocrGui
             }
         }
 
-        // Add a dedicated method to start the processing timer
+        /// <summary>
+        /// Starts the processing timer to update the UI with elapsed time.
+        /// </summary>
         private void StartProcessingTimer()
         {
             if (_processingTimerActive)
@@ -555,7 +629,7 @@ namespace ocrGui
             
             // Start a timer to update the UI every second
             _uiUpdateTimer = new System.Timers.Timer(1000); // Update every second
-            _uiUpdateTimer.Elapsed += (s, e) => {
+            _uiUpdateTimer.Elapsed += (_, _) => {
                 if (_processingTimerActive)
                 {
                     _processingDuration = DateTime.Now - _processingStartTime;
@@ -582,6 +656,9 @@ namespace ocrGui
             });
         }
 
+        /// <summary>
+        /// Enables or disables input controls based on the specified flag.
+        /// </summary>
         private void SetInputControlsEnabled(bool enabled)
         {
             Dispatcher.UIThread.InvokeAsync(() =>
@@ -603,6 +680,9 @@ namespace ocrGui
             });
         }
 
+        /// <summary>
+        /// Displays an error dialog with the specified message.
+        /// </summary>
         private async Task ShowErrorDialog(string message)
         {
             var errorDialog = new Window
@@ -617,7 +697,7 @@ namespace ocrGui
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
             };
             
-            okButton.Click += (sender, e) => errorDialog.Close();
+            okButton.Click += (_, _) => errorDialog.Close();
             
             errorDialog.Content = new StackPanel
             {
@@ -636,6 +716,9 @@ namespace ocrGui
             await errorDialog.ShowDialog(this);
         }
 
+        /// <summary>
+        /// Enables or disables main controls based on the specified flag.
+        /// </summary>
         private void SetControlsEnabled(bool enabled)
         {
             if (_inputFolderTextBox != null) _inputFolderTextBox.IsEnabled = enabled;
@@ -646,6 +729,9 @@ namespace ocrGui
             // Process button state is controlled by UpdateProcessButtonState()
         }
 
+        /// <summary>
+        /// Runs the OCR application with the specified input and output folders.
+        /// </summary>
         private async Task RunOcrApplication(string inputFolder, string outputFolder)
         {
             if (_outputTextBox == null) return;
@@ -667,9 +753,9 @@ namespace ocrGui
                 // Try to find the executable in common locations
                 var possiblePaths = new[]
                 {
-                    System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "ocrApplication", "bin", "Debug", "net8.0", "ocrApplication.dll")),
-                    System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "ocrApplication", "bin", "Debug", "net8.0", "ocrApplication.dll")),
-                    System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ocrApplication.dll"))
+                    Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "ocrApplication", "bin", "Debug", "net8.0", "ocrApplication.dll")),
+                    Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "ocrApplication", "bin", "Debug", "net8.0", "ocrApplication.dll")),
+                    Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ocrApplication.dll"))
                 };
 
                 foreach (var path in possiblePaths)
@@ -704,7 +790,7 @@ namespace ocrGui
                 }
             };
 
-            _currentProcess.OutputDataReceived += async (sender, e) =>
+            _currentProcess.OutputDataReceived += async (_, e) =>
             {
                 if (e.Data == null) return;
 
@@ -732,7 +818,7 @@ namespace ocrGui
                 await ProcessOutputLine(line);
             };
 
-            _currentProcess.ErrorDataReceived += async (sender, e) =>
+            _currentProcess.ErrorDataReceived += async (_, e) =>
             {
                 if (e.Data == null) return;
                 await ProcessOutputLine($"Error: {e.Data}");
@@ -760,6 +846,9 @@ namespace ocrGui
                         {
                             _isProcessing = false;
                             _isProcessingCompleted = true;
+                            
+                            // Set the current process to null when it completes
+                            _currentProcess = null;
                             
                             // Lock the progress bar at 100%
                             _progressBarLocked = true;
@@ -816,6 +905,9 @@ namespace ocrGui
             _currentOutputFolder = outputFolder;
         }
         
+        /// <summary>
+        /// Processes a line of output from the OCR application.
+        /// </summary>
         private async Task ProcessOutputLine(string line)
         {
             if (_outputTextBox == null) return;
@@ -862,6 +954,9 @@ namespace ocrGui
             }
         }
 
+        /// <summary>
+        /// Updates the progress bar with the specified progress value.
+        /// </summary>
         private async Task UpdateProgress(double progress)
         {
             await Dispatcher.UIThread.InvokeAsync(() =>
@@ -870,6 +965,9 @@ namespace ocrGui
             });
         }
 
+        /// <summary>
+        /// Updates the progress bar with the specified progress value.
+        /// </summary>
         private void UpdateProgressBar(double progress)
         {
             if (_progressBar == null || _progressBarLocked || _isProcessingCompleted)
@@ -903,6 +1001,9 @@ namespace ocrGui
             this.Title = $"OCR Application - {progress:0}% Complete - {remainingText}";
         }
 
+        /// <summary>
+        /// Updates the progress text with the specified custom text or default progress information.
+        /// </summary>
         private async Task UpdateProgressText(string? customText = null)
         {
             if (_progressNameTextBlock == null)
@@ -951,27 +1052,31 @@ namespace ocrGui
             });
         }
 
+        /// <summary>
+        /// Formats a TimeSpan into a string representation.
+        /// </summary>
         private string FormatTimeSpan(TimeSpan span)
         {
             return $"{(int)span.TotalHours:D2}:{span.Minutes:D2}:{span.Seconds:D2}";
         }
 
+        /// <summary>
+        /// Handles the click event for the Exit button.
+        /// </summary>
         private void ExitButton_Click(object? sender, RoutedEventArgs e)
         {
+            // Make sure the exit button works even if the process has completed
             if (_outputTextBox != null)
             {
-                ExitButtonHandler.HandleExit(this, _isProcessing, _currentProcess, _outputTextBox);
+                // Only pass isProcessing=true if the process is actually running
+                bool actuallyProcessing = _isProcessing && _currentProcess != null && !_currentProcess.HasExited;
+                ExitButtonHandler.HandleExit(this, actuallyProcessing, _currentProcess, _outputTextBox);
             }
         }
 
-        private void SetCloseButtonVisibility(bool visible)
-        {
-            if (_exitButton != null)
-            {
-                _exitButton.IsVisible = !visible;
-            }
-        }
-
+        /// <summary>
+        /// Determines if a line of output should be filtered out from display.
+        /// </summary>
         private bool ShouldFilterOutput(string line)
         {
             // Filter out folder path prompts
@@ -990,6 +1095,10 @@ namespace ocrGui
             return false;
         }
 
+        /// <summary>
+        /// Handles the click event for the View Excel button.
+        /// Opens a file picker dialog to select and open an Excel file.
+        /// </summary>
         private async void ViewExcelButton_Click(object? sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_currentOutputFolder) || !Directory.Exists(_currentOutputFolder))
@@ -1034,11 +1143,18 @@ namespace ocrGui
             }
         }
         
+        /// <summary>
+        /// Opens the specified Excel file.
+        /// </summary>
         private void OpenExcelFile(string filePath)
         {
             OpenFile(filePath, "Excel");
         }
 
+        /// <summary>
+        /// Handles the click event for the View Images button.
+        /// Opens a file picker dialog to select and open an image file.
+        /// </summary>
         private async void ViewImagesButton_Click(object? sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_currentOutputFolder) || !Directory.Exists(_currentOutputFolder))
@@ -1090,6 +1206,10 @@ namespace ocrGui
             }
         }
         
+        /// <summary>
+        /// Handles the click event for the View Text button.
+        /// Opens a file picker dialog to select and open a text file.
+        /// </summary>
         private async void ViewTextButton_Click(object? sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_currentOutputFolder) || !Directory.Exists(_currentOutputFolder))
@@ -1141,6 +1261,9 @@ namespace ocrGui
             }
         }
         
+        /// <summary>
+        /// Opens the specified file with the default application for its type.
+        /// </summary>
         private void OpenFile(string filePath, string fileType)
         {
             try

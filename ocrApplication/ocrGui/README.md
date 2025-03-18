@@ -1,58 +1,127 @@
 # OCR GUI Application
 
 ## Overview
-The OCR GUI Application provides a user-friendly graphical interface for the OCR processing capabilities of the core OCR engine. It allows users to select input and output folders, process images, and view results in real-time.
+OCR GUI is a user-friendly graphical interface for the OCR functionality provided by the core OCR Application. Built with the Avalonia UI framework, it offers cross-platform compatibility and a modern user experience for OCR processing.
 
 ## Features
-- Modern, intuitive user interface built with Avalonia UI
-- Folder selection for batch processing
-- Real-time progress monitoring
-- Interactive console output
-- Input handling for interactive OCR processes
-- Cross-platform support (Windows, macOS, Linux)
+- **Intuitive User Interface**: Easy-to-use interface for loading and processing images
+- **Image Visualization**: View original and preprocessed images
+- **Real-time Processing**: See OCR results as they are processed
+- **Multiple OCR Engines**: Choose between different OCR engines
+- **Preprocessing Options**: Apply various preprocessing techniques through GUI
+- **Result Export**: Export results to multiple formats (Excel, PDF, CSV)
+- **Cross-platform**: Works on Windows and macOS
 
-## User Interface Components
+## Installation and Setup
 
-### Input Controls
-- Input folder selection
-- Output folder selection
-- Process button to start OCR operations
-- Exit button with confirmation dialog
+### Prerequisites
+- .NET 8.0 SDK and runtime
+- Tesseract OCR engine
+- Google Cloud Vision API key (optional)
+- 8GB+ RAM recommended
 
-### Progress Monitoring
-- Progress bar with percentage display
-- Dynamic window title updating with progress information
+### Dependencies
+The GUI application relies on the following key packages:
+- Avalonia (11.1.3) - Cross-platform UI framework
+- Avalonia.Desktop (11.1.3) - Desktop platform support
+- Avalonia.Themes.Fluent (11.1.3) - Modern UI theme
+- Avalonia.Diagnostics (11.1.3) - Development-time debugging tools
 
-### Output Display
-- Scrollable text output area
-- Interactive input section for processes that require user feedback
+It also leverages all the OCR functionality from the core ocrApplication project.
 
-## Architecture
-The GUI application follows the MVVM (Model-View-ViewModel) pattern:
-- `MainWindow.axaml` - The main view definition
-- `MainWindow.axaml.cs` - Code-behind for the main window
-- `ExitButtonHandler.cs` - Handler for application exit functionality
-- `App.axaml` and `App.axaml.cs` - Application entry point and configuration
+### Configuration
+The GUI uses the same configuration as the core OCR application. Ensure you have a `config.json` file in the root directory or parent directory with:
+```json
+{
+  "ApiKeys": {
+    "GoogleCloudVision": "YOUR_API_KEY"
+  },
+  "Settings": {
+    "TesseractPath": "YOUR_TESSERACT_PATH",
+    "TessDataPath": "YOUR_TESSDATA_PATH"
+  }
+}
+```
 
-## Dependencies
-- Avalonia UI framework 11.1.3
-- MessageBox.Avalonia 3.2.0
-- .NET 8.0
+## How to Run
 
-## Building and Running
-1. Ensure you have .NET 8.0 SDK installed
-2. Build the solution: `dotnet build ocrGui.csproj`
-3. Run the application: `dotnet run --project ocrGui.csproj`
+```bash
+cd ocrGui
+dotnet run
+```
 
-## Usage Guide
-1. Launch the application
-2. Select an input folder containing images to process
-3. Select an output folder where results will be saved
-4. Click "Process Images" to start the OCR process
-5. Monitor progress in the output area
-6. Provide input when prompted
-7. Use "Exit Application" to safely close the application
+## User Interface
 
-## Notes
-- When an OCR process is running, the application will prompt for confirmation before exiting
-- The application interface will adapt to show relevant controls based on the current processing state 
+### Main Window
+The main window provides the following functionality:
+- Image loading and selection
+- Preprocessing method selection
+- OCR engine selection
+- Processing controls
+- Result visualization
+- Export options
+
+### Workflow
+1. Click "Select Images" to choose images for processing
+2. Select desired preprocessing methods from the checkboxes
+3. Choose OCR engines to use
+4. Click "Process" to start OCR
+5. View results in the results panel
+6. Export results using the export buttons
+
+## Key Components
+
+### 1. MainWindow
+The primary UI component that orchestrates the GUI experience and integrates with the core OCR functionality.
+
+### 2. ExitButtonHandler
+Manages application exit and cleanup operations.
+
+### 3. Image Viewing
+The application provides functionality to view:
+- Original images
+- Preprocessed images with different techniques
+- Side-by-side comparisons
+
+### 4. OCR Processing
+The GUI leverages the same powerful OCR processing capabilities as the command-line application:
+- Multiple preprocessing techniques
+- Multiple OCR engines
+- Ensemble approaches
+- Text similarity analysis
+
+### 5. Results Display
+Results are displayed in an organized manner:
+- Text output by preprocessing method
+- Confidence scores
+- Performance metrics
+
+### 6. Export Options
+The GUI provides multiple export options:
+- Excel exports for detailed analysis
+- PDF exports with visualizations
+- CSV exports for raw data
+
+## Keyboard Shortcuts
+- Ctrl+O: Open image(s)
+- Ctrl+P: Process selected images
+- Ctrl+E: Export results
+- Ctrl+Q: Quit application
+
+## Performance Considerations
+- Processing multiple images simultaneously may require significant memory
+- Complex preprocessing methods may take longer to display
+- Google Cloud Vision API requires internet connectivity
+
+## Troubleshooting
+- Ensure Tesseract is properly installed and paths are correctly configured
+- Check for valid Google Cloud Vision API key if using that engine
+- If images don't display properly, check for correct image file formats
+- For UI responsiveness issues, try processing fewer images at once
+
+## Future Enhancements
+- Batch processing improvements
+- Advanced visualization options
+- Custom preprocessing workflow creation
+- OCR region selection
+- Template-based OCR processing 

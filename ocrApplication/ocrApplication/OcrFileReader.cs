@@ -6,16 +6,21 @@ using System.IO;
 
 /// <summary>
 /// Reads and processes OCR result files.
-/// Contains static utilities for text extraction from result files.
+/// This class provides methods to load OCR results from disk and prepare them for further processing.
 /// </summary>
 public abstract class OcrFileReader
 {
     /// <summary>
     /// Extracts OCR text from multiple files.
     /// Collects content from each file path, skipping inaccessible files.
+    /// Errors during file reading are logged but don't interrupt the overall process.
     /// </summary>
-    /// <param name="filePaths">OCR result file locations</param>
-    /// <returns>Collection of extracted text contents</returns>
+    /// <param name="filePaths">List of OCR result file locations to read from</param>
+    /// <returns>Collection of extracted text contents from all readable files</returns>
+    /// <remarks>
+    /// This method is resilient to file access errors and will continue processing
+    /// other files even if some are inaccessible or corrupted.
+    /// </remarks>
     public static List<string> ReadOcrResultsFromFiles(List<string> filePaths)
     {
         // Create a new list to store the OCR results from all files

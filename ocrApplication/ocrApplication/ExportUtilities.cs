@@ -6,9 +6,20 @@ using OfficeOpenXml;
 
 namespace ocrApplication
 {
+    /// <summary>
+    /// Provides utility methods for exporting OCR results to various file formats.
+    /// Supports exporting to plain text, PDF, Excel, and other formats, with various
+    /// levels of detail and summary information.
+    /// </summary>
     public static class ExportUtilities
     {
-        // Export OCR results to a plain text file
+        /// <summary>
+        /// Exports OCR results to a plain text file with basic formatting.
+        /// Each image's filename and extracted text are included with separator lines.
+        /// </summary>
+        /// <param name="outputPath">Full path for the output text file</param>
+        /// <param name="extractedTexts">Dictionary mapping image paths to their extracted OCR text</param>
+        /// <exception cref="Exception">Throws exception if writing to file fails</exception>
         private static void ExportToPlainText(string outputPath, ConcurrentDictionary<string, string> extractedTexts)
         {
             try
@@ -29,7 +40,13 @@ namespace ocrApplication
             }
         }
 
-        // Export OCR results to a PDF file using iText library
+        /// <summary>
+        /// Exports OCR results to a PDF file with formatted layout.
+        /// Creates a professional PDF document with image filenames and their OCR text results.
+        /// </summary>
+        /// <param name="outputPath">Full path for the output PDF file</param>
+        /// <param name="extractedTexts">Dictionary mapping image paths to their extracted OCR text</param>
+        /// <exception cref="Exception">Throws exception if PDF generation fails</exception>
         private static void ExportToPdf(string outputPath, ConcurrentDictionary<string, string> extractedTexts)
         {
             try
@@ -44,6 +61,8 @@ namespace ocrApplication
                     document.Add(new Paragraph($"Extracted text: {entry.Value}"));
                     document.Add(new Paragraph("--------------------------------------------------\n"));
                 }
+                
+                document.Close();
             }
             catch (Exception)
             {
@@ -52,7 +71,12 @@ namespace ocrApplication
             }
         }
 
-        // Method to prompt user for export type and perform the export
+        /// <summary>
+        /// Exports OCR results to multiple file formats (text, PDF).
+        /// This overload handles only the extracted text without best method information.
+        /// </summary>
+        /// <param name="outputPath">Base path for output files (without extension)</param>
+        /// <param name="extractedTexts">Dictionary mapping image paths to their extracted OCR text</param>
         private static void ExportResults(string outputPath, ConcurrentDictionary<string, string> extractedTexts)
         {
             bool validSelection = false;
@@ -95,7 +119,23 @@ namespace ocrApplication
             }
         }
 
-        // Overloaded method that also includes best preprocessing methods information
+        /// <summary>
+        /// Exports complete OCR results to multiple file formats, including best methods summaries.
+        /// This is the main export method that handles all result types and creates comprehensive reports.
+        /// </summary>
+        /// <param name="outputPath">Base path for output files (without extension)</param>
+        /// <param name="extractedTexts">Dictionary mapping image paths to their extracted OCR text</param>
+        /// <param name="bestCosineMethods">Dictionary mapping images to their best methods based on cosine similarity</param>
+        /// <param name="bestLevenshteinMethods">Dictionary mapping images to their best methods based on Levenshtein distance</param>
+        /// <param name="bestClusteringMethods">Dictionary mapping images to their best methods based on clustering analysis</param>
+        /// <param name="overallBestMethods">Dictionary mapping images to their overall best preprocessing methods</param>
+        /// <remarks>
+        /// This method creates multiple output files:
+        /// - Text file with basic OCR results
+        /// - PDF with formatted OCR results
+        /// - Excel file with detailed best method analysis
+        /// - Summary files with preprocessing method comparisons
+        /// </remarks>
         public static void ExportResults(
             string outputPath, 
             ConcurrentDictionary<string, string> extractedTexts,
@@ -151,7 +191,16 @@ namespace ocrApplication
             // Best methods summaries are not exported as per user request
         }
         
-        // Exports the summary of best preprocessing methods to various file formats.
+        /// <summary>
+        /// Exports a summary of best preprocessing methods to Excel format.
+        /// Creates a structured Excel file showing which methods performed best for each image
+        /// according to different metrics, with detailed analysis and comparisons.
+        /// </summary>
+        /// <param name="outputPath">Base path for output file (without extension)</param>
+        /// <param name="bestCosineMethods">Dictionary mapping images to their best methods based on cosine similarity</param>
+        /// <param name="bestLevenshteinMethods">Dictionary mapping images to their best methods based on Levenshtein distance</param>
+        /// <param name="bestClusteringMethods">Dictionary mapping images to their best methods based on clustering analysis</param>
+        /// <param name="overallBestMethods">Dictionary mapping images to their overall best preprocessing methods</param>
         private static void ExportBestMethodsSummary(
             string outputPath,
             ConcurrentDictionary<string, string> bestCosineMethods,
@@ -279,10 +328,11 @@ namespace ocrApplication
         }
         
         /// <summary>
-        /// Read the best preprocessing methods from the Excel file
+        /// Reads the best preprocessing methods from an Excel file.
+        /// Extracts the best methods based on cosine similarity and Levenshtein distance.
         /// </summary>
-        /// <param name="excelFilePath">Path to the Excel file to read from</param>
-        /// <returns>A tuple containing the best methods by cosine similarity and Levenshtein distance</returns>
+        /// <param name="excelFilePath">Path to the Excel file containing OCR analysis results</param>
+        /// <returns>A tuple containing the best method by cosine similarity and the best method by Levenshtein distance</returns>
         public static (string? bestCosine, string? bestLevenshtein) ReadBestMethodsFromExcel(string excelFilePath)
         {
             string? bestCosineMethod = null;
@@ -340,15 +390,17 @@ namespace ocrApplication
         }
 
         /// <summary>
-        /// Provides functionality for reading data from Excel files.
+        /// Helper class for reading OCR analysis results from Excel files.
+        /// Provides specialized methods for extracting specific metrics and best methods.
         /// </summary>
         public class ExcelFileReader
         {
             /// <summary>
             /// Reads the best preprocessing method based on cosine similarity from an Excel file.
+            /// Searches for the highest cosine similarity score and returns the corresponding method name.
             /// </summary>
-            /// <param name="excelFilePath">Path to the Excel file.</param>
-            /// <returns>The best preprocessing method or null if not found.</returns>
+            /// <param name="excelFilePath">Path to the Excel file containing OCR analysis results</param>
+            /// <returns>The name of the preprocessing method with the highest cosine similarity, or null if not found</returns>
             public string? ReadBestCosineSimilarityMethodFromExcel(string excelFilePath)
             {
                 try
@@ -378,9 +430,10 @@ namespace ocrApplication
 
             /// <summary>
             /// Reads the best preprocessing method based on Levenshtein distance from an Excel file.
+            /// Searches for the highest Levenshtein similarity score and returns the corresponding method name.
             /// </summary>
-            /// <param name="excelFilePath">Path to the Excel file.</param>
-            /// <returns>The best preprocessing method or null if not found.</returns>
+            /// <param name="excelFilePath">Path to the Excel file containing OCR analysis results</param>
+            /// <returns>The name of the preprocessing method with the highest Levenshtein similarity, or null if not found</returns>
             public string? ReadBestLevenshteinMethodFromExcel(string excelFilePath)
             {
                 try
@@ -410,9 +463,10 @@ namespace ocrApplication
 
             /// <summary>
             /// Reads the best preprocessing method based on clustering analysis from an Excel file.
+            /// Identifies the method determined to be best through cluster analysis of OCR results.
             /// </summary>
-            /// <param name="excelFilePath">Path to the Excel file.</param>
-            /// <returns>The best preprocessing method or null if not found.</returns>
+            /// <param name="excelFilePath">Path to the Excel file containing OCR analysis results</param>
+            /// <returns>The name of the preprocessing method determined best by clustering, or null if not found</returns>
             public string? ReadBestClusteringMethodFromExcel(string excelFilePath)
             {
                 try

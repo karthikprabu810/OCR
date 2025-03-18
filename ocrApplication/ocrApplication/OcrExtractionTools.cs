@@ -129,6 +129,39 @@ namespace ocrApplication
         }
         
         /// <summary>
+        /// Asynchronously processes image with Tesseract command-line and saves results to file.
+        /// Uses system-installed Tesseract binary rather than NuGet package.
+        /// </summary>
+        /// <param name="imagePath">Source image path</param>
+        /// <param name="outputPath">Output path (without extension)</param>
+        /// <param name="language">OCR language code (default: eng)</param>
+        /// <returns>Task representing the asynchronous operation</returns>
+        public async Task ExtractTextUsingTesseractAsync(string imagePath, string outputPath, string language = "eng")
+        {
+            // Build the Tesseract command with proper quoting for paths
+            string tesseractCommand = $"\"{_tesseractPath}\" \"{imagePath}\" \"{outputPath}\" 2>/dev/null";
+
+            // Configure the process to run the command
+            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            {
+                FileName = "/bin/bash",                 // Use bash shell on macOS/Linux
+                Arguments = $"-c \"{tesseractCommand}\"", // Pass the command to bash
+                RedirectStandardOutput = true,          // Capture output (not used here)
+                UseShellExecute = false,                // Don't use the OS shell
+                CreateNoWindow = true                   // Don't show a command window
+            };
+
+            // Start the process and wait for it to complete asynchronously
+            using (Process process = Process.Start(processStartInfo))
+            {
+                await process.WaitForExitAsync();  // Asynchronously block until the process finishes
+            }
+
+            // Log completion message
+            //Console.WriteLine("Tesseract OCR complete! Check the output text file.");
+        }
+        
+        /// <summary>
         /// Extracts text using Tesseract OCR .NET library.
         /// Returns result as string rather than writing to file.
         /// </summary>

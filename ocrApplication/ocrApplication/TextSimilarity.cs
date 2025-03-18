@@ -85,12 +85,12 @@ namespace ocrApplication
                         // This measures how similar the word frequency distributions are
                         if (i == 0 || j == 0)
                         {
-                            similarityMatrix[i, j] = _ocrComparison.CalculateCosineSimilarity(allTexts[i], allTexts[j]);
+                            similarityMatrix[i, j] = Math.Round(_ocrComparison.CalculateCosineSimilarity(allTexts[i], allTexts[j]),2);
                         }
                         else
                         {
                             // For comparing OCR methods with each other
-                            similarityMatrix[i, j] = _ocrComparison.CalculateCosineSimilarity(allTexts[i], allTexts[j]);
+                            similarityMatrix[i, j] = Math.Round(_ocrComparison.CalculateCosineSimilarity(allTexts[i], allTexts[j]),2);
                         }
                     }
                 }
@@ -136,12 +136,12 @@ namespace ocrApplication
                         // This measures character-level edit distance, good for detecting spelling errors
                         if (i == 0 || j == 0)
                         {
-                            similarityMatrix[i, j] = _ocrComparison.CalculateLevenshteinSimilarity(allTexts[i], allTexts[j]);
+                            similarityMatrix[i, j] = Math.Round(_ocrComparison.CalculateLevenshteinSimilarity(allTexts[i], allTexts[j]),2);
                         }
                         else
                         {
                             // For comparing OCR methods with each other
-                            similarityMatrix[i, j] = _ocrComparison.CalculateLevenshteinSimilarity(allTexts[i], allTexts[j]);
+                            similarityMatrix[i, j] = Math.Round(_ocrComparison.CalculateLevenshteinSimilarity(allTexts[i], allTexts[j]),2);
                         }
                     }
                 }
@@ -200,7 +200,7 @@ namespace ocrApplication
                         // Apply conditional formatting (heatmap)
                         // Higher values (closer to 100) get more intense green
                         // Lower values get more intense red
-                        double normalizedValue = matrix[i, j] / 100.0; // Assuming values are 0-100
+                        double normalizedValue = matrix[i, j]/100; // Assuming values are 0-100
                             
                         if (normalizedValue >= 0.5)
                         {
@@ -319,8 +319,8 @@ namespace ocrApplication
                         string methodName = preprocessingMethods[i];
                         
                         // Calculate similarities with the provided ground truth
-                        double cosineSimilarity = _ocrComparison.CalculateCosineSimilarity(ocrResult, groundTruth);
-                        double levenshteinSimilarity = _ocrComparison.CalculateLevenshteinSimilarity(ocrResult, groundTruth);
+                        double cosineSimilarity = Math.Round(_ocrComparison.CalculateCosineSimilarity(ocrResult, groundTruth),2);
+                        double levenshteinSimilarity = Math.Round(_ocrComparison.CalculateLevenshteinSimilarity(ocrResult, groundTruth),2);
                         
                         // Calculate text statistics
                         int wordCount = ocrResult.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -337,7 +337,7 @@ namespace ocrApplication
                         worksheet.Cells[row, 6].Value = uniqueWordCount;
                         
                         // Apply conditional formatting based on similarity
-                        ApplyConditionalFormatting(worksheet.Cells[row, 2], cosineSimilarity );
+                        ApplyConditionalFormatting(worksheet.Cells[row, 2], cosineSimilarity);
                         ApplyConditionalFormatting(worksheet.Cells[row, 3], levenshteinSimilarity);
                         
                         if (cosineSimilarity > maxCosine)
@@ -409,10 +409,10 @@ namespace ocrApplication
             }
 
             // Apply Color formatting for the cells based on the similarity percentage
-            private void ApplyConditionalFormatting(ExcelRange cell, double value)
+            private void ApplyConditionalFormatting(ExcelRange cell, double normalizedValue)
             {
                 cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                
+                /*
                 if (value >= 91)
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.Green); // 91-100: Green
@@ -452,27 +452,27 @@ namespace ocrApplication
                 else
                 {
                     cell.Style.Fill.BackgroundColor.SetColor(Color.Red); // 0-10: Red
-                }
+                }*/
                 
                 
                 
                 
                 
-                /*if (normalizedValue >= 0.7)
+                if (normalizedValue >= 0.7)
                 {
                     // Good similarity (green)
-                    cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(255, 200, 255, 200));
+                    cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 200, 255, 200));
                 }
                 else if (normalizedValue >= 0.5)
                 {
                     // Medium similarity (yellow)
-                    cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(255, 255, 255, 200));
+                    cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 255, 255, 200));
                 }
                 else
                 {
                     // Poor similarity (red)
-                    cell.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(255, 255, 200, 200));
-                }*/
+                    cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(255, 255, 200, 200));
+                }
             }
         }
     }

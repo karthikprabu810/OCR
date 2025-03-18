@@ -80,7 +80,7 @@ namespace ocrApplication
             // Prevent division by zero
             if (magnitude1 == 0 || magnitude2 == 0)
                 return 0;
-
+            
             // Calculate cosine similarity
             return (dotProduct / (float)(Math.Sqrt(magnitude1) * Math.Sqrt(magnitude2)))*100;
         }
@@ -132,7 +132,7 @@ namespace ocrApplication
         /// <returns>
         /// An integer representing the minimum number of edits needed to transform text1 into text2.
         /// </returns>
-        public int CalculateLevenshteinDistance(string text1, string text2)
+        private int CalculateLevenshteinDistance(string text1, string text2)
         {
             if (string.IsNullOrEmpty(text1))
                 return string.IsNullOrEmpty(text2) ? 0 : text2.Length;
@@ -196,6 +196,7 @@ namespace ocrApplication
 
             // Convert distance to similarity score (1 - normalized distance)
             float maxLength = Math.Max(text1.Length, text2.Length);
+            
             return (maxLength == 0 ? 1.0f : 1.0f - (distance / maxLength))*100;
         }
 

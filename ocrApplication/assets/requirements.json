@@ -13,7 +13,13 @@
         { "name": "EnsembleOcr", "description": "Combined OCR results using majority voting and other ensemble techniques" },
         { "name": "TextSimilarity", "description": "Text comparison and similarity analysis tools" },
         { "name": "ExecutionTimeLogger", "description": "Performance tracking and metrics collection" },
-        { "name": "ExportUtilities", "description": "Result export functionality to various formats" }
+        { "name": "ExportUtilities", "description": "Result export functionality to various formats" },
+        { "name": "OcrProcessor", "description": "Orchestrates the OCR processing workflow" },
+        { "name": "OcrSummary", "description": "Generates summary reports of OCR results" },
+        { "name": "InputHandler", "description": "Handles user input and file discovery" },
+        { "name": "ClusterAnalysis", "description": "Performs clustering analysis on OCR results" },
+        { "name": "OcrComparision", "description": "Compares results from different OCR methods" },
+        { "name": "EnsembleOcrWithConfidence", "description": "Enhanced ensemble OCR with confidence scores" }
       ],
       "packages": [
         { "name": "Emgu.CV.runtime.mini.macos", "version": "4.9.0.5494" },
@@ -31,11 +37,18 @@
         { "name": "TensorFlow.NET", "version": "0.150.0" },
         { "name": "TensorFlowSharp.ARM", "version": "1.7.0-preview1" },
         { "name": "Tesseract", "version": "5.2.0" },
-        { "name": "XUCore.ShellProgressBar", "version": "6.10.14-preview1" }
+        { "name": "XUCore.ShellProgressBar", "version": "6.10.14-preview1" },
+        { "name": "Accord.MachineLearning", "version": "3.8.0" },
+        { "name": "Accord.Statistics", "version": "3.8.0" }
       ]
     },
     "ocrGui": {
       "framework": "net8.0",
+      "components": [
+        { "name": "MainWindow", "description": "Primary UI component for OCR processing" },
+        { "name": "ExitButtonHandler", "description": "Manages application exit" },
+        { "name": "App", "description": "Main application entry point" }
+      ],
       "packages": [
         { "name": "Avalonia", "version": "11.1.3" },
         { "name": "Avalonia.Desktop", "version": "11.1.3" },
@@ -43,8 +56,20 @@
         { "name": "Avalonia.Themes.Fluent", "version": "11.1.3" }
       ]
     },
-    "TestProject": {
+    "unitTestProject": {
       "framework": "net8.0",
+      "components": [
+        { "name": "OcrExtractionToolsTests", "description": "Tests for OCR extraction functionality" },
+        { "name": "EnsembleOcrTests", "description": "Tests for ensemble OCR methods" },
+        { "name": "TextSimilarityTests", "description": "Tests for text similarity comparisons" },
+        { "name": "ImagePreprocessingTests", "description": "Tests for image preprocessing methods" },
+        { "name": "GuiTests", "description": "Tests for GUI functionality" },
+        { "name": "GuiComponentTests", "description": "Tests for individual GUI components" },
+        { "name": "ViewButtonsTests", "description": "Tests for view buttons in GUI" },
+        { "name": "ThreeViewButtonsTests", "description": "Tests for three-view button functionality" },
+        { "name": "IntegrationTests", "description": "End-to-end integration tests" },
+        { "name": "TestHelpers", "description": "Helper methods for testing" }
+      ],
       "packages": [
         { "name": "coverlet.collector", "version": "6.0.0" },
         { "name": "Emgu.CV.runtime.windows", "version": "4.9.0.5494" },
@@ -98,7 +123,8 @@
         },
         "traineddata": {
           "description": "Language data files",
-          "location": "Should be placed in the 'tessdata' directory within your application"
+          "location": "Should be placed in the 'tessdata' directory within your application",
+          "source": "The tessdata.zip file in the assets folder contains required language data files"
         }
       }
     }
@@ -108,6 +134,17 @@
     "preprocessing": "Multiple image preprocessing techniques for improved OCR accuracy",
     "ensemble-ocr": "Combines results from multiple OCR engines for better accuracy",
     "performance-tracking": "Measures and reports on OCR execution time and memory usage",
-    "comparative-analysis": "Generates comparative analysis of different preprocessing techniques"
+    "comparative-analysis": "Generates comparative analysis of different preprocessing techniques",
+    "gui-interface": "User-friendly graphical interface for OCR operations",
+    "testing-framework": "Comprehensive testing suite for reliability and accuracy"
+  },
+  "documentation": {
+    "readme": {
+      "parent": "README.md in root directory with overall project information",
+      "ocrApplication": "README.md in ocrApplication directory with command-line tool details",
+      "ocrGui": "README.md in ocrGui directory with GUI application details",
+      "unitTestProject": "README.md in unitTestProject directory with testing information"
+    },
+    "api": "README_API.md in assets directory contains API usage information"
   }
 } 

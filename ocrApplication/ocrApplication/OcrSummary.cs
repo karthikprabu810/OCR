@@ -39,14 +39,22 @@ namespace ocrApplication
         }
         
         /// <summary>
-        /// Reads the best preprocessing methods from Excel files generated during OCR processing.
-        /// For each image, attempts to read the Excel file containing the analysis results
-        /// and extracts the best methods based on cosine similarity and Levenshtein distance.
+        /// Reads the best preprocessing methods from Excel files for each image.
+        /// Analyzes results based on different similarity metrics (cosine, Levenshtein, clustering)
+        /// and determines which preprocessing method performed best for each image.
         /// </summary>
-        /// <param name="imageFiles">Array of image file paths that were processed.</param>
-        /// <param name="ocrResultsFolder">Path to the folder containing OCR results.</param>
-        /// <returns>A tuple containing dictionaries of best methods by cosine similarity and Levenshtein distance.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
+        /// <param name="imageFiles">Array of image file paths that were processed</param>
+        /// <param name="ocrResultsFolder">Folder containing the OCR result files</param>
+        /// <returns>
+        /// A tuple of three dictionaries mapping image paths to their best preprocessing methods based on:
+        /// 1. Cosine similarity
+        /// 2. Levenshtein distance
+        /// 3. Clustering analysis
+        /// </returns>
+        /// <remarks>
+        /// This method expects specific Excel files in the results folder that were generated
+        /// during the OCR processing phase. If these files don't exist, empty dictionaries are returned.
+        /// </remarks>
         public static (ConcurrentDictionary<string, string>, ConcurrentDictionary<string, string>, ConcurrentDictionary<string, string>) 
             ReadBestMethodsFromExcelFiles(string[] imageFiles, string ocrResultsFolder)
         {
@@ -113,15 +121,21 @@ namespace ocrApplication
         }
         
         /// <summary>
-        /// Displays a summary table of the best preprocessing methods for each image.
-        /// Shows a comparison of methods determined by cosine similarity, Levenshtein distance,
-        /// and clustering analysis, along with the overall best method combining all approaches.
+        /// Displays a summary of the best preprocessing methods for each image based on different metrics.
+        /// Creates a console table showing which method performed best for each image according to
+        /// cosine similarity, Levenshtein distance, and clustering analysis.
         /// </summary>
-        /// <param name="bestCosineMethods">Dictionary of best methods by cosine similarity.</param>
-        /// <param name="bestLevenshteinMethods">Dictionary of best methods by Levenshtein distance.</param>
-        /// <param name="bestClusteringMethods">Dictionary of best methods by clustering analysis.</param>
-        /// <returns>Dictionary of overall best methods determined by combining all metrics.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
+        /// <param name="bestCosineMethods">Dictionary mapping images to their best methods based on cosine similarity</param>
+        /// <param name="bestLevenshteinMethods">Dictionary mapping images to their best methods based on Levenshtein distance</param>
+        /// <param name="bestClusteringMethods">Dictionary mapping images to their best methods based on clustering analysis</param>
+        /// <returns>
+        /// A dictionary mapping each image to its overall best preprocessing method,
+        /// determined by combining results from all metrics using a voting mechanism.
+        /// </returns>
+        /// <remarks>
+        /// The overall best method is determined by a simplified voting system - if at least two metrics
+        /// agree on the best method, that method is chosen. Otherwise, Levenshtein is used as the tiebreaker.
+        /// </remarks>
         public static Dictionary<string, string> DisplayBestMethodsSummary(
             ConcurrentDictionary<string, string> bestCosineMethods,
             ConcurrentDictionary<string, string> bestLevenshteinMethods,
@@ -193,12 +207,16 @@ namespace ocrApplication
         }
         
         /// <summary>
-        /// Determines the overall best preprocessing method based on results from multiple approaches.
+        /// Determines the overall best preprocessing method based on results from different metrics.
+        /// Uses a voting system to find consensus among the three similarity metrics.
         /// </summary>
-        /// <param name="bestCosineSimilarityMethod">Best method by cosine similarity.</param>
-        /// <param name="bestLevenshteinMethod">Best method by Levenshtein distance.</param>
-        /// <param name="bestClusteringMethod">Best method by clustering analysis.</param>
-        /// <returns>The overall best preprocessing method.</returns>
+        /// <param name="bestCosineSimilarityMethod">Best method according to cosine similarity</param>
+        /// <param name="bestLevenshteinMethod">Best method according to Levenshtein distance</param>
+        /// <param name="bestClusteringMethod">Best method according to clustering analysis</param>
+        /// <returns>
+        /// The preprocessing method name that is determined to be best overall.
+        /// If there's a tie or no consensus, Levenshtein is prioritized as it's generally most reliable for text.
+        /// </returns>
         private static string DetermineOverallBestMethod(string bestCosineSimilarityMethod, string bestLevenshteinMethod, string bestClusteringMethod)
         {
             // Count occurrences of each method
@@ -225,16 +243,17 @@ namespace ocrApplication
         }
         
         /// <summary>
-        /// Generates a complete summary of OCR processing results and exports them.
-        /// This method orchestrates the entire summary generation process, including displaying
-        /// extracted texts, reading best methods from Excel files, displaying the summary table,
-        /// and exporting the results to files.
+        /// Generates comprehensive OCR summaries and exports them to output files.
+        /// Reads best methods, displays summary information, and triggers the export process.
         /// </summary>
-        /// <param name="imageFiles">Array of image file paths that were processed.</param>
-        /// <param name="ocrResultsFolder">Path to the folder containing OCR results.</param>
-        /// <param name="outputFolderPath">Path to save exported results.</param>
-        /// <param name="extractedTexts">Dictionary containing image paths and their extracted OCR text.</param>
-        /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
+        /// <param name="imageFiles">Array of image file paths that were processed</param>
+        /// <param name="ocrResultsFolder">Folder containing the OCR result files</param>
+        /// <param name="outputFolderPath">Destination folder for exported summary files</param>
+        /// <param name="extractedTexts">Dictionary containing image paths and their extracted OCR text</param>
+        /// <remarks>
+        /// This method orchestrates the entire summary and export process, combining results from
+        /// different analyses and creating various output formats (Excel, PDF, etc.).
+        /// </remarks>
         public static void GenerateAndExportSummary(
             string[] imageFiles, 
             string ocrResultsFolder, 

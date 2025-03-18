@@ -10,9 +10,9 @@ namespace unitTestProject
     [TestClass]
     public class OcrExtractionToolsTests
     {
-        private string _testImagePath;
-        private string _testConfigPath;
-        private OcrExtractionTools _ocrTools;
+        private string _testImagePath;          /// <summary>Path to the test image file containing sample text for OCR extraction</summary>
+        private string _testConfigPath;         /// <summary>Path to the test configuration file with OCR engine settings</summary>
+        private OcrExtractionTools _ocrTools;   /// <summary>Instance of OcrExtractionTools to be tested</summary>
         
         /// <summary>
         /// Sets up the test environment before each test.
@@ -42,67 +42,69 @@ namespace unitTestProject
                 TestHelpers.CleanupTestFiles(_testImagePath);
             }
             
-            if (_ocrTools != null)
-            {
-                _ocrTools.Dispose();
-            }
+            // Dispose OCR tools to release resources
+            _ocrTools?.Dispose();
         }
         
         /// <summary>
-        /// Tests successful initialization with a valid configuration file.
-        /// Verifies that the OcrExtractionTools class can be properly instantiated
-        /// when provided with a valid configuration path.
+        /// Tests that the OcrExtractionTools constructor properly initializes the object
+        /// when provided with a valid configuration file path.
+        /// Verifies that no exceptions are thrown and the object is in a usable state.
         /// </summary>
         [TestMethod]
         public void Constructor_WithValidConfig_InitializesSuccessfully()
         {
-            // Arrange & Act already done in Setup
+            // Act
+            var ocrTools = new OcrExtractionTools(_testConfigPath);
             
             // Assert
-            Assert.IsNotNull(_ocrTools, "OcrExtractionTools should be successfully initialized with valid config");
+            Assert.IsNotNull(ocrTools);
+            
+            // Clean up
+            ocrTools.Dispose();
         }
         
         /// <summary>
-        /// Tests error handling when initializing with an invalid configuration path.
-        /// Verifies that the constructor throws a FileNotFoundException when the
-        /// specified configuration file does not exist.
+        /// Tests that the OcrExtractionTools constructor throws a FileNotFoundException
+        /// when initialized with an invalid or non-existent configuration file path.
+        /// This verifies proper error handling for missing configuration files.
         /// </summary>
         [TestMethod]
         [ExpectedException(typeof(FileNotFoundException))]
         public void Constructor_WithInvalidConfigPath_ThrowsFileNotFoundException()
         {
             // Arrange
-            string nonExistentConfigPath = "non_existent_config.json";
+            string invalidConfigPath = Path.Combine(Path.GetTempPath(), $"non_existent_config_{Guid.NewGuid()}.json");
             
-            // Act - This should throw FileNotFoundException
-            var ocrTools = new OcrExtractionTools(nonExistentConfigPath);
+            // Act - should throw FileNotFoundException
+            var ocrTools = new OcrExtractionTools(invalidConfigPath);
+            
+            // Assert is handled by ExpectedException attribute
         }
         
         /// <summary>
-        /// Tests Tesseract OCR text extraction functionality.
-        /// Verifies that the method successfully processes an image and creates
-        /// an output file containing the extracted text. Handles cases where
-        /// Tesseract is not properly installed.
+        /// Tests the asynchronous Tesseract OCR extraction functionality with a valid image.
+        /// Verifies that the extraction process completes successfully and creates an output file
+        /// containing the extracted text. This test may be skipped if Tesseract is not installed.
         /// </summary>
+        /// <returns>Task representing the asynchronous test operation</returns>
         [TestMethod]
         public async Task ExtractTextUsingTesseractAsync_ValidImage_CreatesOutputFile()
         {
             // Arrange
-            string outputDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, "output");
+            string outputPath = Path.Combine(Path.GetTempPath(), $"ocr_test_output_{Guid.NewGuid():N}");
             
             try
             {
                 // Act
-                _ocrTools.ExtractTextUsingTesseract(_testImagePath, outputPath);
-                
-                // Wait briefly for the process to complete
-                await Task.Delay(1000);
+                await _ocrTools.ExtractTextUsingTesseractAsync(_testImagePath, outputPath);
                 
                 // Assert
                 string outputFilePath = outputPath + ".txt";
-                Assert.IsTrue(File.Exists(outputFilePath), "Output text file should exist");
+                Assert.IsTrue(File.Exists(outputFilePath), "Output file should be created");
+                
+                string extractedText = File.ReadAllText(outputFilePath);
+                Assert.IsFalse(string.IsNullOrEmpty(extractedText), "Extracted text should not be empty");
             }
             catch (Exception ex) when (ex.Message.Contains("Tesseract") || ex.ToString().Contains("process"))
             {
@@ -111,19 +113,19 @@ namespace unitTestProject
             }
             finally
             {
-                // Clean up
-                if (Directory.Exists(outputDir))
+                // Clean up output file
+                string outputFilePath = outputPath + ".txt";
+                if (File.Exists(outputFilePath))
                 {
-                    Directory.Delete(outputDir, true);
+                    File.Delete(outputFilePath);
                 }
             }
         }
         
         /// <summary>
-        /// Tests Tesseract OCR using the Windows NuGet package.
-        /// Verifies that the method can execute successfully when the appropriate
-        /// Tesseract dependencies are available. Handles cases where the NuGet
-        /// package or data files are not properly configured.
+        /// Tests the Windows-specific Tesseract OCR extraction using the NuGet package.
+        /// Verifies that text extraction works correctly on Windows platforms using the
+        /// .NET library integration rather than command-line execution.
         /// </summary>
         [TestMethod]
         public void ExtractTextUsingTesseractWindowsNuGet_ValidImage_ProducesOutput()
@@ -148,11 +150,11 @@ namespace unitTestProject
         }
         
         /// <summary>
-        /// Tests Google Vision API text extraction functionality.
-        /// Verifies that the method can successfully communicate with the Google Vision API
-        /// and extract text from images. Handles cases where API credentials are invalid
-        /// or rate limits are exceeded.
+        /// Tests the Google Cloud Vision API OCR extraction functionality.
+        /// Verifies that the API can successfully extract text from a valid image.
+        /// This test may be skipped if the Google Cloud Vision API key is not configured.
         /// </summary>
+        /// <returns>Task representing the asynchronous test operation</returns>
         [TestMethod]
         public async Task ExtractTextUsingGoogleVisionAsync_ValidImage_ReturnsText()
         {
@@ -174,11 +176,11 @@ namespace unitTestProject
         }
         
         /// <summary>
-        /// Tests OCR.space API text extraction functionality.
-        /// Verifies that the method can successfully communicate with the OCR.space API
-        /// and extract text from images. Handles cases where the API is unavailable
-        /// or returns errors.
+        /// Tests the OCR.space API text extraction functionality.
+        /// Verifies that the API can successfully extract text from a valid image.
+        /// This test may be skipped if the OCR.space API key is not configured.
         /// </summary>
+        /// <returns>Task representing the asynchronous test operation</returns>
         [TestMethod]
         public async Task ExtractTextUsingOcrSpaceAsync_ValidImage_ReturnsText()
         {
@@ -199,10 +201,9 @@ namespace unitTestProject
         }
         
         /// <summary>
-        /// Tests configuration file loading functionality.
-        /// Verifies that the class can successfully load and parse a valid JSON
-        /// configuration file containing all required OCR settings and API keys.
-        /// Tests with a complete configuration including all expected fields.
+        /// Tests the configuration loading functionality of OcrExtractionTools.
+        /// Verifies that the class can correctly parse and load configuration settings
+        /// from a valid JSON configuration file, including API keys and paths.
         /// </summary>
         [TestMethod]
         public void LoadConfig_ValidFile_LoadsConfiguration()

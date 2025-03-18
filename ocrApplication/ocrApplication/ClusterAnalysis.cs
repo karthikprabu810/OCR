@@ -6,14 +6,25 @@ using Emgu.CV.Structure;
 
 namespace ocrApplication
 {
+    /// <summary>
+    /// Provides methods for clustering analysis of OCR results and preprocessed images.
+    /// Uses machine learning techniques to group similar images and OCR outputs
+    /// to identify optimal preprocessing methods and improve OCR accuracy.
+    /// </summary>
     public class ClusterAnalysis
     {
         /// <summary>
         /// Performs clustering on the feature vectors extracted from preprocessed images.
+        /// Groups similar preprocessing results to identify the most effective techniques.
         /// </summary>
         /// <param name="featureVectors">List of feature vectors for each preprocessed image.</param>
         /// <param name="numClusters">Number of clusters to form.</param>
-        /// <returns>Clustering results including cluster labels and evaluation metrics.</returns>
+        /// <returns>A tuple containing cluster labels assigned to each vector and the silhouette score
+        /// which measures the quality of clustering (higher is better).</returns>
+        /// <remarks>
+        /// If there are fewer feature vectors than requested clusters, the method will
+        /// duplicate vectors with small random variations to ensure sufficient samples.
+        /// </remarks>
         public (int[] clusterLabels, double silhouetteScore) PerformClustering(List<double[]> featureVectors, int numClusters)
         {
             // Ensure we have enough samples for clustering
@@ -39,49 +50,46 @@ namespace ocrApplication
             };
 
             // Compute the clusters
-            var clusters = kmeans.Learn(featureVectors.ToArray());
+            int[] labels = kmeans.Learn(featureVectors.ToArray()).Decide(featureVectors.ToArray());
 
-            // Assign each feature vector to a cluster
-            int[] labels = clusters.Decide(featureVectors.ToArray());
-
-            // Calculate silhouette score for evaluation
+            // Calculate silhouette score to evaluate clustering quality
             double silhouetteScore = CalculateSilhouetteScore(featureVectors, labels, numClusters);
-
-            // If we duplicated vectors, return only the labels for original vectors
-            if (featureVectors.Count > numClusters)
-            {
-                labels = labels.Take(Math.Min(numClusters, featureVectors.Count)).ToArray();
-            }
 
             return (labels, silhouetteScore);
         }
 
         /// <summary>
-        /// Adds small random noise to a feature vector to create variation.
+        /// Adds small random noise to a feature vector to create a slightly different version.
+        /// Used when duplicating vectors is needed to meet the minimum cluster count.
         /// </summary>
-        /// <param name="vector">Original feature vector.</param>
-        /// <returns>Feature vector with added noise.</returns>
+        /// <param name="vector">Original feature vector</param>
+        /// <returns>A new vector with small random variations</returns>
         private double[] AddNoiseToVector(double[] vector)
         {
-            Random rand = new Random();
-            double[] noisyVector = new double[vector.Length];
-            
+            // Create a new vector to avoid modifying the original
+            var result = new double[vector.Length];
+            var random = new Random();
+
+            // Add small random variations to each element
             for (int i = 0; i < vector.Length; i++)
             {
-                // Add small random noise (±0.05)
-                noisyVector[i] = vector[i] + (rand.NextDouble() * 0.1 - 0.05);
+                // Add noise in the range of ±5% of the original value
+                double noise = vector[i] * (random.NextDouble() * 0.1 - 0.05);
+                result[i] = vector[i] + noise;
             }
-            
-            return noisyVector;
+
+            return result;
         }
 
         /// <summary>
-        /// Calculates the silhouette score for the clustering results.
+        /// Calculates the silhouette score to evaluate clustering quality.
+        /// The silhouette score measures how similar an object is to its own cluster
+        /// compared to other clusters. Higher values indicate better clustering.
         /// </summary>
-        /// <param name="featureVectors">List of feature vectors.</param>
-        /// <param name="labels">Cluster labels for each feature vector.</param>
-        /// <param name="numClusters">Number of clusters.</param>
-        /// <returns>Silhouette score indicating clustering quality.</returns>
+        /// <param name="featureVectors">List of feature vectors</param>
+        /// <param name="labels">Cluster labels assigned to each vector</param>
+        /// <param name="numClusters">Number of clusters</param>
+        /// <returns>Silhouette score between -1 and 1 (higher is better)</returns>
         private double CalculateSilhouetteScore(List<double[]> featureVectors, int[] labels, int numClusters)
         {
             if (featureVectors.Count <= 1 || numClusters <= 1 || numClusters >= featureVectors.Count)
@@ -152,10 +160,12 @@ namespace ocrApplication
         }
 
         /// <summary>
-        /// Extracts feature vectors from an image.
+        /// Extracts feature vectors from an image for use in clustering.
+        /// These features capture important visual characteristics of the image
+        /// that can be used to compare different preprocessing methods.
         /// </summary>
-        /// <param name="image">The image to extract features from.</param>
-        /// <returns>A feature vector representing the image.</returns>
+        /// <param name="image">Input image</param>
+        /// <returns>Feature vector representing the image</returns>
         public double[] ExtractFeatures(Mat image)
         {
             try

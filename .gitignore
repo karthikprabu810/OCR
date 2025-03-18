@@ -1,4 +1,5 @@
 # JetBrains IDEs (IntelliJ, PyCharm, WebStorm, etc.)
+.DS_Store
 .idea/
 
 # VS Code specific
