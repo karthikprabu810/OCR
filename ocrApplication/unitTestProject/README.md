@@ -1,5 +1,36 @@
 # OCR Unit Test Project
 
+## Table of Contents
+1. [Overview](#overview)
+2. [Key Features](#key-features)
+3. [Test Categories](#test-categories)
+   - [OCR Component Tests](#ocr-component-tests)
+   - [Image Processing Tests](#image-processing-tests)
+   - [GUI Component Tests](#gui-component-tests)
+   - [Integration Tests](#integration-tests)
+4. [Installation and Setup](#installation-and-setup)
+   - [Prerequisites](#prerequisites)
+   - [Dependencies](#dependencies)
+   - [Configuration](#configuration)
+5. [Running the Tests](#running-the-tests)
+   - [Run All Tests](#run-all-tests)
+   - [Run Specific Test Category](#run-specific-test-category)
+   - [Run with Code Coverage](#run-with-code-coverage)
+6. [Test Structure](#test-structure)
+   - [Unit Tests](#unit-tests)
+   - [Integration Tests](#integration-tests)
+   - [Mock Objects](#mock-objects)
+   - [Helper Methods](#helper-methods)
+7. [Adding New Tests](#adding-new-tests)
+   - [Steps to Add a New Test Class](#steps-to-add-a-new-test-class)
+   - [Example Test Structure](#example-test-structure)
+8. [Best Practices](#best-practices)
+   - [For Writing Tests](#for-writing-tests)
+   - [For Test Maintenance](#for-test-maintenance)
+9. [Troubleshooting](#troubleshooting)
+10. [Continuous Integration](#continuous-integration)
+11. [Future Enhancements](#future-enhancements)
+
 ## Overview
 This project contains comprehensive unit and integration tests for the OCR Application Suite, ensuring the reliability, accuracy, and performance of both the command-line application and GUI components. The test suite validates core OCR functionality, image preprocessing, text similarity analysis, and user interface components.
 

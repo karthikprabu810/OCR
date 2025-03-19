@@ -1,5 +1,26 @@
 # OCR Application Suite
 
+## Table of Contents
+1. [Overview](#overview)
+2. [Key Features](#key-features)
+3. [System Requirements](#system-requirements)
+4. [Installation and Setup](#installation-and-setup)
+   - [Clone the repository](#1-clone-the-repository)
+   - [Install .NET dependencies](#2-install-net-dependencies)
+   - [Install Tesseract OCR](#3-install-tesseract-ocr)
+   - [Configuration](#4-configuration)
+   - [Language Data Files](#5-language-data-files)
+5. [Running the Projects](#running-the-projects)
+   - [OCR Application (Command Line)](#ocr-application-command-line)
+   - [OCR GUI](#ocr-gui)
+   - [Unit Tests](#unit-tests)
+6. [Project Structure](#project-structure)
+   - [ocrApplication](#ocrapplication)
+   - [ocrGui](#ocrgui)
+   - [unitTestProject](#unittestproject)
+7. [Dependencies](#dependencies)
+8. [Contributor](#contributor)
+
 ## Overview
 This repository contains a comprehensive OCR (Optical Character Recognition) solution designed to extract text from images with high accuracy. The suite includes three main components:
 
@@ -111,5 +132,5 @@ Comprehensive test suite:
 ## Dependencies
 See the [requirements.json](assets/requirements.json) file for a detailed list of dependencies.
 
-## Contributors
+## Contributor
 Karthik Prabu Natarajan

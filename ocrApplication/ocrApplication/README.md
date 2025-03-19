@@ -1,5 +1,25 @@
 # OCR Application
 
+## Table of Contents
+1. [Overview](#overview)
+2. [Problem Statement](#problem-statement)
+3. [Installation and Setup](#installation-and-setup)
+   - [Prerequisites](#prerequisites)
+   - [Configuration](#configuration)
+4. [Key Components](#key-components)
+   - [ConfigLocator](#configlocator)
+   - [ImagePreprocessing](#imagepreprocessing)
+   - [OcrExtractionTools](#ocrextractiontools)
+   - [EnsembleOcr](#ensembleocr)
+   - [TextSimilarity](#textsimilarity)
+   - [ExecutionTimeLogger](#executiontimelogger)
+   - [ExportUtilities](#exportutilities)
+5. [Usage](#usage)
+   - [Interactive Mode](#interactive-mode)
+   - [Batch Mode](#batch-mode)
+   - [Help](#help)
+6. [Workflow](#workflow)
+
 ## Overview
 The OCR Application is a powerful command-line tool designed to extract text from images using multiple OCR engines and advanced preprocessing techniques. It implements an ensemble approach to improve OCR accuracy by combining results from different engines and preprocessing methods.
 
