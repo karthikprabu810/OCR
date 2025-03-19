@@ -17,15 +17,7 @@ OCR GUI is a user-friendly graphical interface for the OCR functionality provide
 ### Prerequisites
 - .NET 8.0 SDK and runtime
 - Tesseract OCR engine
-- Google Cloud Vision API key (optional)
 - 8GB+ RAM recommended
-
-### Dependencies
-The GUI application relies on the following key packages:
-- Avalonia (11.1.3) - Cross-platform UI framework
-- Avalonia.Desktop (11.1.3) - Desktop platform support
-- Avalonia.Themes.Fluent (11.1.3) - Modern UI theme
-- Avalonia.Diagnostics (11.1.3) - Development-time debugging tools
 
 It also leverages all the OCR functionality from the core ocrApplication project.
 
@@ -101,27 +93,3 @@ The GUI provides multiple export options:
 - Excel exports for detailed analysis
 - PDF exports with visualizations
 - CSV exports for raw data
-
-## Keyboard Shortcuts
-- Ctrl+O: Open image(s)
-- Ctrl+P: Process selected images
-- Ctrl+E: Export results
-- Ctrl+Q: Quit application
-
-## Performance Considerations
-- Processing multiple images simultaneously may require significant memory
-- Complex preprocessing methods may take longer to display
-- Google Cloud Vision API requires internet connectivity
-
-## Troubleshooting
-- Ensure Tesseract is properly installed and paths are correctly configured
-- Check for valid Google Cloud Vision API key if using that engine
-- If images don't display properly, check for correct image file formats
-- For UI responsiveness issues, try processing fewer images at once
-
-## Future Enhancements
-- Batch processing improvements
-- Advanced visualization options
-- Custom preprocessing workflow creation
-- OCR region selection
-- Template-based OCR processing 

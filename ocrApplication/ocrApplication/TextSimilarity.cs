@@ -33,23 +33,46 @@ namespace ocrApplication
             {
                 var embeddings = new List<TextEmbedding>();
                 
+                // Find the maximum dimension across all word vectors for normalization
+                int maxDim = 0;
+                var allWordVectors = new List<Dictionary<string, double>>();
+                
+                // First pass: compute all word vectors and determine max dimension
                 for (int i = 0; i < texts.Count; i++)
                 {
                     // Convert each text to a word frequency vector
                     var wordVector = _ocrComparison.GetWordVector(texts[i]);
+                    allWordVectors.Add(wordVector);
+                    maxDim = Math.Max(maxDim, wordVector.Count);
+                }
+                
+                // Second pass: create embeddings with proper dimensionality
+                for (int i = 0; i < texts.Count; i++)
+                {
+                    // Get the precomputed word vector
+                    var wordVector = allWordVectors[i];
                     
-                    // Convert dictionary of word frequencies to a simple array for visualization
-                    var vector = wordVector.Values.ToArray();
+                    // Convert dictionary values to array while preserving decimal precision
+                    double[] vector = wordVector.Values.Select(v => (double)v).ToArray();
                     
                     // Ensure all vectors have the same dimension by padding with zeros if needed
-                    // This is necessary for visualization and comparison
-                    int maxDim = texts.Select(t => _ocrComparison.GetWordVector(t).Count).Max();
                     if (vector.Length < maxDim)
                     {
                         Array.Resize(ref vector, maxDim);
                     }
                     
-                    // Create a TextEmbedding with the vector and its label
+                    // Normalize vector values to prevent integer truncation in visualization
+                    // This ensures decimal points are preserved when plotted
+                    double maxValue = vector.Length > 0 ? vector.Max() : 1.0;
+                    if (maxValue > 0)
+                    {
+                        for (int j = 0; j < vector.Length; j++)
+                        {
+                            vector[j] = Math.Round(vector[j] / maxValue, 4); // Preserve 4 decimal places
+                        }
+                    }
+                    
+                    // Create a TextEmbedding with the normalized vector and its label
                     embeddings.Add(new TextEmbedding(vector, labels[i]));
                 }
                 

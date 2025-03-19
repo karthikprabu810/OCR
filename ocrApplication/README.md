@@ -53,9 +53,6 @@ dotnet restore
 Create a `config.json` file in the root directory with the following structure:
 ```json
 {
-  "ApiKeys": {
-    "GoogleCloudVision": "YOUR_API_KEY"
-  },
   "Settings": {
     "TesseractPath": "YOUR_TESSERACT_PATH",
     "TessDataPath": "YOUR_TESSDATA_PATH"
@@ -114,8 +111,5 @@ Comprehensive test suite:
 ## Dependencies
 See the [requirements.json](assets/requirements.json) file for a detailed list of dependencies.
 
-## License
-[Insert License Information]
-
 ## Contributors
-[List of Contributors] 
+Karthik Prabu Natarajan

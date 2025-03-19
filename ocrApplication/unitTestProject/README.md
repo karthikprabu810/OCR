@@ -154,17 +154,6 @@ public class NewFeatureTests
 
 ## Troubleshooting
 
-### Common Issues
-- **Test Discovery Issues**: Make sure test classes have `[TestClass]` attribute and methods have `[TestMethod]` attribute
-- **Path Issues**: Ensure test data files use relative paths
-- **Environment Dependencies**: Mock external dependencies when possible
-- **Platform-Specific Issues**: Use conditional compilation for platform-specific tests
-
-### Debugging Tests
-- Use Visual Studio or VS Code for step-by-step debugging
-- Add `Console.WriteLine` statements for debugging information
-- Run tests individually to isolate issues
-
 ## Continuous Integration
 The test suite is designed to run in CI/CD pipelines to ensure code quality:
 - Automatic test execution on commits
