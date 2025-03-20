@@ -5,22 +5,23 @@ The OCR Application Suite is a comprehensive solution for extracting and analyzi
 The application is designed for researchers, data scientists, and professionals who need to extract text from images with high accuracy, especially in scenarios where traditional OCR solutions struggle, such as with poor quality images, diverse fonts, or mixed languages.
 
 ## Table of Contents
-1. [Features](#features)
-2. [Components](#components)
+1. [Goal of the Experiment](#goal-of-the-experiment)
+2. [Features](#features)
+3. [Components](#components)
    - [ocrApplication](#ocrapplication)
    - [ocrGui](#ocrgui)
    - [unitTestProject](#unittestproject)
-3. [System Requirements](#system-requirements)
-4. [Installation](#installation)
+4. [System Requirements](#system-requirements)
+5. [Installation](#installation)
    - [Prerequisites](#prerequisites)
    - [Setup Steps](#setup-steps)
    - [Configuration](#configuration)
    - [Language Data Files](#language-data-files)
-5. [Usage](#usage)
+6. [Usage](#usage)
    - [Command Line Interface](#command-line-interface)
    - [Graphical User Interface](#graphical-user-interface)
-6. [Testing](#testing)
-7. [Architecture](#architecture)
+7. [Testing](#testing)
+8. [Architecture](#architecture)
    - [ocrApplication](#ocrapplication)
       - [Input Handling](#input-handling)
       - [Image Preprocessing](#image-preprocessing)
@@ -31,8 +32,25 @@ The application is designed for researchers, data scientists, and professionals 
    - [ocrGui](#ocrgui)
       - [App axaml](#app-axaml)
       - [Main Window](#main-window)
-9. [Dependencies](#dependencies)
+9. [Result and Visualization](result-and-visualization)
+10. [Dependencies](#dependencies)
 
+## Goal of the Experiment
+The goal of this experiment is to evaluate and optimize the effectiveness of various image preprocessing techniques on the accuracy of Optical Character Recognition (OCR) using the Terrasect SDK. Specifically, this experiment seeks to achieve the following objectives:
+
+1. **Investigate the Impact of Preprocessing**  
+   Assess how different image preprocessing transformations such as shifting, rotating, scaling, contrast adjustments, and noise reduction affect the quality of the extracted text from diverse images, including those with varying quality, lighting conditions, and angles.
+
+2. **Optimize OCR Accuracy**  
+   Utilize the Terrasect API to extract text from preprocessed images and determine which preprocessing methods yield the most accurate and reliable text extraction.
+
+3. **Evaluate Preprocessing Strategies**  
+   Compare the effectiveness of various preprocessing techniques using metrics like cosine similarity, Levenshtein distance, and clustering analysis to identify the preprocessing approach that best improves the OCR output.
+
+4. **Develop a Robust OCR Solution**  
+   Design a console application that loads images, applies preprocessing techniques, extracts text using Terrasect, and outputs both the extracted text and a comparative analysis of the OCR results from different preprocessing approaches.
+
+Ultimately, the experiment aims to enhance OCR capabilities and provide a comprehensive understanding of the role of preprocessing in improving OCR outcomes.
 
 ## Features
 
@@ -191,14 +209,14 @@ The [`InputHandler`](ocrApplication/InputHandler.cs) class load images from spec
 public static class InputHandler
 {
     // Prompts the user for a valid folder path, ensuring that the input is not empty or whitespace.
-    public static string GetFolderPath(string promptMessage) [{ /* ... */ }](ocrApplication/InputHandler.cs#L17)
+    public static string GetFolderPath(string promptMessage) { /* ... */ }
     
     // Discovers all image files in a specified folder and its subfolders.
-    public static string[] DiscoverImageFiles(string inputFolderPath)  [{ /* ... */ }](ocrApplication/InputHandler.cs#L43)
+    public static string[] DiscoverImageFiles(string inputFolderPath)  { /* ... */ }
     
     // Prompts the user to select preprocessing methods to apply from the available options.
     public static List<(string Name, Func<string, Mat> Method)> SelectPreprocessingMethods(
-            (string Name, Func<string, Mat> Method)[] allPreprocessMethods)  [{ /* ... */ }](ocrApplication/InputHandler.cs#L125)
+            (string Name, Func<string, Mat> Method)[] allPreprocessMethods)  { /* ... */ }
     
 }
 ```
@@ -330,9 +348,47 @@ The method [`MainWindow.axaml.cs`](ocrGui/MainWindow.axaml.cs) creates and confi
 public partial class MainWindow : Window
 {
    // This is where we create the main window instance and assign it to the desktop application lifetime. This ensures proper window management and lifecycle.
-   public MainWindow()[{ /* */ }](ocrGui/MainWindow.axaml.cs#L24)
+   public MainWindow(){ /* */ }
 }
 ```
+
+## Result and Visualization
+
+### Similarity Metrics
+The similarity metrics provided quantitative measures of OCR accuracy across different preprocessing methods and document types. The average cosine and Levenshtein similarity scores for each preprocessing configuration indicates higher scores indicating better OCR quality.
+
+![Similarity scores for different preprocessing configurations for a image](assets/readme/image.png) ![Graphical representation of Similarity score for different configuration settings](assets/readme/image-1.png)
+
+The results demonstrated that the combination of preprocessing methods achieved the highest similarity scores, with an average cosine similarity of 0.876 and an average Levenshtein similarity of 0.892. These averages were calculated by performing multiple runs of text extraction on the same image. Among individual preprocessing methods, grayscale provided the most significant improvement in OCR accuracy, with an average cosine similarity of 0.913 and an average Levenshtein similarity of 0.938. 
+
+![Cosine Similarity Matrix of a Image](assets/readme/image-6.png)
+
+The application's visualization tools provided intuitive representations of OCR performance across different preprocessing methods. Figure 7 shows a heatmap visualization of cosine similarity scores for a sample document.
+The heatmap used color intensity to represent similarity strength, with higher values appearing green and lower values appearing red. This visualization enabled users to quickly identify the most effective preprocessing methods for specific documents.
+
+The execution time and memory usage for various image processing techniques shown below was logged, revealing that more complex transformational techniques exhibit longer processing times and increase in memory usage. Additionally, grayscale conversion was found to use more memory in 85% of the cases. 
+
+![Time Consumption for various Image processing techniques](assets/readme/image-2.png) ![Memory uage for various pre-processing techniques](assets/readme/image-3.png)
+
+### Performance Visualization
+The parallel processing implementation significantly improved overall processing efficiency. Table II shows the processing time for different numbers of images for default image processing methods. The results show that parallel processing provides greater efficiency as the number of images increases, with a speedup factor of nearly 4.5× for larger datasets. This efficiency gain is attributed to the concurrent processing model implemented in the OcrProcessor class, which effectively utilizes multiple CPU cores.
+
+![Performance Analysis in single core vs multi-core system](assets/readme/image-4.png)
+
+### Embedding Analysis
+The application generated vector embeddings for OCR text results, enabling detailed analysis of text similarity in a high-dimensional space. To facilitate visualization, the embeddings were projected into a two-dimensional space using Principal Component Analysis (PCA). 
+
+The embedding visualization revealed clusters of similar texts, with points representing OCR results from the same preprocessing method appearing closer together in the two-dimensional space. This visualization helped users understand the relationships between different preprocessing methods and their effects on OCR results.
+
+![Scatter plot of vector embeddings for different preprocessing configurations](assets/readme/image-5.png)
+
+The superimposed vector embeddings suggests that the similar preprocessing techniques provide similar results.
+
+### Graphical User Interface Screen
+
+![GUI-output](<assets/readme/Screenshot 2025-03-18 at 13.20.22.png>)
+
+The user inputs the folder names through the GUI, either by typing the path or selecting folders via a browse dialog. After processing, the extracted text is displayed in the GUI, allowing the user to review or save the results easily.
 
 ## Dependencies
 See the [requirements.json](assets/requirements.json) file for a detailed list of dependencies.
