@@ -111,7 +111,8 @@ namespace ocrApplication
                 ("Rotate_135", ImagePreprocessing.Rotate_135),                            // Rotates the image by 135 degree
                 ("Rotate_180", ImagePreprocessing.Rotate_180),                            // Rotates the image by 180 degree
                 ("BilateralFilter", ImagePreprocessing.BilateralFilter),                  // Edge-preserving smoothing
-                ("ConvertToHSV", ImagePreprocessing.ConvertToHsv)                         // Alternative color representation
+                ("ConvertToHSV", ImagePreprocessing.ConvertToHsv),                        // Alternative color representation
+                ("Combination 1", ImagePreprocessing.Combo1)                              // Alternative color representation
             };
         }
         

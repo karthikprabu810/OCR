@@ -1019,5 +1019,52 @@ public static class ImagePreprocessing
         
         return blackHatImage;
     }
+    
+    public static Mat Combo1(string imagePath)
+    {
+        try
+        {
+            // Load directly in grayscale mode for efficiency
+            Mat grayImage = LoadImage(imagePath, ImreadModes.Grayscale);
+            
+            if (grayImage.IsEmpty)
+            {
+                Console.WriteLine("Error loading image: " + imagePath);
+                return new Mat();
+            }
+            Mat denoisedImage = new Mat();
+            // Apply 5x5 Gaussian kernel for noise reduction
+            CvInvoke.GaussianBlur(grayImage, denoisedImage, new Size(5, 5), 0);
+            
+            // Estimate optimal gamma value based on image properties
+            double gamma = EstimateGamma(denoisedImage);
+            
+            // Convert to 32-bit float for processing
+            Mat normalizedImage = new Mat();
+            denoisedImage.ConvertTo(normalizedImage, DepthType.Cv32F, 1.0 / 255.0);
+            
+            // Apply gamma correction: pixel = pixel^(1/gamma)
+            Mat correctedImage = new Mat();
+            CvInvoke.Pow(normalizedImage, 1.0 / gamma, correctedImage);
+            
+            // Convert back to 8-bit format
+            Mat resultImage = new Mat();
+            correctedImage.ConvertTo(resultImage, DepthType.Cv8U, 255.0);
+            
+            normalizedImage.Dispose();
+            correctedImage.Dispose();
+            
+            ClearCacheIfNeeded();
+            return resultImage;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in Combinatiion conversion: {ex.Message}");
+            return new Mat();
+        }
+    }
+    
+    
+    
 
 }

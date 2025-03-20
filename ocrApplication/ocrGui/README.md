@@ -11,12 +11,12 @@
    - [Main Window](#main-window)
 6. [Workflow](#workflow)
 7. [Key Components](#key-components)
-   - [MainWindow](#mainwindow)
-   - [ExitButtonHandler](#exitbuttonhandler)
-   - [Image Viewing](#image-viewing)
-   - [OCR Processing](#ocr-processing)
-   - [Results Display](#results-display)
-   - [Export Options](#export-options)
+   - [MainWindow](#2-mainwindow)
+   - [ExitButtonHandler](#3-exitbuttonhandler)
+   - [Image Viewing](#4-image-viewing)
+   - [OCR Processing](#5-ocr-processing)
+   - [Results Display](#6-results-display)
+   - [Export Options](#7-export-options)
 
 ## Overview
 OCR GUI is a user-friendly graphical interface for the OCR functionality provided by the core OCR Application. Built with the Avalonia UI framework, it offers cross-platform compatibility and a modern user experience for OCR processing.

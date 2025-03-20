@@ -14,8 +14,6 @@
    - [Configuration](#configuration)
 5. [Running the Tests](#running-the-tests)
    - [Run All Tests](#run-all-tests)
-   - [Run Specific Test Category](#run-specific-test-category)
-   - [Run with Code Coverage](#run-with-code-coverage)
 6. [Test Structure](#test-structure)
    - [Unit Tests](#unit-tests)
    - [Integration Tests](#integration-tests)
@@ -86,18 +84,6 @@ The tests use a test-specific configuration file (`ocr_config.json`) that's copi
 ```bash
 cd unitTestProject
 dotnet test
-```
-
-### Run Specific Test Category
-```bash
-dotnet test --filter "Category=OCR"
-dotnet test --filter "Category=GUI"
-dotnet test --filter "Category=Integration"
-```
-
-### Run with Code Coverage
-```bash
-dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
 ```
 
 ## Test Structure
