@@ -197,6 +197,8 @@ dotnet test
 ```
 
 ## Architecture
+The flow diagram of the application is provided below:
+![Application Flow Chart](assets/readme/image-7.png)
 
 ### ocrApplication
 Core OCR processing engine with the following key components:
