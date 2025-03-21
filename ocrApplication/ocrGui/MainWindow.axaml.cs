@@ -1298,23 +1298,48 @@ namespace ocrGui
         }
     }
 
+    /// <summary>
+    /// A command implementation that delegates to methods or lambda expressions.
+    /// Implements the ICommand interface to support the MVVM pattern in the GUI.
+    /// </summary>
     public class RelayCommand : ICommand
     {
         private readonly Action _execute;
         private readonly Func<bool>? _canExecute;
 
+        /// <summary>
+        /// Initializes a new instance of the RelayCommand class.
+        /// </summary>
+        /// <param name="execute">The action to execute when the command is invoked.</param>
+        /// <param name="canExecute">Optional function to determine if the command can be executed.</param>
+        /// <exception cref="ArgumentNullException">Thrown when execute is null.</exception>
         public RelayCommand(Action execute, Func<bool>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
         }
 
+        /// <summary>
+        /// Determines whether the command can be executed in its current state.
+        /// </summary>
+        /// <param name="parameter">Data used by the command. If not needed, this can be set to null.</param>
+        /// <returns>True if this command can be executed; otherwise, false.</returns>
         public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
 
+        /// <summary>
+        /// Executes the command's action.
+        /// </summary>
+        /// <param name="parameter">Data used by the command. If not needed, this can be set to null.</param>
         public void Execute(object? parameter) => _execute();
 
+        /// <summary>
+        /// Event that is raised when changes occur that affect whether the command can execute.
+        /// </summary>
         public event EventHandler? CanExecuteChanged;
 
+        /// <summary>
+        /// Raises the CanExecuteChanged event to indicate the command execution status has changed.
+        /// </summary>
         public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 } 

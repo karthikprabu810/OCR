@@ -7,11 +7,20 @@
         Title="TextExtract"
         MinWidth="800" MinHeight="600">
 
+    <!-- 
+    Main application layout with a 4-row grid:
+    1. Row 0: Main control panel with folder selection inputs
+    2. Row 1: Progress bar area
+    3. Row 2: Output text display area
+    4. Row 3: User input area for interactive commands
+    -->
     <Grid RowDefinitions="Auto,Auto,*,Auto">
-        <!-- Top Panel: Input Controls -->
+        <!-- Top Panel: Application title and input controls for folder selection -->
         <StackPanel Grid.Row="0" Margin="20">
+            <!-- Header area with application title and exit button -->
             <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Grid.Column="0" FontSize="24" FontWeight="Bold" Margin="0,0,0,20">TextExtract</TextBlock>
+                <!-- Exit button initially hidden, shown during processing -->
                 <Button Grid.Column="1" Name="ExitButton" 
                         Background="Transparent"
                         Foreground="#DC3545"
@@ -25,21 +34,21 @@
                 </Button>
             </Grid>
             
-            <!-- Input Folder Selection -->
+            <!-- Input Folder Selection with text box and browse button -->
             <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,5">
                 <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="120">Input Folder:</TextBlock>
                 <TextBox Grid.Column="1" Name="InputFolderTextBox" Margin="5,0" Watermark="Select input folder..." />
                 <Button Grid.Column="2" Name="BrowseInputButton" Margin="5,0" Content="Browse..." />
             </Grid>
             
-            <!-- Output Folder Selection -->
+            <!-- Output Folder Selection with text box and browse button -->
             <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,5">
                 <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="120">Output Folder:</TextBlock>
                 <TextBox Grid.Column="1" Name="OutputFolderTextBox" Margin="5,0" Watermark="Select output folder..." />
                 <Button Grid.Column="2" Name="BrowseOutputButton" Margin="5,0" Content="Browse..." />
             </Grid>
             
-            <!-- Process Button -->
+            <!-- Process Button to start the OCR extraction - styled with blue color and icon -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
                 <Button Name="ProcessButton" 
                         Background="#007ACC" 
@@ -48,6 +57,7 @@
                         Padding="12,0">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock VerticalAlignment="Center" FontSize="14">Extract Text</TextBlock>
+                        <!-- Document icon using Path data -->
                         <Path Data="M6,2A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6M6,4H13V9H18V20H6V4M8,12V14H16V12H8M8,16V18H13V16H8Z"
                               Fill="White"
                               Stretch="Uniform"
@@ -58,19 +68,21 @@
             </StackPanel>
         </StackPanel>
         
-        <!-- Progress Bar Section -->
+        <!-- Progress Bar Section: Shows processing status and duration information -->
         <StackPanel Grid.Row="1" Margin="20,0,20,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
+                <!-- Text display showing current processing step -->
                 <TextBlock Name="ProgressNameTextBlock" 
                           Grid.Column="0"
                           Margin="0,5,0,5"
                           FontFamily="Consolas,Courier New,monospace"
                           IsVisible="False"
                           HorizontalAlignment="Left"/>
+                <!-- Duration indicator showing processing time -->
                 <TextBlock Name="DurationTextBlock"
                           Grid.Column="1"
                           Margin="0,5,0,5"
@@ -78,11 +90,12 @@
                           IsVisible="False"
                           HorizontalAlignment="Right"/>
             </Grid>
+            <!-- Progress bar showing visual indication of completion percentage -->
             <ProgressBar Name="ProgressBar" Height="20" IsVisible="False" />
             
-            <!-- View Result Buttons (Initially Hidden) -->
+            <!-- Result Action Buttons: Only shown after successful processing -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10" Margin="0,10,0,0">
-                <!-- View Excel Button -->
+                <!-- View Excel Button: Opens the generated Excel report -->
                 <Button Name="ViewExcelButton" 
                         Background="#28a745" 
                         Foreground="White" 
@@ -91,6 +104,7 @@
                         Padding="12,0">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock VerticalAlignment="Center" FontSize="14">View Excel</TextBlock>
+                        <!-- Spreadsheet icon -->
                         <Path Data="M5,3C3.89,3 3,3.89 3,5V19C3,20.11 3.89,21 5,21H19C20.11,21 21,20.11 21,19V5C21,3.89 20.11,3 19,3H5M5,5H19V19H5V5M7,7V9H17V7H7M7,11V13H17V11H7M7,15V17H14V15H7Z"
                               Fill="White"
                               Stretch="Uniform"
@@ -99,7 +113,7 @@
                     </StackPanel>
                 </Button>
                 
-                <!-- View Images Button -->
+                <!-- View Images Button: Opens the folder with preprocessed images -->
                 <Button Name="ViewImagesButton" 
                         Background="#6f42c1" 
                         Foreground="White" 
@@ -108,6 +122,7 @@
                         Padding="12,0">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock VerticalAlignment="Center" FontSize="14">View Image</TextBlock>
+                        <!-- Image file icon -->
                         <Path Data="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M6,20H15L18,20V12L14,16L12,14L6,20M8,9A2,2 0 0,0 6,11A2,2 0 0,0 8,13A2,2 0 0,0 10,11A2,2 0 0,0 8,9Z"
                               Fill="White"
                               Stretch="Uniform"
@@ -116,7 +131,7 @@
                     </StackPanel>
                 </Button>
                 
-                <!-- View Text Button -->
+                <!-- View Text Button: Opens the extracted text results -->
                 <Button Name="ViewTextButton" 
                         Background="#007bff" 
                         Foreground="White" 
@@ -125,6 +140,7 @@
                         Padding="12,0">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock VerticalAlignment="Center" FontSize="14">View Text</TextBlock>
+                        <!-- Text document icon -->
                         <Path Data="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.11,3 19,3Z"
                               Fill="White"
                               Stretch="Uniform"
@@ -135,23 +151,28 @@
             </StackPanel>
         </StackPanel>
         
-        <!-- Bottom Panel: Output Display -->
+        <!-- Output Display Area: Shows console output, errors, and processing results -->
         <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" Margin="20,0,20,10">
             <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Output section header -->
                 <TextBlock Grid.Row="0" Margin="10,5" FontWeight="Bold">Process Output:</TextBlock>
+                <!-- Scrollable text display for OCR processing output and messages -->
                 <ScrollViewer Grid.Row="1" Margin="0,0,0,10">
                     <TextBox Name="OutputTextBox" IsReadOnly="True" AcceptsReturn="True" 
                              TextWrapping="Wrap" BorderThickness="0" Background="Transparent" />
                 </ScrollViewer>
                 
-                <!-- Interactive Input Panel -->
+                <!-- Interactive Input Panel: For sending responses to OCR process when needed -->
                 <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="10,0,10,10">
+                    <!-- Text input field for user responses -->
                     <TextBox Grid.Column="0" Name="UserInputTextBox" Watermark="Enter your response here when prompted..." 
                              Margin="0,0,5,0" IsEnabled="False" />
+                    <!-- Send button with arrow icon -->
                     <Button Grid.Column="1" Name="SendInputButton"
                             Width="40" Height="35" IsEnabled="False"
                             Background="#007ACC" Foreground="White"
                             Padding="8,4">
+                        <!-- Send arrow icon -->
                         <Path Data="M2,21L23,12L2,3V10L17,12L2,14V21Z"
                               Fill="White"
                               Stretch="Uniform"
@@ -164,7 +185,7 @@
         
         <!-- Footer Section with Developer Attribution -->
         <Grid Grid.Row="3" ColumnDefinitions="Auto,*" Margin="20,0,20,20">
-            <!-- Developer Attribution -->
+            <!-- Copyright and developer credit information -->
             <TextBlock Grid.Column="0" 
                       Text="Copyright © 2024-2025 TextExtract by Karthik Prabu Natarajan (Code_Maverick)" 
                       FontStyle="Italic"

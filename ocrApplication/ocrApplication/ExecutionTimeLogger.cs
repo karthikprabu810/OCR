@@ -365,18 +365,20 @@ public static class ExecutionTimeLogger
     }
 
     /// <summary>
-    /// Saves clustering analysis results to an Excel file.
+    /// Saves clustering analysis results to an Excel file with visualizations.
     /// </summary>
     /// <param name="excelFilePath">Path to the Excel file.</param>
     /// <param name="clusterLabels">Array of cluster labels for each preprocessing method.</param>
-    /// <param name="silhouetteScore">Silhouette score indicating clustering quality.</param>
+    /// <param name="overallSilhouetteScore">Overall silhouette score indicating clustering quality.</param>
+    /// <param name="individualSilhouetteScores">Individual silhouette scores for each preprocessing method.</param>
     /// <param name="worksheetName">Name of the worksheet to create.</param>
     /// <param name="bestPreprocessingMethod">The best preprocessing method determined by clustering.</param>
     /// <param name="preprocessingMethodNames">Names of the preprocessing methods.</param>
     public static void SaveClusteringResultsToExcel(
         string excelFilePath,
         int[] clusterLabels,
-        double silhouetteScore,
+        double overallSilhouetteScore,
+        double[] individualSilhouetteScores,
         string worksheetName,
         string bestPreprocessingMethod,
         List<string> preprocessingMethodNames)
@@ -401,15 +403,20 @@ public static class ExecutionTimeLogger
         // Set headers
         clusteringSheet.Cells[1, 1].Value = "Preprocessing Method";
         clusteringSheet.Cells[1, 2].Value = "Cluster ID";
-        clusteringSheet.Cells[1, 3].Value = "Is Best Method";
+        clusteringSheet.Cells[1, 3].Value = "Silhouette Score";
+        clusteringSheet.Cells[1, 4].Value = "Is Best Method";
 
         // Bold the headers
-        clusteringSheet.Cells[1, 1, 1, 3].Style.Font.Bold = true;
+        clusteringSheet.Cells[1, 1, 1, 4].Style.Font.Bold = true;
 
         // Handle potential mismatch between clusterLabels and preprocessingMethodNames
         int dataLength = Math.Min(
             preprocessingMethodNames?.Count ?? 0, 
             clusterLabels?.Length ?? 0);
+            
+        // Ensure individualSilhouetteScores is valid and has enough elements
+        bool hasIndividualScores = individualSilhouetteScores != null && 
+                                  individualSilhouetteScores.Length >= dataLength;
 
         // Add data rows
         for (int i = 0; i < dataLength; i++)
@@ -421,17 +428,48 @@ public static class ExecutionTimeLogger
 
             // Cluster ID
             clusteringSheet.Cells[row, 2].Value = clusterLabels[i];
+            
+            // Individual silhouette score
+            clusteringSheet.Cells[row, 3].Value = hasIndividualScores ? 
+                Math.Round(individualSilhouetteScores[i], 4) : 
+                "N/A";
 
             // Is this the best method
             bool isBest = preprocessingMethodNames[i] == bestPreprocessingMethod;
-            clusteringSheet.Cells[row, 3].Value = isBest ? "Yes" : "No";
+            clusteringSheet.Cells[row, 4].Value = isBest ? "Yes" : "No";
 
             // Highlight the best method
             if (isBest)
             {
                 // Highlight the entire row
-                clusteringSheet.Cells[row, 1, row, 3].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                clusteringSheet.Cells[row, 1, row, 3].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGreen);
+                clusteringSheet.Cells[row, 1, row, 4].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                clusteringSheet.Cells[row, 1, row, 4].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGreen);
+            }
+            
+            // Style the silhouette score cell (conditional formatting)
+            if (hasIndividualScores)
+            {
+                // Set color scale based on silhouette score value
+                double score = individualSilhouetteScores[i];
+                if (!double.IsNaN(score) && !double.IsInfinity(score))
+                {
+                    // Color coding: Red for negative (bad), Yellow for near zero, Green for positive (good)
+                    if (score < 0)
+                    {
+                        clusteringSheet.Cells[row, 3].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        clusteringSheet.Cells[row, 3].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightPink);
+                    }
+                    else if (score > 0.7)
+                    {
+                        clusteringSheet.Cells[row, 3].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        clusteringSheet.Cells[row, 3].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGreen);
+                    }
+                    else if (score > 0.3)
+                    {
+                        clusteringSheet.Cells[row, 3].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        clusteringSheet.Cells[row, 3].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightYellow);
+                    }
+                }
             }
         }
 
@@ -439,14 +477,22 @@ public static class ExecutionTimeLogger
         clusteringSheet.Cells[dataLength + 3, 1].Value = "Clustering Metrics";
         clusteringSheet.Cells[dataLength + 3, 1].Style.Font.Bold = true;
 
-        clusteringSheet.Cells[dataLength + 4, 1].Value = "Silhouette Score";
-        clusteringSheet.Cells[dataLength + 4, 2].Value = silhouetteScore;
+        clusteringSheet.Cells[dataLength + 4, 1].Value = "Overall Silhouette Score";
+        clusteringSheet.Cells[dataLength + 4, 2].Value = Math.Round(overallSilhouetteScore, 4);
 
         clusteringSheet.Cells[dataLength + 5, 1].Value = "Best Preprocessing Method";
         clusteringSheet.Cells[dataLength + 5, 2].Value = bestPreprocessingMethod;
+        
+        clusteringSheet.Cells[dataLength + 6, 1].Value = "Silhouette Score Interpretation";
+        clusteringSheet.Cells[dataLength + 6, 1].Style.Font.Bold = true;
+        
+        clusteringSheet.Cells[dataLength + 7, 1].Value = "< 0: Likely incorrect clustering";
+        clusteringSheet.Cells[dataLength + 8, 1].Value = "0-0.3: Weak structure";
+        clusteringSheet.Cells[dataLength + 9, 1].Value = "0.3-0.7: Reasonable structure";
+        clusteringSheet.Cells[dataLength + 10, 1].Value = "> 0.7: Strong structure";
 
         // Auto-size columns for better readability
-        clusteringSheet.Cells[1, 1, dataLength + 5, 3].AutoFitColumns();
+        clusteringSheet.Cells[1, 1, dataLength + 10, 4].AutoFitColumns();
 
         // Create a pie chart to visualize cluster distribution only if we have sufficient data
         if (clusterLabels != null && clusterLabels.Length > 0)
@@ -458,7 +504,7 @@ public static class ExecutionTimeLogger
             var clusterCounts = uniqueClusters.Select(c => clusterLabels.Count(l => l == c)).ToList();
 
             // Create a temporary data section for the chart
-            int charDataStartRow = dataLength + 7;
+            int charDataStartRow = dataLength + 12;
             clusteringSheet.Cells[charDataStartRow, 1].Value = "Cluster";
             clusteringSheet.Cells[charDataStartRow, 2].Value = "Count";
 
@@ -469,13 +515,38 @@ public static class ExecutionTimeLogger
             }
 
             // Configure the chart
-            pieChart.SetPosition(dataLength + 3, 0, 3, 0);
+            pieChart.SetPosition(dataLength + 7, 0, 6, 0);
             pieChart.SetSize(400, 300);
             pieChart.Series.Add(
                 ExcelCellBase.GetAddress(charDataStartRow + 1, 2, charDataStartRow + uniqueClusters.Count, 2),
                 ExcelCellBase.GetAddress(charDataStartRow + 1, 1, charDataStartRow + uniqueClusters.Count, 1)
             );
             pieChart.Title.Text = "Cluster Distribution";
+        }
+        
+        // Create a bar chart for silhouette scores if we have individual scores
+        if (individualSilhouetteScores != null && individualSilhouetteScores.Length > 0)
+        {
+            var barChart = clusteringSheet.Drawings.AddChart("Silhouette Scores", eChartType.ColumnClustered);
+            
+            // Set chart position and size
+            barChart.SetPosition(1, 0, 6, 0);
+            barChart.SetSize(500, 300);
+            
+            // Configure the series data
+            barChart.Series.Add(
+                ExcelCellBase.GetAddress(2, 3, dataLength + 1, 3),
+                ExcelCellBase.GetAddress(2, 1, dataLength + 1, 1)
+            );
+            
+            // Set chart title and axis labels
+            barChart.Title.Text = "Silhouette Scores by Preprocessing Method";
+            barChart.XAxis.Title.Text = "Preprocessing Method";
+            barChart.YAxis.Title.Text = "Silhouette Score";
+            
+            // Set Y-axis range from -1 to 1
+            barChart.YAxis.MinValue = -1.0;
+            barChart.YAxis.MaxValue = 1.0;
         }
 
         // Save the changes

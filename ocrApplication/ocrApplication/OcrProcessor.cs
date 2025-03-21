@@ -196,6 +196,9 @@ namespace ocrApplication
                 // Use majority voting to determine the ground truth
                 groundTruth = _ensembleOcr.CombineUsingMajorityVoting(ocrResultForGroundTruth);
                 
+                // Apply additional filtering to remove redundant lines
+                groundTruth = _ensembleOcr.FilterRedundantLines(groundTruth);
+                
                 // Save the final ensemble OCR result
                 string groundTruthFilePath = Path.Combine(imageOcrResultFolder, "final_ocr_result.txt");
                 await File.WriteAllTextAsync(groundTruthFilePath, groundTruth);
@@ -273,22 +276,38 @@ namespace ocrApplication
                         }
                     }
                     
-                    // Perform clustering and get results
-                    var (clusterLabels, silhouetteScore) = clusterAnalysis.PerformClustering(featureVectors, 
-                        numClusters: Math.Min(3, preprocessingMethodNames.Count));
+                    // Perform clustering and get results with individual silhouette scores
+                    var (clusterLabels, overallSilhouetteScore, individualSilhouetteScores) = 
+                        clusterAnalysis.PerformClustering(featureVectors, 
+                            numClusters: Math.Min(3, preprocessingMethodNames.Count));
                     
-                    // Determine best preprocessing method based on clustering
+                    // Calculate method quality score based on both clustering and silhouette score
+                    // Higher score = better method
+                    var methodScores = new Dictionary<string, double>();
+                    for (int i = 0; i < Math.Min(preprocessingMethodNames.Count, individualSilhouetteScores.Length); i++)
+                    {
+                        double score = individualSilhouetteScores[i];
+                        // Ensure we don't use invalid scores
+                        if (!double.IsNaN(score) && !double.IsInfinity(score))
+                        {
+                            methodScores[preprocessingMethodNames[i]] = score;
+                        }
+                    }
+                    
+                    // Determine best preprocessing method based on clustering and silhouette scores
                     string bestClusterMethod = DetermineBestClusterMethod(
                         clusterLabels.Skip(1).ToArray(), // Skip original image's cluster
                         preprocessMethods,
                         bestPreprocessingMethod,
-                        bestLevenshteinMethod);
+                        bestLevenshteinMethod,
+                        methodScores);
                     
-                    // Save clustering results to Excel
+                    // Save clustering results to Excel with individual silhouette scores
                     ExecutionTimeLogger.SaveClusteringResultsToExcel(
                         excelFilePath, 
                         clusterLabels, 
-                        silhouetteScore, 
+                        overallSilhouetteScore,
+                        individualSilhouetteScores, 
                         "clusterAnalysis", 
                         bestClusterMethod, 
                         preprocessingMethodNames);
@@ -376,14 +395,44 @@ namespace ocrApplication
         /// <param name="preprocessMethods">List of preprocessing methods.</param>
         /// <param name="bestCosineSimilarityMethod">Best preprocessing method based on cosine similarity.</param>
         /// <param name="bestLevenshteinMethod">Best preprocessing method based on Levenshtein distance.</param>
+        /// <param name="methodScores">Dictionary of silhouette scores for each method.</param>
         /// <returns>The name of the best preprocessing method.</returns>
         private string DetermineBestClusterMethod(
             int[] clusterLabels, 
             List<(string Name, Func<string, Mat> Method)> preprocessMethods,
             string bestCosineSimilarityMethod,
-            string bestLevenshteinMethod)
+            string bestLevenshteinMethod,
+            Dictionary<string, double> methodScores = null)
         {
-            // If we have a bestCosineSimilarityMethod or bestLevenshteinMethod
+            // If we have individual method scores, prioritize methods with high silhouette scores
+            if (methodScores != null && methodScores.Count > 0)
+            {
+                // Get methods with positive silhouette scores (well-clustered)
+                var goodMethods = methodScores.Where(m => m.Value > 0.3).OrderByDescending(m => m.Value).ToList();
+                
+                if (goodMethods.Count > 0)
+                {
+                    // If best text-based method has good clustering, prioritize it
+                    if (!string.IsNullOrEmpty(bestCosineSimilarityMethod) && 
+                        methodScores.TryGetValue(bestCosineSimilarityMethod, out double cosineScore) && 
+                        cosineScore > 0.1)
+                    {
+                        return bestCosineSimilarityMethod;
+                    }
+                    
+                    if (!string.IsNullOrEmpty(bestLevenshteinMethod) && 
+                        methodScores.TryGetValue(bestLevenshteinMethod, out double levenScore) && 
+                        levenScore > 0.1)
+                    {
+                        return bestLevenshteinMethod;
+                    }
+                    
+                    // Otherwise, return the method with highest silhouette score
+                    return goodMethods[0].Key;
+                }
+            }
+            
+            // If no good methods found by silhouette score, use text similarity methods if available
             if (!string.IsNullOrEmpty(bestCosineSimilarityMethod))
             {
                 return bestCosineSimilarityMethod;

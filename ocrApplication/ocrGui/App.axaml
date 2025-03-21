@@ -1,8 +1,14 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="ocrGui.App">
+    <!-- 
+    Application styles for the OCR GUI application.
+    Sets up the visual appearance of the entire application using the Avalonia UI framework.
+    -->
     <Application.Styles>
+        <!-- FluentTheme provides modern Windows-style UI elements -->
         <FluentTheme />
+        <!-- DataGrid style for displaying tabular data in the application -->
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
     </Application.Styles>
 </Application> 

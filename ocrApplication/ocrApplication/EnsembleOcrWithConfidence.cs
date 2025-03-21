@@ -6,6 +6,11 @@ namespace ocrApplication;
 public class EnsembleOcrWithConfidence
 {
 
+    /// <summary>
+    /// Combines multiple OCR results by weighing words based on their corresponding confidence scores.
+    /// Words that appear in multiple OCR results with high confidence scores will have higher
+    /// overall weights and are more likely to be included in the final output.
+    /// </summary>
     /// <param name="ocrResults">List of text results from different OCR engines or preprocessing methods</param>
     /// <param name="confidences">List of confidence scores corresponding to each OCR result</param>
     /// <returns>Combined text output with highest confidence words</returns>

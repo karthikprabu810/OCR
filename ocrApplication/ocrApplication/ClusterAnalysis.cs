@@ -19,13 +19,13 @@ namespace ocrApplication
         /// </summary>
         /// <param name="featureVectors">List of feature vectors for each preprocessed image.</param>
         /// <param name="numClusters">Number of clusters to form.</param>
-        /// <returns>A tuple containing cluster labels assigned to each vector and the silhouette score
-        /// which measures the quality of clustering (higher is better).</returns>
+        /// <returns>A tuple containing cluster labels assigned to each vector, the overall silhouette score,
+        /// and individual silhouette scores for each vector/method.</returns>
         /// <remarks>
         /// If there are fewer feature vectors than requested clusters, the method will
         /// duplicate vectors with small random variations to ensure sufficient samples.
         /// </remarks>
-        public (int[] clusterLabels, double silhouetteScore) PerformClustering(List<double[]> featureVectors, int numClusters)
+        public (int[] clusterLabels, double silhouetteScore, double[] individualSilhouetteScores) PerformClustering(List<double[]> featureVectors, int numClusters)
         {
             // Ensure we have enough samples for clustering
             if (featureVectors.Count < numClusters)
@@ -52,10 +52,10 @@ namespace ocrApplication
             // Compute the clusters
             int[] labels = kmeans.Learn(featureVectors.ToArray()).Decide(featureVectors.ToArray());
 
-            // Calculate silhouette score to evaluate clustering quality
-            double silhouetteScore = CalculateSilhouetteScore(featureVectors, labels, numClusters);
+            // Calculate silhouette scores to evaluate clustering quality
+            var (overallSilhouetteScore, individualSilhouetteScores) = CalculateSilhouetteScores(featureVectors, labels, numClusters);
 
-            return (labels, silhouetteScore);
+            return (labels, overallSilhouetteScore, individualSilhouetteScores);
         }
 
         /// <summary>
@@ -82,18 +82,18 @@ namespace ocrApplication
         }
 
         /// <summary>
-        /// Calculates the silhouette score to evaluate clustering quality.
+        /// Calculates silhouette scores to evaluate clustering quality for all methods.
         /// The silhouette score measures how similar an object is to its own cluster
         /// compared to other clusters. Higher values indicate better clustering.
         /// </summary>
         /// <param name="featureVectors">List of feature vectors</param>
         /// <param name="labels">Cluster labels assigned to each vector</param>
         /// <param name="numClusters">Number of clusters</param>
-        /// <returns>Silhouette score between -1 and 1 (higher is better)</returns>
-        private double CalculateSilhouetteScore(List<double[]> featureVectors, int[] labels, int numClusters)
+        /// <returns>A tuple with the overall silhouette score and individual silhouette scores per method</returns>
+        private (double overallScore, double[] individualScores) CalculateSilhouetteScores(List<double[]> featureVectors, int[] labels, int numClusters)
         {
             if (featureVectors.Count <= 1 || numClusters <= 1 || numClusters >= featureVectors.Count)
-                return 0.0; // Return 0 for edge cases
+                return (0.0, new double[featureVectors.Count]); // Return zeros for edge cases
                 
             double[] silhouetteValues = new double[featureVectors.Count];
             var distance = new Euclidean(); // Using Euclidean distance
@@ -155,8 +155,12 @@ namespace ocrApplication
                 silhouetteValues[i] = (b - a) / Math.Max(a, b);
             }
             
-            // Return the average silhouette score
-            return silhouetteValues.Where(s => !double.IsNaN(s)).Average();
+            // Filter out NaN values, which can occur in edge cases
+            var validSilhouetteValues = silhouetteValues.Where(s => !double.IsNaN(s)).ToArray();
+            
+            // Return both the average silhouette score and all individual scores
+            double overallScore = validSilhouetteValues.Length > 0 ? validSilhouetteValues.Average() : 0;
+            return (overallScore, silhouetteValues);
         }
 
         /// <summary>
