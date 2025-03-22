@@ -219,6 +219,8 @@ namespace ocrApplication
                 // These dictionaries store the best method for each image based on different metrics
                 ConcurrentDictionary<string, string> bestPreprocessingMethods = ocrProcessor.GetBestPreprocessingMethods();
                 ConcurrentDictionary<string, string> bestLevenshteinMethods = ocrProcessor.GetBestLevenshteinMethods();
+                ConcurrentDictionary<string, string> bestJaroWinklerMethods = ocrProcessor.GetBestJaroWinklerMethods();
+                ConcurrentDictionary<string, string> bestJaccardMethods = ocrProcessor.GetBestJaccardMethods();
                 ConcurrentDictionary<string, string> bestClusteringMethods = ocrProcessor.GetBestClusteringMethods();
                 
                 // OcrSummary provides methods for summarizing and visualizing results
@@ -226,7 +228,13 @@ namespace ocrApplication
                 
                 // Use the OcrSummary class to generate and display summary information
                 // Pass the best methods directly from OcrProcessor instead of reading from Excel
-                OcrSummary.DisplayBestMethodsSummary(bestPreprocessingMethods, bestLevenshteinMethods, bestClusteringMethods);
+                var bestMethods = OcrSummary.DisplayEnhancedBestMethodsSummary(
+                    new Dictionary<string, string>(bestPreprocessingMethods), 
+                    new Dictionary<string, string>(bestLevenshteinMethods),
+                    new Dictionary<string, string>(bestJaroWinklerMethods),
+                    new Dictionary<string, string>(bestJaccardMethods),
+                    new Dictionary<string, string>(bestClusteringMethods)
+                );
                 
                 // Export results to various formats (Excel, PDF, etc.)
                 // ExportUtilities handles the details of exporting to different formats
@@ -236,7 +244,9 @@ namespace ocrApplication
                     bestPreprocessingMethods, 
                     bestLevenshteinMethods, 
                     bestClusteringMethods,
-                    new Dictionary<string, string>() // Empty dictionary as we're not using it
+                    bestJaroWinklerMethods,
+                    bestJaccardMethods,
+                    bestMethods
                 );
             }
 

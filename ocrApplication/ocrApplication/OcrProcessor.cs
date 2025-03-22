@@ -37,6 +37,18 @@ namespace ocrApplication
             new ConcurrentDictionary<string, string>();
             
         /// <summary>
+        /// Dictionary to store the best Jaro-Winkler similarity preprocessing method for each image.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, string> _bestJaroWinklerMethods = 
+            new ConcurrentDictionary<string, string>();
+            
+        /// <summary>
+        /// Dictionary to store the best Jaccard similarity preprocessing method for each image.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, string> _bestJaccardMethods = 
+            new ConcurrentDictionary<string, string>();
+            
+        /// <summary>
         /// Initializes a new instance of the OcrProcessor class.
         /// </summary>
         /// <param name="ocrTool">The OCR extraction tool to use for processing.</param>
@@ -212,6 +224,12 @@ namespace ocrApplication
                 // Create and visualize Levenshtein distance similarity matrix
                 await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixLv(ocrResults, groundTruth, excelFilePath, ocrSteps);
                 
+                // Create and visualize Jaro-Winkler similarity matrix
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixJW(ocrResults, groundTruth, excelFilePath, ocrSteps);
+                
+                // Create and visualize Jaccard similarity matrix
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixJaccard(ocrResults, groundTruth, excelFilePath, ocrSteps);
+                
                 // Generate report on which preprocessing methods were most effective
                 await similarityMatrixGenerator.GeneratePreprocessingEffectivenessReport(ocrResults, groundTruth, excelFilePath, ocrSteps);
                     
@@ -242,6 +260,32 @@ namespace ocrApplication
                         fileNameWithoutExtension,
                         bestLevenshteinMethod,
                         (_, _) => bestLevenshteinMethod
+                    );
+                }
+                
+                // Find the best preprocessing method based on Jaro-Winkler similarity
+                string bestJaroWinklerMethod = await ocrComparison.FindBestJaroWinklerMethod(ocrResults, groundTruth, ocrSteps);
+                
+                // Store the best Jaro-Winkler method (even if it's "Original")
+                if (!string.IsNullOrEmpty(bestJaroWinklerMethod))
+                {
+                    _bestJaroWinklerMethods.AddOrUpdate(
+                        fileNameWithoutExtension,
+                        bestJaroWinklerMethod,
+                        (_, _) => bestJaroWinklerMethod
+                    );
+                }
+                
+                // Find the best preprocessing method based on Jaccard similarity
+                string bestJaccardMethod = await ocrComparison.FindBestJaccardMethod(ocrResults, groundTruth, ocrSteps);
+                
+                // Store the best Jaccard method (even if it's "Original")
+                if (!string.IsNullOrEmpty(bestJaccardMethod))
+                {
+                    _bestJaccardMethods.AddOrUpdate(
+                        fileNameWithoutExtension,
+                        bestJaccardMethod,
+                        (_, _) => bestJaccardMethod
                     );
                 }
                 
@@ -300,6 +344,8 @@ namespace ocrApplication
                         preprocessMethods,
                         bestPreprocessingMethod,
                         bestLevenshteinMethod,
+                        bestJaroWinklerMethod,
+                        bestJaccardMethod,
                         methodScores);
                     
                     // Save clustering results to Excel with individual silhouette scores
@@ -378,6 +424,24 @@ namespace ocrApplication
         }
 
         /// <summary>
+        /// Gets the dictionary of best preprocessing methods determined by Jaro-Winkler similarity.
+        /// </summary>
+        /// <returns>A concurrent dictionary mapping image names to their best preprocessing methods based on Jaro-Winkler similarity.</returns>
+        public ConcurrentDictionary<string, string> GetBestJaroWinklerMethods()
+        {
+            return _bestJaroWinklerMethods;
+        }
+        
+        /// <summary>
+        /// Gets the dictionary of best preprocessing methods determined by Jaccard similarity.
+        /// </summary>
+        /// <returns>A concurrent dictionary mapping image names to their best preprocessing methods based on Jaccard similarity.</returns>
+        public ConcurrentDictionary<string, string> GetBestJaccardMethods()
+        {
+            return _bestJaccardMethods;
+        }
+
+        /// <summary>
         /// Extracts feature vectors from an image.
         /// </summary>
         /// <param name="image">The image to extract features from.</param>
@@ -395,6 +459,8 @@ namespace ocrApplication
         /// <param name="preprocessMethods">List of preprocessing methods.</param>
         /// <param name="bestCosineSimilarityMethod">Best preprocessing method based on cosine similarity.</param>
         /// <param name="bestLevenshteinMethod">Best preprocessing method based on Levenshtein distance.</param>
+        /// <param name="bestJaroWinklerMethod">Best preprocessing method based on Jaro-Winkler similarity.</param>
+        /// <param name="bestJaccardMethod">Best preprocessing method based on Jaccard similarity.</param>
         /// <param name="methodScores">Dictionary of silhouette scores for each method.</param>
         /// <returns>The name of the best preprocessing method.</returns>
         private string DetermineBestClusterMethod(
@@ -402,6 +468,8 @@ namespace ocrApplication
             List<(string Name, Func<string, Mat> Method)> preprocessMethods,
             string bestCosineSimilarityMethod,
             string bestLevenshteinMethod,
+            string bestJaroWinklerMethod = null,
+            string bestJaccardMethod = null,
             Dictionary<string, double> methodScores = null)
         {
             // If we have individual method scores, prioritize methods with high silhouette scores

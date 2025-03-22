@@ -181,6 +181,84 @@ namespace ocrApplication
             }
 
             /// <summary>
+            /// Creates Jaro-Winkler similarity heatmap comparing OCR results.
+            /// Visualizes string similarity with emphasis on prefixes.
+            /// </summary>
+            /// <param name="ocrResults">OCR text results</param>
+            /// <param name="groundTruth">Reference text for comparison</param>
+            /// <param name="outputFilePath">Excel output path</param>
+            /// <param name="ocrSteps">Method names for labeling</param>
+            /// <returns>Task for async operation</returns>
+            public async Task GenerateAndVisualizeOcrSimilarityMatrixJW(List<string> ocrResults, string groundTruth, string outputFilePath, List<string> ocrSteps)
+            {
+                int n = ocrResults.Count;
+                // Create matrix with space for ground truth plus all OCR results
+                double[,] similarityMatrix = new double[n + 1, n + 1]; // +1 for ground truth
+                
+                // Create a single list with ground truth as the first element, followed by OCR results
+                var allTexts = new List<string> { groundTruth };
+                allTexts.AddRange(ocrResults);
+                
+                // Calculate Jaro-Winkler similarity for each pair of texts in the matrix
+                for (int i = 0; i < allTexts.Count; i++)
+                {
+                    for (int j = 0; j < allTexts.Count; j++)
+                    {
+                        similarityMatrix[i, j] = Math.Round(_ocrComparison.CalculateJaroWinklerSimilarity(allTexts[i], allTexts[j]), 2);
+                    }
+                }
+                
+                // Create headers with "Ground Truth" as the first element, followed by OCR method names
+                var headers = new List<string> { "Ground Truth" };
+                headers.AddRange(ocrSteps);
+                
+                // Save the matrix to Excel with heatmap formatting
+                SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_JaroWinkler", headers);
+                
+                // Brief delay to ensure file saving completes
+                await Task.Delay(1000);
+            }
+            
+            /// <summary>
+            /// Creates Jaccard similarity heatmap comparing OCR results.
+            /// Visualizes word set overlap between texts.
+            /// </summary>
+            /// <param name="ocrResults">OCR text results</param>
+            /// <param name="groundTruth">Reference text for comparison</param>
+            /// <param name="outputFilePath">Excel output path</param>
+            /// <param name="ocrSteps">Method names for labeling</param>
+            /// <returns>Task for async operation</returns>
+            public async Task GenerateAndVisualizeOcrSimilarityMatrixJaccard(List<string> ocrResults, string groundTruth, string outputFilePath, List<string> ocrSteps)
+            {
+                int n = ocrResults.Count;
+                // Create matrix with space for ground truth plus all OCR results
+                double[,] similarityMatrix = new double[n + 1, n + 1]; // +1 for ground truth
+                
+                // Create a single list with ground truth as the first element, followed by OCR results
+                var allTexts = new List<string> { groundTruth };
+                allTexts.AddRange(ocrResults);
+                
+                // Calculate Jaccard similarity for each pair of texts in the matrix
+                for (int i = 0; i < allTexts.Count; i++)
+                {
+                    for (int j = 0; j < allTexts.Count; j++)
+                    {
+                        similarityMatrix[i, j] = Math.Round(_ocrComparison.CalculateJaccardSimilarity(allTexts[i], allTexts[j]), 2);
+                    }
+                }
+                
+                // Create headers with "Ground Truth" as the first element, followed by OCR method names
+                var headers = new List<string> { "Ground Truth" };
+                headers.AddRange(ocrSteps);
+                
+                // Save the matrix to Excel with heatmap formatting
+                SaveSimilarityMatrixWithHeatmap(similarityMatrix, outputFilePath, "OCR_Similarity_Heatmap_Jaccard", headers);
+                
+                // Brief delay to ensure file saving completes
+                await Task.Delay(1000);
+            }
+
+            /// <summary>
             /// Creates color-coded Excel heatmap for similarity visualization.
             /// Higher values appear green, lower values appear red.
             /// </summary>
