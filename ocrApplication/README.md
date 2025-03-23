@@ -24,7 +24,7 @@ The application is designed for researchers, data scientists, and professionals 
    - [Graphical User Interface](#graphical-user-interface)
 7. [Testing](#testing)
 8. [Architecture](#architecture)
-   - [ocrApplication](#ocrapplication)-1
+   - [ocrApplication](#ocrapplication-1)
       - [Input Handling](#input-handling)
       - [Image Preprocessing](#image-preprocessing)
       - [OCR Extraction](#ocr-extraction)
