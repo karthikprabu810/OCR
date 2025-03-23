@@ -4,6 +4,8 @@ The OCR Application Suite is a comprehensive solution for extracting and analyzi
 
 The application is designed for researchers, data scientists, and professionals who need to extract text from images with high accuracy, especially in scenarios where traditional OCR solutions struggle, such as with poor quality images, diverse fonts, or mixed languages.
 
+<a name="top"></a>
+
 ## Table of Contents
 1. [Goal of the Experiment](#goal-of-the-experiment)
 2. [Features](#features)
@@ -22,7 +24,7 @@ The application is designed for researchers, data scientists, and professionals 
    - [Graphical User Interface](#graphical-user-interface)
 7. [Testing](#testing)
 8. [Architecture](#architecture)
-   - [ocrApplication](#ocrapplication)
+   - [ocrApplication](#ocrapplication)-1
       - [Input Handling](#input-handling)
       - [Image Preprocessing](#image-preprocessing)
       - [OCR Extraction](#ocr-extraction)
@@ -277,6 +279,14 @@ public class OcrComparison
     
     // Generate word vectors for comparison
     public Dictionary<string, double> GetWordVector(string text) { /* ... */ }
+
+    // Calculate Jaccard similarity
+    public float CalculateJaccardSimilarity(string text1, string text2)
+        { /* ... */ }
+
+    // Calculate Jaro-Winkler similarity
+    private float CalculateJaroSimilarity(string s1, string s2)
+        { /* ... */ }
 }
 ```
 
@@ -318,6 +328,8 @@ public static class ExportUtilities
 ```
 
 ### ocrGui
+The flow diagram of the application is provided below:
+![Application Flow Chart](assets/readme/image-10.png)
 
 #### App axaml
 The app has one Main page interacting with users.The page loaded when running ocrGui is Main Page. In .NET MAUI, the user can define the primary page, via Avalonia.xaml. The Avalonia is the first accessed when running the app, holding the defined primary page and presenting its content. App.xaml is presented in the code below.This method creates and configures the main application window.
@@ -350,7 +362,7 @@ The method [`MainWindow.axaml.cs`](ocrGui/MainWindow.axaml.cs) creates and confi
 public partial class MainWindow : Window
 {
    // This is where we create the main window instance and assign it to the desktop application lifetime. This ensures proper window management and lifecycle.
-   public MainWindow(){ /* */ }
+   public MainWindow(){ /*  ... */ }
 }
 ```
 
@@ -384,13 +396,54 @@ The embedding visualization revealed clusters of similar texts, with points repr
 
 ![Scatter plot of vector embeddings for different preprocessing configurations](assets/readme/image-5.png)
 
+The embedding analysis revealed several key insights:
+
+1. **Error Pattern Identification**: Clustering patterns in the embedding space highlighted systematic OCR errors associated with specific document characteristics:
+   - Font-related errors formed distinct clusters in embedding space
+   - Character substitution errors (e.g., '0' for 'O') created near-parallel trajectories
+   - Context-dependent errors showed high variability in embedding distance
+
+2. **Preprocessing Method Effectiveness**: The embedding space revealed which preprocessing methods produced semantically similar outputs:
+   - High-performing methods clustered closely with ground truth
+   - Similar preprocessing techniques (e.g., different levels of Gaussian blur) formed gradient patterns
+   - Outlier preprocessing methods were easily identified
+
+3. **Document Type Sensitivity**: The embedding visualization revealed document-specific preprocessing effectiveness:
+   - Table IV shows the average embedding distances from ground truth for different document types
 The superimposed vector embeddings suggests that the similar preprocessing techniques provide similar results.
+
+### Cluster Analysis
+
+The clustering-based preprocessing method selection showed significant effectiveness in identifying optimal preprocessing methods that maintained important visual characteristics while enhancing OCR accuracy. Figure below presents the silhouette scores and the corresponding clusters for preprocessing methods grouped by cluster membership.
+![GUI-input](<assets/readme/image-11.png>) ![GUI-output](<assets/readme/image-12.png>)
+
+The clustering analysis revealed three distinct clusters of preprocessing methods:
+1) Cluster 1 (Minimal Processing): Methods that preserved most of the original image characteristics, including no preprocessing and noise reduction. These methods had moderate silhouette scores (0.624-0.683), indicating reasonably cohesive grouping.
+2) Cluster 2 (Structural Enhancement): Methods that enhanced document structure without aggressive pixel-level modifications, including binarization, deskewing, and their combination. These methods had high silhouette scores (0.736-0.883), indicating strong cluster cohesion.
+3) Cluster 3 (Comprehensive Enhancement): Methods that applied more aggressive transformations to improve image quality, including contrast enhancement and combinations with multiple processing steps. These methods also showed high silhouette scores (0.795-0.891).
+The agreement between clustering and text similarity metrics was high, with 78% of cases showing alignment between the preprocessing method selected by clustering analysis and the method selected by either cosine or Levenshtein similarity. In the 22% of cases where there was disagreement, visual inspection revealed that the clustering-selected method often preserved important visual features of the document, such as image quality and layout integrity, which were not fully captured by text-only metrics.
+
+The final outcome of the overall image processing methods is summarized to provide a clear assessment of the effectiveness of each applied technique. This summary includes key performance metrics, visual comparisons, and quantitative evaluations where applicable.
+
+Additionally, the processed results are saved for future reference, ensuring reproducibility and enabling further analysis or refinement if needed. These saved outputs can be used for benchmarking, comparative studies, or improving subsequent iterations of the image processing pipeline.
+![Excel-output](<assets/readme/image-13.png>)
+![CLI-output](<assets/readme/image-15.png>)
+
+### Command Line Interface Screen
+
+In the CLI version, the user specifies the folder names by entering the paths as command-line arguments or providing inputs interactively. The application processes the images within the specified folders, extracting text using OCR techniques.
+
+During processing, a progress bar is displayed to keep the user informed about the current status and estimated completion time. Once processing is complete, the extracted text is displayed in the terminal for immediate review. Additionally, the user has the option to save the results to a file for future reference, ensuring convenient access and further analysis if needed.
+![GUI-input](<assets/readme/image-14.png>)
 
 ### Graphical User Interface Screen
 
-![GUI-output](<assets/readme/Screenshot 2025-03-18 at 13.20.22.png>)
+![GUI-input](<assets/readme/image-8.png>)
+![GUI-output](<assets/readme/image-9.png>)
 
 The user inputs the folder names through the GUI, either by typing the path or selecting folders via a browse dialog. After processing, the extracted text is displayed in the GUI, allowing the user to review or save the results easily.
 
 ## Dependencies
 See the [requirements.json](assets/requirements.json) file for a detailed list of dependencies.
+
+[⬆️ Back to Top](#top)
