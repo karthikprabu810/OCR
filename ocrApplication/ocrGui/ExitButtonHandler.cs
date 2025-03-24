@@ -39,7 +39,7 @@ namespace ocrGui
                         WindowStartupLocation = WindowStartupLocation.CenterOwner,
                         CanResize = false,
                         ShowInTaskbar = false,
-                        SystemDecorations = Avalonia.Controls.SystemDecorations.BorderOnly
+                        SystemDecorations = SystemDecorations.BorderOnly
                     };
 
                     var tcs = new TaskCompletionSource<bool>();
@@ -73,19 +73,19 @@ namespace ocrGui
                         HorizontalContentAlignment = HorizontalAlignment.Center
                     };
 
-                    yesButton.Click += (s, e) =>
+                    yesButton.Click += (_, _) =>
                     {
                         tcs.SetResult(true);
                         messageBox.Close();
                     };
 
-                    noButton.Click += (s, e) =>
+                    noButton.Click += (_, _) =>
                     {
                         tcs.SetResult(false);
                         messageBox.Close();
                     };
 
-                    messageBox.Closed += (s, e) => 
+                    messageBox.Closed += (_, _) => 
                     {
                         if (!tcs.Task.IsCompleted)
                         {

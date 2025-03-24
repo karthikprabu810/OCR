@@ -13,14 +13,14 @@ public class EnsembleOcrWithConfidence
     /// </summary>
     /// <param name="ocrResults">List of text results from different OCR engines or preprocessing methods</param>
     /// <param name="confidences">List of confidence scores corresponding to each OCR result</param>
-    /// <returns>Combined text output with highest confidence words</returns>
+    /// <returns>Combined text output with the highest confidence words</returns>
     /// <remarks>
     /// The algorithm works by assigning weights to each word based on the confidence score
     /// of the OCR result it came from. Words that appear in multiple results with high confidence
     /// will have higher accumulated weights and are more likely to be included in the final output.
     /// 
     /// The method assumes that the ocrResults and confidences lists have matching indices,
-    /// where the confidence at index i corresponds to the OCR result at index i.
+    /// where the confidence at index I correspond to the OCR result at index i.
     /// </remarks>
     public string CombineWithConfidence(List<string> ocrResults, List<double> confidences)
     {

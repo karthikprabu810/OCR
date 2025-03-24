@@ -1,10 +1,9 @@
 {
   "TesseractPath": "/usr/local/bin/tesseract",
   "TesseractTessDataPath": "/Users/karthikprabu/.nuget/packages/tesseract.data.english/4.0.0/build/tessdata",
-  "OcrSpaceApiKey": "API_KEY",
-  "IronOcrLicenseKey": "IRONSUITE.BILLA.GMAIL.COM.10931-76BCADE919-ATKM4ZRTQGH5HMHX-CTEYWBIFG3O5-4KMT2U7UJNNI-OQRW5F5DIVE4-BQWUASBZJZHF-2CUKH272NFYM-7QTMCA-TDTOYTWEHBOPEA-DEPLOYMENT.TRIAL-H4UND3.TRIAL.EXPIRES.06.APR.2025",
+  "IronOcrLicenseKey": "IRONOCR_API_KEY",
   "GoogleVisionApiKey": "/Users/karthikprabu/Downloads/personal/radiant-raceway-449617-p7-3d176321d658.json",
-  "Counter": 182,
+  "Counter": 188,
   "Limit": 950,
   "ApiUrl": "http://127.0.0.1:5000/process_ocr"
 }

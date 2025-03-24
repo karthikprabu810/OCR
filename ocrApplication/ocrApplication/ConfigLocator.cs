@@ -15,11 +15,11 @@ namespace ocrApplication
         /// <param name="throwIfNotFound">If true, throws FileNotFoundException when config file is not found</param>
         /// <returns>Path to the config.json file if found; otherwise null (if throwIfNotFound is false)</returns>
         /// <exception cref="FileNotFoundException">Thrown if config file is not found and throwIfNotFound is true</exception>
-        public static string FindConfigFile(bool throwIfNotFound = true)
+        public static string? FindConfigFile(bool throwIfNotFound = true)
         {
             // First try to find the config.json in the base directory (parent of ocrApplication, ocrGui, and unitTestProject)
             string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string configFilePath;
+            string? configFilePath;
             
             // Navigate up until we find the directory containing ocrApplication and ocrGui
             while (!string.IsNullOrEmpty(baseDirectory))

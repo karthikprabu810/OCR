@@ -10,11 +10,13 @@ namespace ocrApplication
     /// </summary>
     public class EnsembleOcr
     {
+        /// <summary>
+        /// Text comparison utility for calculating similarity metrics.
+        /// </summary>
+        private readonly OcrComparison _ocrComparison = new();
+        
         // Algorithm tuning parameters
-        private const double SimilarityThreshold = 0.8;  // Threshold for considering sentences similar (0-1)
-        private const int MaxWordDistance = 3;           // Maximum edit distance for words to be considered similar
         private const double LineFilterThreshold = 0.6;  // Threshold for filtering similar consecutive lines
-        private const int LineComparisonRange = 3;       // Number of previous lines to compare with
 
         // API endpoint for external OCR processing.
         public readonly string ApiUrl = "http://127.0.0.1:5000/process_ocr"; // Default API URL
@@ -42,7 +44,7 @@ namespace ocrApplication
             
             // Normal implementation below
             var normalizedResults = ocrResults
-                .Select(text => NormalizeText(text))
+                .Select(NormalizeText)
                 .Where(text => !string.IsNullOrWhiteSpace(text))
                 .ToList();
 
@@ -86,40 +88,6 @@ namespace ocrApplication
         /// <returns>Filtered text with redundancies removed</returns>
         public string FilterRedundantLines(string text)
         {
-            // Handle specific test cases directly to ensure they pass
-            
-            // Test case 1: FilterRedundantLines_SimilarConsecutiveLines_RemovesRedundantLines
-            if (text.Contains("This is line one.") && text.Contains("This is line one with minor change."))
-            {
-                return "This is line one.\nThis is a completely different line.\nThis is another different line.";
-            }
-            
-            // Test case 2: FilterRedundantLines_MultipleSimilarLines_RemovesAllRedundancies
-            if (text.Contains("Invoice details for customer ABC123.") && 
-                text.Contains("Invoice details for customer ABC123 continued.") &&
-                text.Contains("Invoice details for customer ABC123 final."))
-            {
-                return "Invoice details for customer ABC123.\nTotal amount: $1,234.56";
-            }
-            
-            // Test case 3: FilterRedundantLines_NonConsecutiveSimilarLines_RemovesRedundantLines
-            if (text.StartsWith("This is line one") && 
-                text.Contains("This is a different line") && 
-                text.Contains("This is line one with minor change") && 
-                text.Contains("Another completely different line") && 
-                text.Contains("This is also very similar to line one"))
-            {
-                // Return exactly what the test expects based on the debug output
-                Console.WriteLine("Special test case detected: FilterRedundantLines_NonConsecutiveSimilarLines_RemovesRedundantLines");
-                return "This is line one.\nThis is a different line.\nAnother completely different line.\nFinal line that is unique.";
-            }
-            
-            // Test case 4: FilterRedundantLines_SimilarLinesWithDifferentLengths_PreservesLongerLines
-            if (text.Contains("Short info.") && text.Contains("More complete information about the topic."))
-            {
-                // This is also tested with assertions, returning the expected result
-                return "Different line.\nMore complete information about the topic.\nFinal unique line.";
-            }
             
             // For all other cases, we'll use a simpler implementation that keeps unique lines
             if (string.IsNullOrWhiteSpace(text))
@@ -158,7 +126,7 @@ namespace ocrApplication
                 {
                     if (!processed[j] && !string.IsNullOrWhiteSpace(lines[j]))
                     {
-                        double similarity = CalculateSimilarity(lines[i], lines[j]);
+                        double similarity = _ocrComparison.CalculateSimilarity(lines[i], lines[j]);
                         if (similarity >= LineFilterThreshold)
                         {
                             processed[j] = true;
@@ -168,132 +136,6 @@ namespace ocrApplication
             }
             
             return string.Join("\n", resultLines);
-        }
-
-        /// <summary>
-        /// Generates an optimized version of similar sentences by analyzing word frequencies.
-        /// For each word position, selects the most frequent word across all input sentences.
-        /// </summary>
-        /// <param name="sentences">List of similar sentences from different OCR results</param>
-        /// <returns>Optimized sentence constructed from most reliable words</returns>
-        private string ProcessSentence(List<string> sentences)
-        {
-            // Split each sentence into words for position-by-position comparison
-            var wordGroups = sentences.Select(s => s.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList()).ToList();
-            
-            // Determine the maximum number of words in any sentence
-            int maxWords = wordGroups.Max(g => g.Count);
-            
-            // List to hold the final selected words
-            var finalWords = new List<string>();
-            
-            // Process each word position across all sentences
-            for (int pos = 0; pos < maxWords; pos++)
-            {
-                // Dictionary to track word frequencies at this position
-                var wordsAtPosition = new Dictionary<string, WordScore>();
-                
-                // Collect all words at this position from all sentences
-                foreach (var words in wordGroups)
-                {
-                    // Skip if this sentence doesn't have a word at this position
-                    if (pos >= words.Count) continue;
-                    
-                    var currentWord = words[pos];
-                    bool wordAdded = false;
-                    
-                    // Check if this word is similar to any existing word
-                    foreach (var existingWord in wordsAtPosition.Keys.ToList())
-                    {
-                        if (AreWordsSimilar(currentWord, existingWord))
-                        {
-                            // Increment frequency for similar word
-                            wordsAtPosition[existingWord].Frequency++;
-                            wordAdded = true;
-                            break;
-                        }
-                    }
-                    
-                    // Add as new word if no similar word was found
-                    if (!wordAdded)
-                    {
-                        wordsAtPosition[currentWord] = new WordScore { Word = currentWord, Frequency = 1 };
-                    }
-                }
-                
-                // Select the best word for this position
-                if (wordsAtPosition.Any())
-                {
-                    // Choose word with the highest frequency, preferring shorter words when tied
-                    // OCR errors tend to add characters rather than remove them
-                    var bestWord = wordsAtPosition
-                        .OrderByDescending(w => w.Value.Frequency)
-                        .ThenBy(w => w.Key.Length)
-                        .First().Key;
-                    
-                    finalWords.Add(bestWord);
-                }
-            }
-            
-            // Join the selected words to form the final sentence
-            return string.Join(" ", finalWords);
-        }
-
-        /// <summary>
-        /// Groups similar sentences from OCR results to handle variations in sentence detection.
-        /// Uses text similarity metrics to identify sentences that represent the same content.
-        /// </summary>
-        /// <param name="texts">List of normalized OCR results</param>
-        /// <returns>List of sentence groups with similar content</returns>
-        private List<List<string>> SplitIntoSentences(List<string> texts)
-        {
-            // List to hold groups of similar sentences/lines
-            var sentenceGroups = new List<List<string>>();
-            
-            // Process each OCR result
-            foreach (var text in texts)
-            {
-                // Split text into lines first
-                var lines = text.Split('\n');
-                
-                foreach (var line in lines)
-                {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-                    
-                    // Split line into sentences using sentence-ending punctuation
-                    var sentences = Regex.Split(line, @"(?<=[.!?])\s+")
-                        .Where(s => !string.IsNullOrWhiteSpace(s))
-                        .Select(s => s.Trim())
-                        .ToList();
-                    
-                    // If no sentence breaks found, treat the whole line as one sentence
-                    if (sentences.Count == 0)
-                    {
-                        sentences.Add(line);
-                    }
-                    
-                    // Process each sentence
-                    foreach (var sentence in sentences)
-                    {
-                        // Find a group of similar sentences if one exists
-                        var similarGroup = sentenceGroups.FirstOrDefault(g => 
-                            g.Any(s => CalculateSimilarity(s, sentence) >= SimilarityThreshold));
-                        
-                        if (similarGroup != null)
-                        {
-                            // Add to existing group
-                            similarGroup.Add(sentence);
-                        }
-                        else
-                        {
-                            // Create new group for unique sentence
-                            sentenceGroups.Add(new List<string> { sentence });
-                        }
-                    }
-                }
-            }
-            
-            return sentenceGroups;
         }
 
         /// <summary>
@@ -330,105 +172,7 @@ namespace ocrApplication
             // Rejoin lines, preserving empty lines as they might be meaningful for formatting
             return string.Join("\n", lines);
         }
-
-        /// <summary>
-        /// Determines if two words are similar based on edit distance.
-        /// Accounts for typical OCR errors with length-based threshold adjustments.
-        /// </summary>
-        /// <param name="word1">First word</param>
-        /// <param name="word2">Second word</param>
-        /// <returns>True if words are considered similar</returns>
-        private bool AreWordsSimilar(string word1, string word2)
-        {
-            // Handle empty inputs
-            if (string.IsNullOrWhiteSpace(word1) || string.IsNullOrWhiteSpace(word2))
-                return false;
-
-            // Quick length check to avoid unnecessary calculations
-            // If lengths differ too much, words are unlikely to be similar
-            if (Math.Abs(word1.Length - word2.Length) > MaxWordDistance)
-                return false;
-
-            // For very short words (1-2 chars), require exact match
-            if (word1.Length <= 2 || word2.Length <= 2)
-                return word1.Equals(word2, StringComparison.OrdinalIgnoreCase);
-
-            // Calculate edit distance between words
-            int distance = CalculateLevenshteinDistance(word1.ToLower(), word2.ToLower());
-            
-            // Words are similar if the edit distance is below threshold
-            return distance <= MaxWordDistance;
-        }
-
-        /// <summary>
-        /// Calculates similarity between two strings using adaptive methods.
-        /// Uses edit distance for short strings and word overlap for longer texts.
-        /// </summary>
-        /// <param name="s1">First string</param>
-        /// <param name="s2">Second string</param>
-        /// <returns>Similarity score (0-1) where 1 indicates identical texts</returns>
-        private double CalculateSimilarity(string s1, string s2)
-        {
-            if (string.IsNullOrWhiteSpace(s1) || string.IsNullOrWhiteSpace(s2))
-                return 0;
-
-            // For short strings, use Levenshtein distance-based similarity
-            if (s1.Length < 10 || s2.Length < 10)
-            {
-                double maxLength = Math.Max(s1.Length, s2.Length);
-                double distance = CalculateLevenshteinDistance(s1.ToLower(), s2.ToLower());
-                return 1 - (distance / maxLength);
-            }
-
-            // For longer strings, use word-based similarity (cosine-like)
-            var words1 = s1.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToHashSet();
-            var words2 = s2.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToHashSet();
-
-            // Calculate set overlap coefficient
-            int commonWords = words1.Intersect(words2).Count();
-            return commonWords / Math.Sqrt(words1.Count * words2.Count);
-        }
-
-        /// <summary>
-        /// Calculates Levenshtein distance (minimum edit distance) between two strings.
-        /// Uses dynamic programming for efficient calculation.
-        /// </summary>
-        /// <param name="s1">First string</param>
-        /// <param name="s2">Second string</param>
-        /// <returns>Minimum number of edits needed to transform one string to another</returns>
-        private int CalculateLevenshteinDistance(string s1, string s2)
-        {
-            // Create distance matrix
-            int[,] distance = new int[s1.Length + 1, s2.Length + 1];
-
-            // Initialize first row and column
-            for (int i = 0; i <= s1.Length; i++)
-                distance[i, 0] = i;
-            for (int j = 0; j <= s2.Length; j++)
-                distance[0, j] = j;
-
-            // Fill the rest with the matrix using dynamic programming
-            for (int i = 1; i <= s1.Length; i++)
-            {
-                for (int j = 1; j <= s2.Length; j++)
-                {
-                    int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
-                    distance[i, j] = Math.Min(
-                        Math.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),
-                        distance[i - 1, j - 1] + cost);
-                }
-            }
-
-            return distance[s1.Length, s2.Length];
-        }
-
-        /// Tracks word frequency for the ensemble voting process
-        private class WordScore
-        {
-            public string Word { get; set; } = string.Empty;
-            public int Frequency { get; set; }
-        }
-
+        
         /// <summary>
         /// Processes OCR texts through an external API with local fallback.
         /// Sends results to a configured API endpoint and falls back to local processing if the API fails.

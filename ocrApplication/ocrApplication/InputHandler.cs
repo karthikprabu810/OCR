@@ -180,7 +180,6 @@ namespace ocrApplication
                 Console.WriteLine("\nInitiating preprocessing techniques and extraction...");
             }
 
-
             // Handle specific method selection
             else
             {
@@ -215,7 +214,6 @@ namespace ocrApplication
                     Console.WriteLine("\nInitiating preprocessing techniques and extraction...");
                 }
             }
-            
             return preprocessMethods;
         }
     }

@@ -61,7 +61,7 @@ namespace unitTestProject
         /// </summary>
         /// <returns>Path to the configuration file</returns>
         /// <exception cref="FileNotFoundException">Thrown if config file cannot be found</exception>
-        public static string CreateTestConfig()
+        public static string? CreateTestConfig()
         {
             return ocrApplication.ConfigLocator.FindConfigFile();
         }

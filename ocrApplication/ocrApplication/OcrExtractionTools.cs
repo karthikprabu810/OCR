@@ -2,30 +2,11 @@ using System.Diagnostics;
 using Google.Cloud.Vision.V1;
 using IronOcr;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Tesseract;
 
 namespace ocrApplication
 {
-    /// <summary>
-    /// Configuration settings for OCR services and API credentials.
-    /// Stores paths, API keys, and usage limits loaded from JSON configuration.
-    /// </summary>
-    public class OcrConfig
-    {
-        public required string TesseractPath { get; set; }           // Path to the Tesseract OCR executable
-        public required string TesseractTessDataPath { get; set; }   // Path to Tesseract language data files
-        public required string OcrSpaceApiKey { get; set; }          // API key for OCR.Space service
-        public required string IronOcrLicenseKey { get; set; }       // License key for IronOCR library
-        public required string GoogleVisionApiKey { get; set; }      // API key or credentials path for Google Vision
-        
-        // API usage tracking
-        public int Counter { get; set; }                    // Current API call count
-        public int Limit { get; set; }                      // Maximum allowed API calls
-        
-        public required string ApiUrl { get; set; }                  // Endpoint for external OCR processing
-    }
-
+    
     /// <summary>
     /// Provides multi-engine OCR capabilities using various services and libraries.
     /// Supports Tesseract, IronOCR, Google Vision, and OCR.Space with configuration management.
@@ -35,11 +16,10 @@ namespace ocrApplication
         // Configuration fields
         private string _tesseractPath;           // Tesseract executable location
         private string _tessDataPath;            // Tesseract language data location
-        private string _ocrSpaceApiKey;          // OCR.Space API credentials
         private string _ironOcrLicenseKey;       // IronOCR license 
         private string _googleVisionApiKey;      // Google Vision credentials
         private bool _disposed ;                 // Disposal tracking flag
-        private string _configFilePath;          // Config file location
+        private string? _configFilePath;          // Config file location
 
 
         /// <summary>
@@ -47,7 +27,7 @@ namespace ocrApplication
         /// </summary>
         /// <param name="configFilePath">Path to JSON configuration file</param>
         /// <exception cref="InvalidOperationException">Thrown when required API keys are missing</exception>
-        public OcrExtractionTools(string configFilePath)
+        public OcrExtractionTools(string? configFilePath)
         {
             _configFilePath = configFilePath;
             // Load configuration settings from the JSON file
@@ -56,13 +36,12 @@ namespace ocrApplication
             // Initialize fields with values from config, with fallbacks where appropriate
             _tesseractPath = config.TesseractPath;
             _tessDataPath = config.TesseractTessDataPath;
-            _ocrSpaceApiKey = config.OcrSpaceApiKey;
             _ironOcrLicenseKey = config.IronOcrLicenseKey;
             _googleVisionApiKey = config.GoogleVisionApiKey;
 
             // Validate that critical API keys are present
             // Without these keys, the OCR services can't be used
-            if (string.IsNullOrEmpty(_ocrSpaceApiKey) || string.IsNullOrEmpty(_ironOcrLicenseKey))
+            if (string.IsNullOrEmpty(_ironOcrLicenseKey))
             {
                 throw new InvalidOperationException("One or more required API keys are missing from the config file.");
             }
@@ -75,7 +54,7 @@ namespace ocrApplication
         /// <returns>Populated configuration object</returns>
         /// <exception cref="FileNotFoundException">Thrown when config file not found</exception>
         /// <exception cref="JsonException">Thrown when JSON parsing fails</exception>
-        private OcrConfig LoadConfig(string filePath)
+        private OcrConfig LoadConfig(string? filePath)
         {
             // Read all text from the config file
             var json = File.ReadAllText(filePath);
@@ -281,57 +260,6 @@ namespace ocrApplication
             }
         }
 
-        /// <summary>
-        /// Extracts text using OCR.Space REST API service.
-        /// Provides cloud-based OCR with potential specialized detection capabilities.
-        /// </summary>
-        /// <param name="imagePath">Source image path</param>
-        /// <returns>Extracted text or error message</returns>
-        public async Task<string> ExtractTextUsingOcrSpaceAsync(string imagePath)
-        {
-            // Create HttpClient for API communication
-            using (var client = new HttpClient())
-            {
-                // Create a multipart form for sending the image and API key
-                var form = new MultipartFormDataContent();
-
-                // Add the image file to the request
-                // Open the file as a stream and add it to the form
-                form.Add(new StreamContent(File.OpenRead(imagePath)), "file", Path.GetFileName(imagePath));
-
-                // Add the API key to authenticate the request
-                form.Add(new StringContent(_ocrSpaceApiKey), "apikey");
-
-                try
-                {
-                    // Send the HTTP POST request to the OCR.Space API
-                    var response = await client.PostAsync("https://api.ocr.space/parse/image", form);
-                    // Read the response body as a string
-                    var content = await response.Content.ReadAsStringAsync();
-
-                    // Parse the JSON response
-                    var json = JObject.Parse(content);
-
-                    // Check if OCR was successful (exit code 1 means success)
-                    var ocrExitCode = json["OCRExitCode"].ToString();
-                    if (ocrExitCode == "1")
-                    {
-                        // Extract and return the parsed text from the response
-                        return json["ParsedResults"][0]["ParsedText"].ToString();
-                    }
-                    else
-                    {
-                        // Return the error message if OCR failed
-                        return $"Error: {json["ErrorMessage"]}";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Return error message for any exceptions during API call
-                    return $"Error calling OCR.Space API: {ex.Message}";
-                }
-            }
-        }
 
         /// <summary>
         /// Releases resources used by OCR services.

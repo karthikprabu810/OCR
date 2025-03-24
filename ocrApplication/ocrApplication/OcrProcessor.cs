@@ -25,7 +25,7 @@ namespace ocrApplication
             new ConcurrentDictionary<string, string>();
             
         // Dictionary to track best preprocessing method by cosine similarity for each image (thread-safe)
-        private readonly ConcurrentDictionary<string, string> _bestPreprocessingMethods = 
+        private readonly ConcurrentDictionary<string, string> _bestCosineMethods = 
             new ConcurrentDictionary<string, string>();
             
         // Dictionary to track best preprocessing method by Levenshtein distance for each image (thread-safe)
@@ -216,19 +216,19 @@ namespace ocrApplication
                 await File.WriteAllTextAsync(groundTruthFilePath, groundTruth);
                 
                 // Create similarity matrix generator for analysis
-                TextSimilarity.SimilarityMatrixGenerator similarityMatrixGenerator = new TextSimilarity.SimilarityMatrixGenerator();
+                SimilarityMatrixGenerator similarityMatrixGenerator = new SimilarityMatrixGenerator();
 
                 // Create and visualize cosine similarity matrix
-                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrix(ocrResults, groundTruth, excelFilePath, ocrSteps);
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrix(ocrResults, groundTruth, excelFilePath, ocrSteps, SimilarityType.Cosine);
                 
                 // Create and visualize Levenshtein distance similarity matrix
-                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixLv(ocrResults, groundTruth, excelFilePath, ocrSteps);
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrix(ocrResults, groundTruth, excelFilePath, ocrSteps, SimilarityType.Levenshtein);
                 
                 // Create and visualize Jaro-Winkler similarity matrix
-                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixJW(ocrResults, groundTruth, excelFilePath, ocrSteps);
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrix(ocrResults, groundTruth, excelFilePath, ocrSteps, SimilarityType.JaroWinkler);
                 
                 // Create and visualize Jaccard similarity matrix
-                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrixJaccard(ocrResults, groundTruth, excelFilePath, ocrSteps);
+                await similarityMatrixGenerator.GenerateAndVisualizeOcrSimilarityMatrix(ocrResults, groundTruth, excelFilePath, ocrSteps, SimilarityType.Jaccard);
                 
                 // Generate report on which preprocessing methods were most effective
                 await similarityMatrixGenerator.GeneratePreprocessingEffectivenessReport(ocrResults, groundTruth, excelFilePath, ocrSteps);
@@ -237,13 +237,13 @@ namespace ocrApplication
                 var ocrComparison = new OcrComparison();
                 
                 // Find the best preprocessing method based on cosine similarity
-                string bestPreprocessingMethod = await ocrComparison.FindBestPreprocessingMethod(ocrResults, groundTruth, ocrSteps);
+                string bestPreprocessingMethod = await ocrComparison.FindBestCosineMethod(ocrResults, groundTruth, ocrSteps);
                 
                 // Store the best method for later use (even if it's "Original")
                 if (!string.IsNullOrEmpty(bestPreprocessingMethod))
                 {
                     // Use concurrent dictionary to avoid thread issues
-                    _bestPreprocessingMethods.AddOrUpdate(
+                    _bestCosineMethods.AddOrUpdate(
                         fileNameWithoutExtension,
                         bestPreprocessingMethod,
                         (_, _) => bestPreprocessingMethod
@@ -340,12 +340,10 @@ namespace ocrApplication
                     
                     // Determine best preprocessing method based on clustering and silhouette scores
                     string bestClusterMethod = DetermineBestClusterMethod(
-                        clusterLabels.Skip(1).ToArray(), // Skip original image's cluster
+                        (clusterLabels ?? Array.Empty<int>()).Skip(1).ToArray(), // Skip original image's cluster
                         preprocessMethods,
                         bestPreprocessingMethod,
                         bestLevenshteinMethod,
-                        bestJaroWinklerMethod,
-                        bestJaccardMethod,
                         methodScores);
                     
                     // Save clustering results to Excel with individual silhouette scores
@@ -392,6 +390,20 @@ namespace ocrApplication
             // Wait for all image processing tasks to complete
             await Task.WhenAll(tasks);
             
+            // Print IronOCR Licensing Error
+            if (OcrExtractionHelper.IronOcrLicensingErrorOccurred)
+            {
+                Console.WriteLine(OcrExtractionHelper.IronOcrLicensingErrorMessage);
+            }
+            // Print google Vision Licensing Error
+            if (OcrExtractionHelper.VisionLicensingErrorOccurred)
+            {
+                Console.WriteLine(OcrExtractionHelper.VisionLicensingErrorMessage);
+            }
+            
+            // Waits 100 ms to print output properly
+            await Task.Delay(100);
+            
             // Return the dictionary of extracted texts
             return _extractedTexts;
         }
@@ -400,9 +412,9 @@ namespace ocrApplication
         /// Gets the dictionary of best preprocessing methods determined by cosine similarity.
         /// </summary>
         /// <returns>A concurrent dictionary mapping image names to their best preprocessing methods based on cosine similarity.</returns>
-        public ConcurrentDictionary<string, string> GetBestPreprocessingMethods()
+        public ConcurrentDictionary<string, string> GetBestCosineMethods()
         {
-            return _bestPreprocessingMethods;
+            return _bestCosineMethods;
         }
         
         /// <summary>
@@ -459,8 +471,6 @@ namespace ocrApplication
         /// <param name="preprocessMethods">List of preprocessing methods.</param>
         /// <param name="bestCosineSimilarityMethod">Best preprocessing method based on cosine similarity.</param>
         /// <param name="bestLevenshteinMethod">Best preprocessing method based on Levenshtein distance.</param>
-        /// <param name="bestJaroWinklerMethod">Best preprocessing method based on Jaro-Winkler similarity.</param>
-        /// <param name="bestJaccardMethod">Best preprocessing method based on Jaccard similarity.</param>
         /// <param name="methodScores">Dictionary of silhouette scores for each method.</param>
         /// <returns>The name of the best preprocessing method.</returns>
         private string DetermineBestClusterMethod(
@@ -468,12 +478,10 @@ namespace ocrApplication
             List<(string Name, Func<string, Mat> Method)> preprocessMethods,
             string bestCosineSimilarityMethod,
             string bestLevenshteinMethod,
-            string bestJaroWinklerMethod = null,
-            string bestJaccardMethod = null,
-            Dictionary<string, double> methodScores = null)
+            Dictionary<string, double> methodScores)
         {
             // If we have individual method scores, prioritize methods with high silhouette scores
-            if (methodScores != null && methodScores.Count > 0)
+            if (methodScores.Count > 0)
             {
                 // Get methods with positive silhouette scores (well-clustered)
                 var goodMethods = methodScores.Where(m => m.Value > 0.3).OrderByDescending(m => m.Value).ToList();
@@ -495,7 +503,7 @@ namespace ocrApplication
                         return bestLevenshteinMethod;
                     }
                     
-                    // Otherwise, return the method with highest silhouette score
+                    // Otherwise, return the method with the highest silhouette score
                     return goodMethods[0].Key;
                 }
             }
@@ -516,13 +524,13 @@ namespace ocrApplication
             {
                 // Find the most frequent cluster
                 var clusterCounts = new Dictionary<int, int>();
-                for (int i = 0; i < clusterLabels.Length; i++)
+                foreach (var t in clusterLabels)
                 {
-                    if (!clusterCounts.ContainsKey(clusterLabels[i]))
+                    if (!clusterCounts.ContainsKey(t))
                     {
-                        clusterCounts[clusterLabels[i]] = 0;
+                        clusterCounts[t] = 0;
                     }
-                    clusterCounts[clusterLabels[i]]++;
+                    clusterCounts[t]++;
                 }
                 
                 // Get the cluster with the most elements

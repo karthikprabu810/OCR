@@ -1,31 +1,10 @@
 using System.Collections.Concurrent;
-using System.Linq;
-using System.Collections.Generic;
-using System.IO;
-using System;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Globalization;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Collections;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.AccessControl;
-using System.Security.Principal;
-using System.Security.Permissions;
-using System.Security;
-using OfficeOpenXml;
 
 namespace ocrApplication
 {
     /// <summary>
     /// Provides functionality for summarizing and displaying OCR processing results.
-    /// Handles reading best methods from Excel files, displaying summary tables, 
+    /// Handles reading the best methods from Excel files, displaying summary tables, 
     /// and preparing data for export. This class centralizes all reporting and 
     /// summary generation functionality for OCR results.
     /// </summary>
@@ -56,64 +35,6 @@ namespace ocrApplication
                 Console.WriteLine($"Extracted text: {entry.Value}");
                 Console.WriteLine("--------------------------------------------------");
             }
-        }
-        
-        /// <summary>
-        /// Reads the best preprocessing methods from Excel files created during OCR processing.
-        /// </summary>
-        /// <param name="outputDirectory">Directory containing the Excel files</param>
-        /// <returns>Tuple containing dictionaries mapping image paths to their best methods based on different similarity metrics</returns>
-        public static (
-            Dictionary<string, string> bestCosineMethods, 
-            Dictionary<string, string> bestLevenshteinMethods,
-            Dictionary<string, string> bestJaroWinklerMethods,
-            Dictionary<string, string> bestJaccardMethods,
-            Dictionary<string, string> bestClusteringMethods) ReadBestMethodsFromExcelFiles(string outputDirectory)
-        {
-            var bestCosineMethods = new Dictionary<string, string>();
-            var bestLevenshteinMethods = new Dictionary<string, string>();
-            var bestJaroWinklerMethods = new Dictionary<string, string>();
-            var bestJaccardMethods = new Dictionary<string, string>();
-            var bestClusteringMethods = new Dictionary<string, string>();
-            
-            try
-            {
-                // Get all Excel files in the output directory
-                var excelFiles = Directory.GetFiles(outputDirectory, "Comparative_Analysis_*.xlsx");
-                
-                foreach (var excelFile in excelFiles)
-                {
-                    // Extract image name from file name
-                    string fileName = Path.GetFileNameWithoutExtension(excelFile);
-                    string imageName = fileName.Replace("Comparative_Analysis_", "");
-                    
-                    // Read best methods from Excel file
-                    using (var package = new ExcelPackage(new FileInfo(excelFile)))
-                    {
-                        ExcelWorksheet worksheet = package.Workbook.Worksheets["Similarity Scores"];
-                        if (worksheet != null)
-                        {
-                            // Find the summary section
-                            int row = worksheet.Dimension.End.Row - 5; // Assuming fixed layout with summary at end
-                            
-                            // Get best methods
-                            bestCosineMethods[imageName] = worksheet.Cells[row - 5, 2].Value?.ToString();
-                            bestLevenshteinMethods[imageName] = worksheet.Cells[row - 4, 2].Value?.ToString();
-                            bestJaroWinklerMethods[imageName] = worksheet.Cells[row - 3, 2].Value?.ToString();
-                            bestJaccardMethods[imageName] = worksheet.Cells[row - 2, 2].Value?.ToString();
-                            bestClusteringMethods[imageName] = worksheet.Cells[row - 1, 2].Value?.ToString();
-                        }
-                    }
-                }
-                
-                Console.WriteLine($"Read best methods from {excelFiles.Length} Excel files");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error reading best methods from Excel files: {ex.Message}");
-            }
-            
-            return (bestCosineMethods, bestLevenshteinMethods, bestJaroWinklerMethods, bestJaccardMethods, bestClusteringMethods);
         }
         
         /// <summary>
@@ -169,8 +90,19 @@ namespace ocrApplication
             // Dictionary to store overall best methods
             var overallBestMethods = new Dictionary<string, string>();
             
+            // Get the console window width
+            int windowWidth = Console.WindowWidth;
+            // Calculate the width for each of the 7 columns
+            int columnWidth = windowWidth / 7;
+                
+            // Create the format string dynamically based on the column width
+            string formatString = string.Format(
+                "{{0,-{0}}} | {{1,-{0}}} | {{2,-{0}}} | {{3,{0}}} | {{4,-{0}}} | {{5,-{0}}} | {{6,-{0}}}",
+                columnWidth
+            );
+            
             // Print a formatted table header with column alignment
-            Console.WriteLine("\n{0,-20} | {1,-16} | {2,-16} | {3,-16} | {4,-16} | {5,-16} | {6,-16}", 
+            Console.WriteLine(formatString, 
                 "Image", "Cosine", "Levenshtein", "Jaro-Winkler", "Jaccard", "Clustering", "Overall Best");
             Console.WriteLine(new string('-', 132));
             
@@ -202,14 +134,14 @@ namespace ocrApplication
                 
                 // Display the row in the table with proper formatting
                 // Use "N/A" as fallback if a method is not available
-                Console.WriteLine("{0,-20} | {1,-16} | {2,-16} | {3,-16} | {4,-16} | {5,-16} | {6,-16}", 
+                Console.WriteLine(formatString, 
                     imageName, 
-                    bestCosine ?? "N/A", 
-                    bestLevenshtein ?? "N/A",
-                    bestJaroWinkler ?? "N/A",
-                    bestJaccard ?? "N/A",
-                    bestClustering ?? "N/A",
-                    overallBestMethod ?? "N/A");
+                    bestCosine, 
+                    bestLevenshtein,
+                    bestJaroWinkler,
+                    bestJaccard,
+                    bestClustering,
+                    overallBestMethod);
             }
             
             // Add a closing line to the table
@@ -296,65 +228,6 @@ namespace ocrApplication
             };
             
             return priorities.TryGetValue(method, out int priority) ? priority : 15; // Default priority
-        }
-        
-        /// <summary>
-        /// Generates comprehensive OCR summaries and exports them to output files.
-        /// Reads best methods, displays summary information, and triggers the export process.
-        /// </summary>
-        /// <param name="imageFiles">Array of image file paths that were processed</param>
-        /// <param name="ocrResultsFolder">Folder containing the OCR result files</param>
-        /// <param name="outputFolderPath">Destination folder for exported summary files</param>
-        /// <param name="extractedTexts">Dictionary containing image paths and their extracted OCR text</param>
-        /// <remarks>
-        /// This method orchestrates the entire summary and export process, combining results from
-        /// different analyses and creating various output formats (Excel, PDF, etc.).
-        /// </remarks>
-        public static void GenerateAndExportEnhancedSummary(
-            string[] imageFiles, 
-            string ocrResultsFolder, 
-            string outputFolderPath,
-            ConcurrentDictionary<string, string> extractedTexts)
-        {
-            if (imageFiles == null)
-                throw new ArgumentNullException(nameof(imageFiles));
-                
-            if (string.IsNullOrEmpty(ocrResultsFolder))
-                throw new ArgumentNullException(nameof(ocrResultsFolder));
-                
-            if (string.IsNullOrEmpty(outputFolderPath))
-                throw new ArgumentNullException(nameof(outputFolderPath));
-                
-            if (extractedTexts == null)
-                throw new ArgumentNullException(nameof(extractedTexts));
-                
-            // Step 1: Display summary of extracted texts
-            DisplayExtractedTexts(extractedTexts);
-            
-            // Step 2: Read best methods from Excel files
-            var (bestCosineMethods, bestLevenshteinMethods, bestJaroWinklerMethods, bestJaccardMethods, bestClusteringMethods) = 
-                ReadBestMethodsFromExcelFiles(ocrResultsFolder);
-            
-            // Step 3: Display best methods summary and get overall best methods
-            var overallBestMethods = DisplayEnhancedBestMethodsSummary(
-                bestCosineMethods, 
-                bestLevenshteinMethods, 
-                bestJaroWinklerMethods, 
-                bestJaccardMethods, 
-                bestClusteringMethods);
-            
-            // Step 4: Export results including overall best methods
-            ExportUtilities.ExportResults(
-                outputFolderPath + "/OCR_Results", 
-                extractedTexts, 
-                new ConcurrentDictionary<string, string>(bestCosineMethods), 
-                new ConcurrentDictionary<string, string>(bestLevenshteinMethods), 
-                new ConcurrentDictionary<string, string>(bestClusteringMethods),
-                new ConcurrentDictionary<string, string>(bestJaroWinklerMethods),
-                new ConcurrentDictionary<string, string>(bestJaccardMethods),
-                overallBestMethods);
-            
-            Console.WriteLine("\nSummary generated and exported successfully.");
         }
     }
 } 

@@ -11,7 +11,7 @@ namespace unitTestProject
     public class OcrExtractionToolsTests
     {
         private string _testImagePath;          /// <summary>Path to the test image file containing sample text for OCR extraction</summary>
-        private string _testConfigPath;         /// <summary>Path to the test configuration file with OCR engine settings</summary>
+        private string? _testConfigPath;         /// <summary>Path to the test configuration file with OCR engine settings</summary>
         private OcrExtractionTools _ocrTools;   /// <summary>Instance of OcrExtractionTools to be tested</summary>
         
         /// <summary>
@@ -74,7 +74,7 @@ namespace unitTestProject
         public void Constructor_WithInvalidConfigPath_ThrowsFileNotFoundException()
         {
             // Arrange
-            string invalidConfigPath = Path.Combine(Path.GetTempPath(), $"non_existent_config_{Guid.NewGuid()}.json");
+            string? invalidConfigPath = Path.Combine(Path.GetTempPath(), $"non_existent_config_{Guid.NewGuid()}.json");
             
             // Act - should throw FileNotFoundException
             var ocrTools = new OcrExtractionTools(invalidConfigPath);
@@ -176,31 +176,6 @@ namespace unitTestProject
         }
         
         /// <summary>
-        /// Tests the OCR.space API text extraction functionality.
-        /// Verifies that the API can successfully extract text from a valid image.
-        /// This test may be skipped if the OCR.space API key is not configured.
-        /// </summary>
-        /// <returns>Task representing the asynchronous test operation</returns>
-        [TestMethod]
-        public async Task ExtractTextUsingOcrSpaceAsync_ValidImage_ReturnsText()
-        {
-            try
-            {
-                // Act
-                string text = await _ocrTools.ExtractTextUsingOcrSpaceAsync(_testImagePath);
-                
-                // Assert - Note: This test depends on external API availability
-                Assert.IsFalse(string.IsNullOrEmpty(text), "Extracted text should not be empty");
-            }
-            catch (Exception ex) when (ex.Message.Contains("API") || 
-                                      ex.ToString().Contains("HttpRequestException"))
-            {
-                // Skip test if OCR Space API is not reachable
-                Assert.Inconclusive($"Test requires OCR Space API availability: {ex.Message}");
-            }
-        }
-        
-        /// <summary>
         /// Tests the configuration loading functionality of OcrExtractionTools.
         /// Verifies that the class can correctly parse and load configuration settings
         /// from a valid JSON configuration file, including API keys and paths.
@@ -220,7 +195,7 @@ namespace unitTestProject
                 ""ApiUrl"": ""http://localhost:5000/process_ocr""
             }";
             
-            string tempConfigPath = Path.Combine(Path.GetTempPath(), $"test_config_{Guid.NewGuid()}.json");
+            string? tempConfigPath = Path.Combine(Path.GetTempPath(), $"test_config_{Guid.NewGuid()}.json");
             File.WriteAllText(tempConfigPath, jsonContent);
             
             try

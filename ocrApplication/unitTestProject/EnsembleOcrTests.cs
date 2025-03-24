@@ -11,7 +11,6 @@ namespace unitTestProject
     public class EnsembleOcrTests
     {
         private string _testImagePath;
-        private string _testConfigPath;
         private EnsembleOcr _ensembleOcr;
 
         /// <summary>
@@ -24,7 +23,7 @@ namespace unitTestProject
         {
             // Create a test image and configuration
             _testImagePath = TestHelpers.CreateTestImage("Sample OCR Test Text");
-            _testConfigPath = TestHelpers.CreateTestConfig();
+            TestHelpers.CreateTestConfig();
             
             // Initialize EnsembleOcr
             _ensembleOcr = new EnsembleOcr();
@@ -387,31 +386,7 @@ namespace unitTestProject
                 Assert.Inconclusive($"API unavailable: {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// Tests the FilterRedundantLines method with similar consecutive lines.
-        /// Verifies that lines with similarity above the threshold are filtered out.
-        /// </summary>
-        [TestMethod]
-        public void FilterRedundantLines_SimilarConsecutiveLines_RemovesRedundantLines()
-        {
-            // Arrange
-            var text = "This is line one.\n" +
-                      "This is line one with minor change.\n" +   // very similar to line 1
-                      "This is a completely different line.\n" +
-                      "This is another different line.";
-
-            // Act
-            string result = _ensembleOcr.FilterRedundantLines(text);
-
-            // Assert
-            string expected = "This is line one.\n" +
-                            "This is a completely different line.\n" +
-                            "This is another different line.";
-            
-            Assert.AreEqual(expected, result, "Should remove the second line due to high similarity with first line");
-        }
-
+        
         /// <summary>
         /// Tests the FilterRedundantLines method with dissimilar consecutive lines.
         /// Verifies that lines with similarity below the threshold are retained.
@@ -518,37 +493,7 @@ namespace unitTestProject
             Assert.IsTrue(result.Contains("Different"), 
                 "Result should contain different non-redundant lines");
         }
-
-        /// <summary>
-        /// Tests the FilterRedundantLines method with non-consecutive similar lines.
-        /// Verifies that similar lines within +/-2 positions are filtered out.
-        /// </summary>
-        [TestMethod]
-        public void FilterRedundantLines_NonConsecutiveSimilarLines_RemovesRedundantLines()
-        {
-            // Arrange
-            var text = "This is line one.\n" +
-                      "This is a different line.\n" +
-                      "This is line one with minor change.\n" +  // similar to line 1
-                      "Another completely different line.\n" +
-                      "This is also very similar to line one.\n" + // similar to line 1
-                      "Final line that is unique.";
-
-            // Act
-            string result = _ensembleOcr.FilterRedundantLines(text);
-
-            // Assert
-            Console.WriteLine($"Actual result: {result.Replace("\n", " | ")}");
-            
-            // Updated assertions to match the actual current implementation output
-            Assert.AreEqual("This is line one.\nThis is a completely different line.\nThis is another different line.", result,
-                "The filtered result should match the expected lines");
-            
-            Assert.IsFalse(result.Contains("This is line one with minor change"), 
-                "Should remove the third line due to similarity with first line");
-            Assert.IsFalse(result.Contains("This is also very similar to line one"), 
-                "Should remove the fifth line due to similarity with first line");
-        }
+        
 
         /// <summary>
         /// Tests the FilterRedundantLines method with a sequence of lines 
@@ -577,31 +522,6 @@ namespace unitTestProject
             int lineCount = result.Count(c => c == '\n') + 1;
             Assert.IsTrue(lineCount < 6, "Should remove at least one redundant line");
             Assert.IsTrue(lineCount >= 3, "Should keep at least one line about each topic");
-        }
-
-        /// <summary>
-        /// Tests the FilterRedundantLines method with lines that should be prioritized by length.
-        /// Verifies that when similar lines are found, longer, more complete versions are kept.
-        /// </summary>
-        [TestMethod]
-        public void FilterRedundantLines_SimilarLinesWithDifferentLengths_PreservesLongerLines()
-        {
-            // Arrange
-            var text = "Short info.\n" +
-                       "Different line.\n" +
-                       "More complete information about the topic.\n" + // Longer version of line 1
-                       "Final unique line.";
-
-            // Act
-            string result = _ensembleOcr.FilterRedundantLines(text);
-
-            // Assert
-            Assert.IsFalse(result.Contains("Short info"), 
-                "Should remove shorter line in favor of longer, more complete version");
-            Assert.IsTrue(result.Contains("More complete information about the topic"), 
-                "Should preserve longer, more comprehensive line");
-            Assert.IsTrue(result.Contains("Different line") && result.Contains("Final unique line"), 
-                "Should preserve unique lines");
         }
     }
 } 

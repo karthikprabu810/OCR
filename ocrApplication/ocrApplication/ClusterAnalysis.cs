@@ -25,7 +25,7 @@ namespace ocrApplication
         /// If there are fewer feature vectors than requested clusters, the method will
         /// duplicate vectors with small random variations to ensure sufficient samples.
         /// </remarks>
-        public (int[] clusterLabels, double silhouetteScore, double[] individualSilhouetteScores) PerformClustering(List<double[]> featureVectors, int numClusters)
+        public (int[]? clusterLabels, double silhouetteScore, double[] individualSilhouetteScores) PerformClustering(List<double[]> featureVectors, int numClusters)
         {
             // Ensure we have enough samples for clustering
             if (featureVectors.Count < numClusters)

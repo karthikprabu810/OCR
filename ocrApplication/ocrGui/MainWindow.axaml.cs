@@ -85,7 +85,7 @@ namespace ocrGui
         private DateTime _processStartTime;             /// <summary>Timestamp when processing started for duration calculation</summary>
         private bool _isProcessingCompleted;            /// <summary>Flag indicating if processing has been completed</summary>
         private DateTime _lastInputSentTime = DateTime.MinValue;              /// <summary>Timestamp of when the last user input was sent to prevent rapid input</summary>
-        private const int INPUT_PROTECTION_MS = 1000; // 1 second protection  /// <summary>Minimum time in milliseconds between allowed user inputs</summary>
+        private const int InputProtectionMs = 1000; // 1 second protection  /// <summary>Minimum time in milliseconds between allowed user inputs</summary>
         private DateTime _processingStartTime = DateTime.MinValue;            /// <summary>Timestamp when current processing phase started</summary>
         private TimeSpan _processingDuration = TimeSpan.Zero;                 /// <summary>Duration of the current processing phase</summary>
         private bool _processingTimerActive;                                  /// <summary>Flag indicating if the processing timer is active</summary>
@@ -528,7 +528,7 @@ namespace ocrGui
                 return;
             
             // Prevent prompt detection too soon after sending input
-            if ((DateTime.Now - _lastInputSentTime).TotalMilliseconds < INPUT_PROTECTION_MS)
+            if ((DateTime.Now - _lastInputSentTime).TotalMilliseconds < InputProtectionMs)
             {
                 return;
             }
@@ -744,7 +744,7 @@ namespace ocrGui
             // Count images before starting
             _totalImagesToProcess = CountImageFilesInDirectory(inputFolder);
             
-            var ocrAppPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+            var ocrAppPath = Path.GetFullPath(Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", 
                 "ocrApplication", "bin", "Debug", "net8.0", "ocrApplication.dll"));
 
@@ -1336,7 +1336,7 @@ namespace ocrGui
         /// Event that is raised when changes occur that affect whether the command can execute.
         /// </summary>
         public event EventHandler? CanExecuteChanged;
-
+        
         /// <summary>
         /// Raises the CanExecuteChanged event to indicate the command execution status has changed.
         /// </summary>

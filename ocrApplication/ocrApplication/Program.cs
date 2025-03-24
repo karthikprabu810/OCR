@@ -38,7 +38,7 @@ namespace ocrApplication
             bool isWindows = RuntimeInformation.OSDescription.Contains("Windows", StringComparison.OrdinalIgnoreCase);
 
             // ConfigLocator automatically searches for the config file in various locations
-            string configFilePath;
+            string? configFilePath;
             try
             {
                 configFilePath = ConfigLocator.FindConfigFile();
@@ -168,6 +168,8 @@ namespace ocrApplication
             string processedImagesFolder = Path.Combine(outputFolderPath, "processed_images");
             string ocrResultsFolder = Path.Combine(outputFolderPath, "ocr_results");
 
+            
+
             // Create output directories
             Directory.CreateDirectory(processedImagesFolder);
             Directory.CreateDirectory(ocrResultsFolder);
@@ -217,7 +219,7 @@ namespace ocrApplication
                 Console.WriteLine("\n\n\nOCR processing complete for all images in the folder and its subfolders.");
             
                 // These dictionaries store the best method for each image based on different metrics
-                ConcurrentDictionary<string, string> bestPreprocessingMethods = ocrProcessor.GetBestPreprocessingMethods();
+                ConcurrentDictionary<string, string> bestPreprocessingMethods = ocrProcessor.GetBestCosineMethods();
                 ConcurrentDictionary<string, string> bestLevenshteinMethods = ocrProcessor.GetBestLevenshteinMethods();
                 ConcurrentDictionary<string, string> bestJaroWinklerMethods = ocrProcessor.GetBestJaroWinklerMethods();
                 ConcurrentDictionary<string, string> bestJaccardMethods = ocrProcessor.GetBestJaccardMethods();

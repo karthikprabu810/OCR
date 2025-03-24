@@ -7,6 +7,12 @@ namespace ocrApplication;
 /// </summary>
 public static class OcrExtractionHelper
 {
+    // Flag declared as a class-level variable for License error
+    public static bool IronOcrLicensingErrorOccurred;
+    public static string IronOcrLicensingErrorMessage = string.Empty;
+    public static bool VisionLicensingErrorOccurred;
+    public static string VisionLicensingErrorMessage = string.Empty;
+    
     /// <summary>
     /// Processes an image using platform-appropriate OCR engines and saves results.
     /// Applies OS-specific implementations (command-line for macOS, library for Windows).
@@ -41,22 +47,21 @@ public static class OcrExtractionHelper
             // Returns the extracted text as a string
             string tesseractText = ocrTool.ExtractTextUsingTesseractWindowsNuGet(imagePath);
             // Manually save the result to a file
-            File.WriteAllText(Path.Combine(Path.GetDirectoryName(ocrToolFolder), $"{methodName}.txt"), tesseractText);
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(ocrToolFolder) ?? string.Empty, $"{methodName}.txt"), tesseractText);
             // Commented out to reduce console output
             // Console.WriteLine($"Tesseract OCR processed: {imagePath}");
         } 
         
         /* ALTERNATIVE OCR IMPLEMENTATIONS
-         * 
+         *
          * The following OCR implementations are currently disabled but fully implemented.
          * They can be enabled as needed to provide additional OCR engines for ensemble processing.
          * Each provides different strengths and may perform better on certain types of images.
-         * 
+         *
          * When enabling these engines:
          * 1. Ensure proper API keys are configured in config.json
          * 2. Consider the cost implications of commercial APIs
          * 3. Uncomment the relevant sections
-         * 4. Update the EnsembleOcr class to work with these additional results
          */
 
         /* IronOCR IMPLEMENTATION
@@ -64,46 +69,42 @@ public static class OcrExtractionHelper
          * // --- IronOCR OCR ---
          * // Use IronOCR on all platforms (commercial OCR library with good accuracy)
          *
-         * // Process the image with IronOCR and get the extracted text
-         * string ironOcrText = ocrTool.ExtractTextUsingIronOcr(imagePath);
+         * try
+         * {
+         *   // Process the image with IronOCR and get the extracted text
+         *   string ironOcrText = ocrTool.ExtractTextUsingIronOcr(imagePath);
          *
-         * // Save the IronOCR result to a separate file
-         * File.WriteAllText(Path.Combine(ocrToolFolder, $"{methodName}_iron_ocr.txt"), ironOcrText);
-         *
-         * // Log the completion of IronOCR processing
-         * Console.WriteLine($"IronOCR processed: {imagePath}");
+         *   // Save the IronOCR result to a separate file
+         *   string ironOcrPath = ocrToolFolder.Substring(0, ocrToolFolder.LastIndexOf('/'));
+         *   File.WriteAllText(Path.Combine(ocrToolFolder, $"{methodName}_iron_ocr.txt"), ironOcrText);
+         * }
+         * catch (Exception ex)
+         * {
+         *   // Handle any other general exceptions
+         *   IronOcrLicensingErrorOccurred = true;
+         *   IronOcrLicensingErrorMessage= ex.Message;
+         * }
          */
 
         /* GOOGLE CLOUD VISION IMPLEMENTATION
          * 
          * // --- Google Vision OCR ---
          * // Use Google Cloud Vision API on all platforms (high accuracy cloud service)
+         * try
+         * {
+         *   // Call the Google Vision OCR API asynchronously but wait for the result
+         *   string googleVisionOcrText = ocrTool.ExtractTextUsingGoogleVisionAsync(imagePath).Result;
          *
-         * // Call the Google Vision OCR API asynchronously but wait for the result
-         * string googleVisionOcrText = ocrTool.ExtractTextUsingGoogleVisionAsync(imagePath).Result;
-         *
-         * // Save the Google Vision result to a separate file
-         * File.WriteAllText(Path.Combine(ocrToolFolder, "google-vision.txt"), googleVisionOcrText);
-         *
-         * // Log the completion of Google Vision processing
-         * Console.WriteLine($"Google Vision OCR processed: {imagePath}");
+         *   // Save the Google Vision result to a separate file
+         *   string googleVisionPath = ocrToolFolder.Substring(0, ocrToolFolder.LastIndexOf('/'));
+         *   File.WriteAllText(Path.Combine(googleVisionPath, $"{methodName}_google_vision.txt"), googleVisionOcrText);
+         * }
+         * catch (Exception ex)
+         * {
+         *   // Handle any other general exceptions
+         *   VisionLicensingErrorOccurred = true;
+         *   VisionLicensingErrorMessage= ex.Message;
+         * }
          */
-
-        /* OCR.SPACE API IMPLEMENTATION
-         * 
-         * // --- OCR.Space API ---
-         * // Use OCR.Space API on all platforms (alternative cloud OCR service)
-         *
-         * // Call the OCR.Space API asynchronously but wait for the result
-         * string ocrSpaceOcrText = ocrTool.ExtractTextUsingOcrSpaceAsync(imagePath).Result;
-         *
-         * // Save the OCR.Space result to a separate file
-         * File.WriteAllText(Path.Combine(ocrToolFolder, "ocr-space.txt"), ocrSpaceOcrText);
-         *
-         * // Log the completion of OCR.Space processing
-         * Console.WriteLine($"OCR.Space processed: {imagePath}");
-         */
-
-
     }
 }

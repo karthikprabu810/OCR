@@ -14,11 +14,11 @@ public static class ExecutionTimeLogger
     /// Creates visual comparisons of execution times and memory usage.
     /// </summary>
     /// <param name="filePath">Excel output location</param>
-    /// <param name="preprocessingTimes">Preprocessing method performance metrics</param>
-    /// <param name="ocrExecutionTimes">OCR tool performance metrics</param>
+    /// <param name="imagePreprocessing">Preprocessing method performance metrics</param>
+    /// <param name="ocrExtraction">OCR tool performance metrics</param>
     public static void SaveExecutionTimesToExcel(string filePath, 
-        List<(string ImageName, string Method, double TimeTaken, long MemoryUsage)> preprocessingTimes, 
-        List<(string ImageName, string OCRTool, double TimeTaken, long MemoryUsage)> ocrExecutionTimes)
+        List<(string ImageName, string Method, double TimeTaken, long MemoryUsage)> imagePreprocessing, 
+        List<(string ImageName, string OCRTool, double TimeTaken, long MemoryUsage)> ocrExtraction)
     {
         // Set EPPlus license context to non-commercial to avoid licensing issues
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -33,11 +33,11 @@ public static class ExecutionTimeLogger
         preprocessingSheet.Cells[1, 3].Value = "Memory Usage (bytes)";
             
         // Populate data for preprocessing methods
-        for (int i = 0; i < preprocessingTimes.Count; i++)
+        for (int i = 0; i < imagePreprocessing.Count; i++)
         {
-            preprocessingSheet.Cells[i + 2, 1].Value = preprocessingTimes[i].Method;
-            preprocessingSheet.Cells[i + 2, 2].Value = preprocessingTimes[i].TimeTaken;
-            preprocessingSheet.Cells[i + 2, 3].Value = preprocessingTimes[i].MemoryUsage;
+            preprocessingSheet.Cells[i + 2, 1].Value = imagePreprocessing[i].Method;
+            preprocessingSheet.Cells[i + 2, 2].Value = imagePreprocessing[i].TimeTaken;
+            preprocessingSheet.Cells[i + 2, 3].Value = imagePreprocessing[i].MemoryUsage;
         }
 
         // Auto-resize columns to fit content
@@ -51,8 +51,8 @@ public static class ExecutionTimeLogger
         executionTimeChart.SetSize(800, 400);
 
         // Set data ranges for the chart
-        var xRangeExecutionTime = preprocessingSheet.Cells[2, 1, preprocessingTimes.Count + 1, 1];
-        var yRangeExecutionTime = preprocessingSheet.Cells[2, 2, preprocessingTimes.Count + 1, 2];
+        var xRangeExecutionTime = preprocessingSheet.Cells[2, 1, imagePreprocessing.Count + 1, 1];
+        var yRangeExecutionTime = preprocessingSheet.Cells[2, 2, imagePreprocessing.Count + 1, 2];
 
         // Add data series to the chart
         var execTimeSeries = executionTimeChart.Series.Add(yRangeExecutionTime, xRangeExecutionTime);
@@ -66,8 +66,8 @@ public static class ExecutionTimeLogger
         memoryUsageChart.SetSize(800, 400);
 
         // Set data ranges for the memory usage chart
-        var xRangeMemoryUsage = preprocessingSheet.Cells[2, 1, preprocessingTimes.Count + 1, 1];
-        var yRangeMemoryUsage = preprocessingSheet.Cells[2, 3, preprocessingTimes.Count + 1, 3];
+        var xRangeMemoryUsage = preprocessingSheet.Cells[2, 1, imagePreprocessing.Count + 1, 1];
+        var yRangeMemoryUsage = preprocessingSheet.Cells[2, 3, imagePreprocessing.Count + 1, 3];
 
         // Add data series to the memory usage chart
         var memUsageSeries = memoryUsageChart.Series.Add(yRangeMemoryUsage, xRangeMemoryUsage);
@@ -85,11 +85,11 @@ public static class ExecutionTimeLogger
         ocrSheet.Cells[1, 3].Value = "Memory Usage (bytes)";
             
         // Populate data for OCR tools
-        for (int i = 0; i < ocrExecutionTimes.Count; i++)
+        for (int i = 0; i < ocrExtraction.Count; i++)
         {
-            ocrSheet.Cells[i + 2, 1].Value = ocrExecutionTimes[i].OCRTool;
-            ocrSheet.Cells[i + 2, 2].Value = ocrExecutionTimes[i].TimeTaken;
-            ocrSheet.Cells[i + 2, 3].Value = ocrExecutionTimes[i].MemoryUsage;
+            ocrSheet.Cells[i + 2, 1].Value = ocrExtraction[i].OCRTool;
+            ocrSheet.Cells[i + 2, 2].Value = ocrExtraction[i].TimeTaken;
+            ocrSheet.Cells[i + 2, 3].Value = ocrExtraction[i].MemoryUsage;
         }
 
         // Auto-resize columns to fit content
@@ -102,8 +102,8 @@ public static class ExecutionTimeLogger
         executionTimeChart2.SetSize(800, 400);
 
         // Set data ranges for the chart
-        var xRangeExecutionTime2 = ocrSheet.Cells[2, 1, ocrExecutionTimes.Count + 1, 1];
-        var yRangeExecutionTime2 = ocrSheet.Cells[2, 2, ocrExecutionTimes.Count + 1, 2];
+        var xRangeExecutionTime2 = ocrSheet.Cells[2, 1, ocrExtraction.Count + 1, 1];
+        var yRangeExecutionTime2 = ocrSheet.Cells[2, 2, ocrExtraction.Count + 1, 2];
 
         // Add data series to the chart
         var execTimeSeries2 = executionTimeChart2.Series.Add(yRangeExecutionTime2, xRangeExecutionTime2);
@@ -116,8 +116,8 @@ public static class ExecutionTimeLogger
         memoryUsageChart2.SetSize(800, 400);
 
         // Set data ranges for the memory usage chart
-        var xRangeMemoryUsage2 = ocrSheet.Cells[2, 1, ocrExecutionTimes.Count + 1, 1];
-        var yRangeMemoryUsage2 = ocrSheet.Cells[2, 3, ocrExecutionTimes.Count + 1, 3];
+        var xRangeMemoryUsage2 = ocrSheet.Cells[2, 1, ocrExtraction.Count + 1, 1];
+        var yRangeMemoryUsage2 = ocrSheet.Cells[2, 3, ocrExtraction.Count + 1, 3];
 
         // Add data series to the memory usage chart
         var memUsageSeries2 = memoryUsageChart2.Series.Add(yRangeMemoryUsage2, xRangeMemoryUsage2);
@@ -213,37 +213,6 @@ public static class ExecutionTimeLogger
             
         // Save the updated package to the file
         package.Save();
-        
-        // Add another visualization with method names as text in a separate worksheet
-        var labelWorksheet = package.Workbook.Worksheets.Add("Text Embeddings With Labels");
-        
-        // Create a table with X, Y coordinates and labels
-        labelWorksheet.Cells[1, 1].Value = "Method";
-        labelWorksheet.Cells[1, 2].Value = "X";
-        labelWorksheet.Cells[1, 3].Value = "Y";
-        labelWorksheet.Cells[1, 1, 1, 3].Style.Font.Bold = true;
-        
-        // Write the data
-        for (int i = 0; i < reduced.Count; i++)
-        {
-            labelWorksheet.Cells[i + 2, 1].Value = embeddings[i].Label;
-            labelWorksheet.Cells[i + 2, 2].Value = reduced[i][0];
-            labelWorksheet.Cells[i + 2, 3].Value = reduced[i][1];
-            
-            labelWorksheet.Cells[i + 2, 2].Style.Numberformat.Format = "0.0000";
-            labelWorksheet.Cells[i + 2, 3].Style.Numberformat.Format = "0.0000";
-        }
-        
-        // Add note about the values
-        labelWorksheet.Cells[reduced.Count + 3, 1].Value = "Note: Points that are closer together represent more similar OCR results.";
-        labelWorksheet.Cells[reduced.Count + 3, 1].Style.Font.Bold = true;
-        labelWorksheet.Cells[reduced.Count + 4, 1].Value = "Each preprocessing method's vector has been normalized to preserve decimal precision.";
-        
-        // Auto-fit columns
-        labelWorksheet.Cells[1, 1, reduced.Count + 4, 3].AutoFitColumns();
-        
-        // Save the package again
-        package.Save();
     }
 
     /// <summary>
@@ -254,7 +223,7 @@ public static class ExecutionTimeLogger
     /// <returns>2D coordinates for visualization</returns>
     private static List<double[]> ReduceDimensionality(List<double[]> vectors)
     {
-        if (vectors == null || vectors.Count == 0)
+        if (vectors.Count == 0)
             return new List<double[]>();
             
         // Handle case where vectors already have 2 or fewer dimensions
@@ -278,9 +247,8 @@ public static class ExecutionTimeLogger
                 int maxDim = vectors.Max(v => v.Length);
                 var uniformVectors = new List<double[]>();
                 
-                for (int i = 0; i < vectors.Count; i++)
+                foreach (var originalVector in vectors)
                 {
-                    var originalVector = vectors[i];
                     var newVector = new double[maxDim]; // Create a new array of the right size
                     
                     // Copy the values from the original vector
@@ -376,12 +344,12 @@ public static class ExecutionTimeLogger
     /// <param name="preprocessingMethodNames">Names of the preprocessing methods.</param>
     public static void SaveClusteringResultsToExcel(
         string excelFilePath,
-        int[] clusterLabels,
+        int[]? clusterLabels,
         double overallSilhouetteScore,
         double[] individualSilhouetteScores,
         string worksheetName,
         string bestPreprocessingMethod,
-        List<string> preprocessingMethodNames)
+        List<string>? preprocessingMethodNames)
     {
         // Set EPPlus license context to non-commercial to avoid licensing issues
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -415,8 +383,7 @@ public static class ExecutionTimeLogger
             clusterLabels?.Length ?? 0);
             
         // Ensure individualSilhouetteScores is valid and has enough elements
-        bool hasIndividualScores = individualSilhouetteScores != null && 
-                                  individualSilhouetteScores.Length >= dataLength;
+        bool hasIndividualScores = individualSilhouetteScores.Length >= dataLength;
 
         // Add data rows
         for (int i = 0; i < dataLength; i++)
@@ -525,7 +492,7 @@ public static class ExecutionTimeLogger
         }
         
         // Create a bar chart for silhouette scores if we have individual scores
-        if (individualSilhouetteScores != null && individualSilhouetteScores.Length > 0)
+        if (individualSilhouetteScores.Length > 0)
         {
             var barChart = clusteringSheet.Drawings.AddChart("Silhouette Scores", eChartType.ColumnClustered);
             

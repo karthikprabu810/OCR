@@ -11,7 +11,7 @@ namespace unitTestProject
     public class IntegrationTests
     {
         private string _testImagePath;                  /// <summary>Path to the test image used for OCR testing</summary>
-        private string _testConfigPath;                 /// <summary>Path to the test configuration file</summary>
+        private string? _testConfigPath;                 /// <summary>Path to the test configuration file</summary>
         private OcrExtractionTools _ocrTools;           /// <summary>OCR extraction tools instance for processing images</summary>
         private OcrComparison _ocrComparison;           /// <summary>OCR comparison utility for analyzing results</summary>
         private EnsembleOcr _ensembleOcr;               /// <summary>Ensemble OCR processor for combining multiple OCR results</summary>

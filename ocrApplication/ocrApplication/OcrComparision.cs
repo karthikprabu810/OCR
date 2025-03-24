@@ -3,7 +3,6 @@ namespace ocrApplication
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using System.Linq;
 
     /// <summary>
     /// Provides methods for comparing OCR results using different similarity metrics.
@@ -381,7 +380,7 @@ namespace ocrApplication
         /// <param name="groundTruth">The ground truth text to compare against.</param>
         /// <param name="ocrSteps">List of preprocessing method names corresponding to the OCR results.</param>
         /// <returns>The name of the preprocessing method that produced the best cosine similarity.</returns>
-        public async Task<string> FindBestPreprocessingMethod(List<string> ocrResults, string groundTruth, List<string> ocrSteps)
+        public Task<string> FindBestCosineMethod(List<string> ocrResults, string groundTruth, List<string> ocrSteps)
         {
             try
             {
@@ -390,7 +389,7 @@ namespace ocrApplication
                     string.IsNullOrEmpty(groundTruth) || 
                     ocrSteps == null || ocrSteps.Count == 0)
                 {
-                    return "Original"; // Default to original if no valid data
+                    return Task.FromResult("Original"); // Default to original if no valid data
                 }
 
                 float maxSimilarity = -1;
@@ -414,15 +413,15 @@ namespace ocrApplication
                 }
 
                 // Return the name of the best method, or "Original" if none found
-                return bestMethodIndex >= 0 && bestMethodIndex < ocrSteps.Count 
+                return Task.FromResult(bestMethodIndex >= 0 && bestMethodIndex < ocrSteps.Count 
                     ? ocrSteps[bestMethodIndex] 
-                    : "Original";
+                    : "Original");
             }
             catch (Exception ex)
             {
                 // Log the error and return the default method
                 Console.WriteLine($"Error finding best preprocessing method: {ex.Message}");
-                return "Original";
+                return Task.FromResult("Original");
             }
         }
 
@@ -435,7 +434,7 @@ namespace ocrApplication
         /// <param name="groundTruth">The ground truth text to compare against.</param>
         /// <param name="ocrSteps">List of preprocessing method names corresponding to the OCR results.</param>
         /// <returns>The name of the preprocessing method that produced the best Levenshtein similarity.</returns>
-        public async Task<string> FindBestLevenshteinMethod(List<string> ocrResults, string groundTruth, List<string> ocrSteps)
+        public Task<string> FindBestLevenshteinMethod(List<string> ocrResults, string groundTruth, List<string> ocrSteps)
         {
             try
             {
@@ -444,7 +443,7 @@ namespace ocrApplication
                     string.IsNullOrEmpty(groundTruth) || 
                     ocrSteps == null || ocrSteps.Count == 0)
                 {
-                    return "Original"; // Default to original if no valid data
+                    return Task.FromResult("Original"); // Default to original if no valid data
                 }
 
                 float maxSimilarity = -1;
@@ -468,15 +467,15 @@ namespace ocrApplication
                 }
 
                 // Return the name of the best method, or "Original" if none found
-                return bestMethodIndex >= 0 && bestMethodIndex < ocrSteps.Count 
+                return Task.FromResult(bestMethodIndex >= 0 && bestMethodIndex < ocrSteps.Count 
                     ? ocrSteps[bestMethodIndex] 
-                    : "Original";
+                    : "Original");
             }
             catch (Exception ex)
             {
                 // Log the error and return the default method
                 Console.WriteLine($"Error finding best Levenshtein method: {ex.Message}");
-                return "Original";
+                return Task.FromResult("Original");
             }
         }
 
@@ -489,7 +488,7 @@ namespace ocrApplication
         /// <param name="groundTruth">The ground truth text to compare against.</param>
         /// <param name="ocrSteps">List of preprocessing method names corresponding to the OCR results.</param>
         /// <returns>The name of the preprocessing method that produced the best Jaro-Winkler similarity.</returns>
-        public async Task<string> FindBestJaroWinklerMethod(List<string> ocrResults, string groundTruth, List<string> ocrSteps)
+        public Task<string> FindBestJaroWinklerMethod(List<string> ocrResults, string groundTruth, List<string> ocrSteps)
         {
             try
             {
@@ -498,7 +497,7 @@ namespace ocrApplication
                     string.IsNullOrEmpty(groundTruth) || 
                     ocrSteps == null || ocrSteps.Count == 0)
                 {
-                    return "Original"; // Default to original if no valid data
+                    return Task.FromResult("Original"); // Default to original if no valid data
                 }
 
                 float maxSimilarity = -1;
@@ -522,15 +521,15 @@ namespace ocrApplication
                 }
 
                 // Return the name of the best method, or "Original" if none found
-                return bestMethodIndex >= 0 && bestMethodIndex < ocrSteps.Count 
+                return Task.FromResult(bestMethodIndex >= 0 && bestMethodIndex < ocrSteps.Count 
                     ? ocrSteps[bestMethodIndex] 
-                    : "Original";
+                    : "Original");
             }
             catch (Exception ex)
             {
                 // Log the error and return the default method
                 Console.WriteLine($"Error finding best Jaro-Winkler method: {ex.Message}");
-                return "Original";
+                return Task.FromResult("Original");
             }
         }
 
@@ -543,7 +542,7 @@ namespace ocrApplication
         /// <param name="groundTruth">The ground truth text to compare against.</param>
         /// <param name="ocrSteps">List of preprocessing method names corresponding to the OCR results.</param>
         /// <returns>The name of the preprocessing method that produced the best Jaccard similarity.</returns>
-        public async Task<string> FindBestJaccardMethod(List<string> ocrResults, string groundTruth, List<string> ocrSteps)
+        public Task<string> FindBestJaccardMethod(List<string> ocrResults, string groundTruth, List<string> ocrSteps)
         {
             try
             {
@@ -552,7 +551,7 @@ namespace ocrApplication
                     string.IsNullOrEmpty(groundTruth) || 
                     ocrSteps == null || ocrSteps.Count == 0)
                 {
-                    return "Original"; // Default to original if no valid data
+                    return Task.FromResult("Original"); // Default to original if no valid data
                 }
 
                 float maxSimilarity = -1;
@@ -576,257 +575,46 @@ namespace ocrApplication
                 }
 
                 // Return the name of the best method, or "Original" if none found
-                return bestMethodIndex >= 0 && bestMethodIndex < ocrSteps.Count 
+                return Task.FromResult(bestMethodIndex >= 0 && bestMethodIndex < ocrSteps.Count 
                     ? ocrSteps[bestMethodIndex] 
-                    : "Original";
+                    : "Original");
             }
             catch (Exception ex)
             {
                 // Log the error and return the default method
                 Console.WriteLine($"Error finding best Jaccard method: {ex.Message}");
-                return "Original";
+                return Task.FromResult("Original");
             }
-        }
-
-        /// <summary>
-        /// Determines the overall best preprocessing method by considering both cosine similarity
-        /// and Levenshtein metrics. This method combines the results from both similarity measures
-        /// to provide a more robust determination of the best method.
-        /// </summary>
-        /// <param name="cosineBestMethod">The best method according to cosine similarity.</param>
-        /// <param name="levenshteinBestMethod">The best method according to Levenshtein similarity.</param>
-        /// <returns>
-        /// The best overall preprocessing method name. If both metrics agree, that method is returned.
-        /// If they disagree, a priority-based decision is made, favoring established preprocessing techniques.
-        /// </returns>
-        public string DetermineOverallBestMethod(string cosineBestMethod, string levenshteinBestMethod)
-        {
-            // If both metrics agree, that's the overall best method
-            if (cosineBestMethod == levenshteinBestMethod)
-                return cosineBestMethod;
-                
-            // If one of the methods is null or empty, return the other one
-            if (string.IsNullOrEmpty(cosineBestMethod))
-                return levenshteinBestMethod ?? "Original";
-                
-            if (string.IsNullOrEmpty(levenshteinBestMethod))
-                return cosineBestMethod;
-            
-            // Define priorities for preprocessing methods
-            Dictionary<string, int> methodPriorities = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "Adaptive_Thresholding", 10 },
-                { "Grayscale", 9 },
-                { "Deskew", 8 },
-                { "Gaussian_Filter", 7 },
-                { "Otsu_Binarization", 6 },
-                { "Median_Filter", 5 },
-                { "Gamma_Correction", 4 },
-                { "Histogram_Equalization", 3 },
-                { "Original", 2 }
-                // Other methods have default priority 0
-            };
-            
-            // Get priorities for both methods
-            int cosinePriority = methodPriorities.ContainsKey(cosineBestMethod) ? methodPriorities[cosineBestMethod] : 0;
-            int levenshteinPriority = methodPriorities.ContainsKey(levenshteinBestMethod) ? methodPriorities[levenshteinBestMethod] : 0;
-            
-            // Return method with higher priority
-            return cosinePriority >= levenshteinPriority ? cosineBestMethod : levenshteinBestMethod;
-        }
-
-        /// <summary>
-        /// Determines the overall best preprocessing method by considering all similarity metrics.
-        /// This method combines the results from multiple similarity measures to provide a more 
-        /// robust determination of the best method.
-        /// </summary>
-        /// <param name="cosineBestMethod">The best method according to cosine similarity.</param>
-        /// <param name="levenshteinBestMethod">The best method according to Levenshtein similarity.</param>
-        /// <param name="jaroWinklerBestMethod">The best method according to Jaro-Winkler similarity.</param>
-        /// <param name="jaccardBestMethod">The best method according to Jaccard similarity.</param>
-        /// <returns>
-        /// The best overall preprocessing method name based on majority voting and priority rules.
-        /// </returns>
-        public string DetermineOverallBestMethod(string cosineBestMethod, string levenshteinBestMethod, 
-                                                string jaroWinklerBestMethod, string jaccardBestMethod)
-        {
-            // Create a dictionary to count method occurrences
-            Dictionary<string, int> methodCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            
-            // Add each non-null method to the counts
-            AddMethodToCount(methodCounts, cosineBestMethod);
-            AddMethodToCount(methodCounts, levenshteinBestMethod);
-            AddMethodToCount(methodCounts, jaroWinklerBestMethod);
-            AddMethodToCount(methodCounts, jaccardBestMethod);
-            
-            // If any method has a majority (appears more than once), return it
-            foreach (var kvp in methodCounts)
-            {
-                if (kvp.Value > 1)
-                {
-                    return kvp.Key;
-                }
-            }
-            
-            // No clear majority, use priority-based decision
-            Dictionary<string, int> methodPriorities = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "Adaptive_Thresholding", 10 },
-                { "Grayscale", 9 },
-                { "Deskew", 8 },
-                { "Gaussian_Filter", 7 },
-                { "Otsu_Binarization", 6 },
-                { "Median_Filter", 5 },
-                { "Gamma_Correction", 4 },
-                { "Histogram_Equalization", 3 },
-                { "Original", 2 }
-                // Other methods have default priority 0
-            };
-            
-            // Find method with highest priority
-            string bestMethod = "Original";  // Default
-            int highestPriority = -1;
-            
-            // Check priority for each method in counts
-            foreach (var method in methodCounts.Keys)
-            {
-                int priority = methodPriorities.ContainsKey(method) ? methodPriorities[method] : 0;
-                if (priority > highestPriority)
-                {
-                    highestPriority = priority;
-                    bestMethod = method;
-                }
-            }
-            
-            return bestMethod;
         }
         
         /// <summary>
-        /// Determines the overall best preprocessing method by considering all similarity metrics and clustering.
-        /// This method combines the results from multiple similarity measures to provide a more 
-        /// robust determination of the best method.
+        /// Calculates similarity between two strings using adaptive methods.
+        /// Uses edit distance for short strings and word overlap for longer texts.
         /// </summary>
-        /// <param name="cosineBestMethod">The best method according to cosine similarity.</param>
-        /// <param name="levenshteinBestMethod">The best method according to Levenshtein similarity.</param>
-        /// <param name="jaroWinklerBestMethod">The best method according to Jaro-Winkler similarity.</param>
-        /// <param name="jaccardBestMethod">The best method according to Jaccard similarity.</param>
-        /// <param name="clusteringBestMethod">The best method according to clustering analysis.</param>
-        /// <returns>
-        /// The best overall preprocessing method name based on majority voting and priority rules.
-        /// </returns>
-        public string DetermineOverallBestMethod(
-            string cosineBestMethod, 
-            string levenshteinBestMethod, 
-            string jaroWinklerBestMethod, 
-            string jaccardBestMethod, 
-            string clusteringBestMethod)
+        /// <param name="s1">First string</param>
+        /// <param name="s2">Second string</param>
+        /// <returns>Similarity score (0-1) where 1 indicates identical texts</returns>
+        public double CalculateSimilarity(string s1, string s2)
         {
-            // Create a dictionary to count method occurrences
-            Dictionary<string, int> methodCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            
-            // Add each non-null method to the counts
-            AddMethodToCount(methodCounts, cosineBestMethod);
-            AddMethodToCount(methodCounts, levenshteinBestMethod);
-            AddMethodToCount(methodCounts, jaroWinklerBestMethod);
-            AddMethodToCount(methodCounts, jaccardBestMethod);
-            AddMethodToCount(methodCounts, clusteringBestMethod);
-            
-            // If any method has a clear majority, return it
-            int maxCount = methodCounts.Count > 0 ? methodCounts.Values.Max() : 0;
-            if (maxCount > 1) 
+            if (string.IsNullOrWhiteSpace(s1) || string.IsNullOrWhiteSpace(s2))
+                return 0;
+
+            // For short strings, use Levenshtein distance-based similarity
+            if (s1.Length < 10 || s2.Length < 10)
             {
-                // Get all methods with the max count
-                var topMethods = methodCounts.Where(kvp => kvp.Value == maxCount).Select(kvp => kvp.Key).ToList();
-                
-                // If there's only one method with max count, return it
-                if (topMethods.Count == 1)
-                    return topMethods[0];
-                
-                // Multiple methods tied for max count, use priority-based decision among them
-                Dictionary<string, int> methodPriorities = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
-                {
-                    { "Adaptive_Thresholding", 10 },
-                    { "Grayscale", 9 },
-                    { "Deskew", 8 },
-                    { "Gaussian_Filter", 7 },
-                    { "Otsu_Binarization", 6 },
-                    { "Median_Filter", 5 },
-                    { "Gamma_Correction", 4 },
-                    { "Histogram_Equalization", 3 },
-                    { "Original", 2 }
-                    // Other methods have default priority 0
-                };
-                
-                // Find the tied method with the highest priority
-                string bestMethod = topMethods[0];  // Default to first tied method
-                int highestPriority = methodPriorities.ContainsKey(bestMethod) ? methodPriorities[bestMethod] : 0;
-                
-                for (int i = 1; i < topMethods.Count; i++)
-                {
-                    string method = topMethods[i];
-                    int priority = methodPriorities.ContainsKey(method) ? methodPriorities[method] : 0;
-                    
-                    if (priority > highestPriority)
-                    {
-                        highestPriority = priority;
-                        bestMethod = method;
-                    }
-                }
-                
-                return bestMethod;
+                double maxLength = Math.Max(s1.Length, s2.Length);
+                double distance = CalculateLevenshteinDistance(s1.ToLower(), s2.ToLower());
+                return 1 - (distance / maxLength);
             }
-            
-            // No method appeared more than once, use priority-based decision among all methods
-            Dictionary<string, int> fallbackPriorities = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "Adaptive_Thresholding", 10 },
-                { "Grayscale", 9 },
-                { "Deskew", 8 },
-                { "Gaussian_Filter", 7 },
-                { "Otsu_Binarization", 6 },
-                { "Median_Filter", 5 },
-                { "Gamma_Correction", 4 },
-                { "Histogram_Equalization", 3 },
-                { "Original", 2 }
-                // Other methods have default priority 0
-            };
-            
-            // Find method with highest priority
-            string fallbackMethod = "Original";  // Default
-            int fallbackHighestPriority = -1;
-            
-            // Check priority for each method in counts
-            foreach (var method in methodCounts.Keys)
-            {
-                int priority = fallbackPriorities.ContainsKey(method) ? fallbackPriorities[method] : 0;
-                if (priority > fallbackHighestPriority)
-                {
-                    fallbackHighestPriority = priority;
-                    fallbackMethod = method;
-                }
-            }
-            
-            return fallbackMethod;
+
+            // For longer strings, use word-based similarity (cosine-like)
+            var words1 = s1.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+            var words2 = s2.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+
+            // Calculate set overlap coefficient
+            int commonWords = words1.Intersect(words2).Count();
+            return commonWords / Math.Sqrt(words1.Count * words2.Count);
         }
-        
-        /// <summary>
-        /// Helper method to add a method to the count dictionary.
-        /// </summary>
-        /// <param name="counts">Dictionary of method counts.</param>
-        /// <param name="method">Method name to add.</param>
-        private void AddMethodToCount(Dictionary<string, int> counts, string method)
-        {
-            if (!string.IsNullOrEmpty(method))
-            {
-                if (counts.ContainsKey(method))
-                {
-                    counts[method]++;
-                }
-                else
-                {
-                    counts[method] = 1;
-                }
-            }
-        }
+
     }
 }
