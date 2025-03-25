@@ -12,11 +12,11 @@ In the CLI version, users specify folder names by entering paths as command-line
 
 During the processing, a progress bar is shown to keep the user updated on the current status and estimated completion time. Once the processing is complete, the extracted text is displayed in the terminal for immediate review. Additionally, users have the option to save the results to a file for future reference, ensuring easy access for further analysis or follow-up actions.
 
-<img src="assets/readme/image-14.png" alt="GUI-input" />
+<img src="../../assets/readme/image-14.png" alt="GUI-input" />
 
 **Graphical User Interface Screen**
 
-<img src="assets/readme/image-8.png" alt="GUI-input" width="45%"/> <img src="assets/readme/image-9.png" alt="GUI-output" width="40%"/>
+<img src="../../assets/readme/image-8.png" alt="GUI-input" width="45%"/> <img src="../../assets/readme/image-9.png" alt="GUI-output" width="40%"/>
 
 The user inputs the folder names through the GUI, either by typing the path or selecting folders via a browse dialog. Once the folders are specified, the application processes the images and extracts text using OCR techniques. After processing is complete, the extracted text is displayed directly in the GUI, allowing the user to review the results. Users can easily save the extracted text to a file for future reference or further analysis. Additionally, the interface provides an intuitive and user-friendly experience, ensuring smooth navigation and efficient access to the OCR results.
 

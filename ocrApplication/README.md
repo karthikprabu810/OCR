@@ -16,7 +16,7 @@ This suite is designed for researchers, data scientists, and professionals who r
    - [Configuration](#configuration)
    - [Language Data Files](#language-data-files)
 5. [Dependencies](#dependencies)
-6. [Usage and Testing](#usageandtesting)
+6. [Usage and Testing](#usage-and-testing)
    - [Command Line Interface](#command-line-interface)
    - [Graphical User Interface](#graphical-user-interface)
    - [Testing](#testing)

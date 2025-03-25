@@ -5,7 +5,7 @@
 ## ocrApplication
 
 The architectural flow diagram of the application is provided below:
-![Application Flow Chart](assets/readme/basic-architecture.png)
+![Application Flow Chart](../../assets/readme/basic-architecture.png)
 
 This diagram illustrates the complete workflow of the OCR application, showing how image input is processed through preprocessing modules, fed into OCR engines, and how the extracted text results are analyzed, compared and visualized. The diagram shows data flow between components including input handling, image preprocessing, OCR extraction, text similarity analysis, and result export modules.
 
@@ -13,7 +13,7 @@ The core OCR processing engine consists of the following key components:
 
 ### Input Handling
 
-The [`InputHandler`](ocrApplication/InputHandler.cs) class manages the first stage of the OCR pipeline as shown in the architecture diagram. It's responsible for loading images from specified locations, creating output directories, and loading selected preprocessing techniques. This component serves as the entry point for all data into the system.
+The [`InputHandler`](../../ocrApplication/InputHandler.cs) class manages the first stage of the OCR pipeline as shown in the architecture diagram. It's responsible for loading images from specified locations, creating output directories, and loading selected preprocessing techniques. This component serves as the entry point for all data into the system.
 
 ```csharp
 public static class InputHandler
@@ -44,10 +44,10 @@ Before applying OCR, it is important to enhance the image quality for better rec
 
 ### Image Preprocessing
 
-The [`ImagePreprocessing`](ocrApplication/ImagePreprocessing.cs) class implements the preprocessing module shown in the architecture diagram. This critical component applies various image enhancement techniques to improve OCR accuracy by normalizing image quality, removing artifacts, and enhancing text features before OCR processing.
+The [`ImagePreprocessing`](../../ocrApplication/ImagePreprocessing.cs) class implements the preprocessing module shown in the architecture diagram. This critical component applies various image enhancement techniques to improve OCR accuracy by normalizing image quality, removing artifacts, and enhancing text features before OCR processing.
 
 The image processing module architecture is described below:
-<img src="assets/readme/preprocessing-module.png" alt="image processing module" height="50%"/>
+<img src="../../assets/readme/preprocessing-module.png" alt="image processing module" height="50%"/>
 
 
 The preprocessing module addresses various image quality challenges that can impact OCR accuracy. It implements 24 distinct image enhancement techniques, organized into five functional categories:
@@ -69,7 +69,7 @@ These techniques are designed to optimize image quality, improving OCR performan
 ### OCR Integration Engine
 
 The extraction module containg various OCR Engines is described as follows
-<img src="assets/readme/extraction-module.png" alt="extraction module" height="70%"/>
+<img src="../../assets/readme/extraction-module.png" alt="extraction module" height="70%"/>
 This component utilizes a multi-engine strategy for text extraction, offering flexibility and improved accuracy through the following integrations:
 
 **Tesseract OCR**: A locally-running OCR engine that supports a wide range of languages, providing an offline solution for text extraction.
@@ -82,7 +82,7 @@ The system allows users to compare results from all three OCR engines, leveragin
 
 *Note: The integration for IronOCR and Google Cloud Vision API is currently commented out. Once the appropriate API keys are provided, the relevant sections of the code can be uncommented to enable these engines.*
 
-The [`OcrExtractionTools`](ocrApplication/OcrExtractionTools.cs) class represents the OCR engine integration component in the architecture diagram. This module interfaces with multiple OCR engines to extract text from preprocessed images.
+The [`OcrExtractionTools`](../../ocrApplication/OcrExtractionTools.cs) class represents the OCR engine integration component in the architecture diagram. This module interfaces with multiple OCR engines to extract text from preprocessed images.
 
 ```csharp
 public class OcrExtractionTools
@@ -104,9 +104,9 @@ public class OcrExtractionTools
 ### Similarity Analysis
 
 The text comparision and similarity module archuitecture is described below:
-<img src="assets/readme/similarity-module.png" alt="comparision module" height="70%"/>
+<img src="../../assets/readme/similarity-module.png" alt="comparision module" height="70%"/>
 
-The [`TextSimilarity`](ocrApplication/OcrComparision.cs) class provides a set of methods for comparing and analyzing the similarity between two text strings. It implements several text comparison techniques, each of which calculates similarity based on different algorithms. The class includes the following methods:
+The [`TextSimilarity`](../../ocrApplication/OcrComparision.cs) class provides a set of methods for comparing and analyzing the similarity between two text strings. It implements several text comparison techniques, each of which calculates similarity based on different algorithms. The class includes the following methods:
 
 ```csharp
 public class OcrComparison
@@ -168,13 +168,13 @@ These techniques combine to form a robust analysis toolkit for comparing OCR res
 ### Visualization
 
 The Visualization Module as described in the below figure is designed to provide visual representations of text similarity and facilitate the export of OCR results for reporting and analysis. 
-<img src="assets/readme/visualisation-module.png" alt="visualisation module" height="70%"/>
+<img src="../../assets/readme/visualisation-module.png" alt="visualisation module" height="70%"/>
 
 This module includes the following key classes and methods:
 
 **SimilarityMatrixGenerator Class**
 
-The [`SimilarityMatrixGenerator`](ocrApplication/TextSimilarity.cs) class creates visual representations of text similarity:
+The [`SimilarityMatrixGenerator`](../../ocrApplication/TextSimilarity.cs) class creates visual representations of text similarity:
 
 ```csharp
 public class SimilarityMatrixGenerator
@@ -200,7 +200,7 @@ These methods help in generating a visual matrix that allows for easy comparison
 
 **Export Utilities**
 
-The [`ExportUtilities`](ocrApplication/ExportUtilities.cs) class provides functionality for exporting synthetic ground truth text and OCR results in multiple file formats. This allows users to save and share their results for further analysis or reporting. The key method in this class is:
+The [`ExportUtilities`](../../ocrApplication/ExportUtilities.cs) class provides functionality for exporting synthetic ground truth text and OCR results in multiple file formats. This allows users to save and share their results for further analysis or reporting. The key method in this class is:
 
 ```csharp
 public static class ExportUtilities
@@ -238,7 +238,7 @@ OCRGui is a graphical user interface designed to facilitate Optical Character Re
 
 The following flowchart describes the workflow of ocrGui, a graphical user interface (GUI) designed for handling OCR (Optical Character Recognition) processing by interacting with an underlying ocrApplication.
 
-<img src="assets/readme/image-gui.png" alt="GUI Architecture" />
+<img src="../../assets/readme/image-gui.png" alt="GUI Architecture" />
 
 *This diagram shows the GUI component workflow, illustrating how user interactions are processed through the Avalonia UI framework. It demonstrates the flow from user input capture, through the MVVM architecture components, to the rendering of results and visualizations in the interface.*
 
@@ -300,7 +300,7 @@ public class App : Application
 
 ### Main Window
 
-The [`MainWindow.axaml.cs`](ocrGui/MainWindow.axaml.cs) file is where the main window of the application is created and configured. It contains the code that sets up the window instance, handles UI interactions, and ensures proper initialization of the window during the application's lifetime.
+The [`MainWindow.axaml.cs`](../../ocrGui/MainWindow.axaml.cs) file is where the main window of the application is created and configured. It contains the code that sets up the window instance, handles UI interactions, and ensures proper initialization of the window during the application's lifetime.
 ```csharp
 public partial class MainWindow : Window
 {

@@ -7,7 +7,7 @@ This document provides detailed instructions for developers who want to extend t
 To integrate a new OCR engine (e.g., a different API or a custom model), follow these steps:  
 
 ### Step 1: Implement the OCR Extraction Method
-Modify `OcrExtractionTools.cs` (located in `ocrApplication/OcrExtractionTools.cs`) and add a new method to handle the text extraction.  
+Modify [`OcrExtractionTools.cs`](../../ocrApplication/OcrExtractionTools.cs) and add a new method to handle the text extraction.  
 
 ```csharp
 public async Task<string> ExtractTextWithNewOcr(string imagePath)
@@ -23,7 +23,7 @@ public async Task<string> ExtractTextWithNewOcr(string imagePath)
 ```
 
 ### Step 2: Register the New OCR Engine in the Processing Pipeline
-Modify `OCRExtractionHelper.cs` (in `ocrApplication/OCRExtractionHelper.cs`) to include the new OCR method in the selection process.  
+Modify [`OCRExtractionHelper.cs`](../../ocrApplication/OCRExtractionHelper.cs) to include the new OCR method in the selection process.  
 
 ```csharp
 Dictionary<string, Func<string, Task<string>>> ocrMethods = new()
@@ -69,7 +69,7 @@ dotnet test
 To improve OCR accuracy, you may want to add a new image preprocessing method.  
 
 ### Step 1: Implement the New Preprocessing Function*
-Add the function inside `ImagePreprocessing.cs` (located in `ocrApplication/ImagePreprocessing.cs`).  
+Add the function inside [`ImagePreprocessing.cs`](../../ocrApplication/ImagePreprocessing.cs).  
 
 ```csharp
 public static Mat ApplySharpening(Mat inputImage)
@@ -111,7 +111,7 @@ dotnet test
 To improve OCR evaluation, you may want to introduce a new similarity metric.  
 
 ### Step 1: Implement the Metric in the Similarity Module
-Modify `OcrComparison.cs` (located in `ocrApplication/OcrComparison.cs`) and add the function.  
+Modify [`OcrComparison.cs`](../../ocrApplication/OcrComparision.cs) and add the function.  
 
 ```csharp
 public double CalculateDamerauLevenshteinSimilarity(string text1, string text2)
@@ -135,7 +135,7 @@ Dictionary<string, Func<string, string, double>> similarityMetrics = new()
 ```
 
 ### Step 3: Update Visualization Module (if needed)  
-Modify `SimilarityMatrixGenerator.cs` to include the new metric in heatmap generation.  
+Modify [`SimilarityMatrixGenerator.cs`](../../ocrApplication/TextSimilarity.cs) to include the new metric in heatmap generation.  
 
 ### Step 4: Test the New Similarity Metric
 ```bash
@@ -147,7 +147,7 @@ dotnet test
 If you want the OCR results exported in a different format (e.g., JSON, CSV, or custom reports), follow these steps:  
 
 ### Step 1: Implement the Export Function
-Modify `ExportUtilities.cs` (located in `ocrApplication/ExportUtilities.cs`).  
+Modify [`ExportUtilities.cs`](../../ocrApplication/ExportUtilities.cs).  
 
 ```csharp
 public static void ExportToJson(string outputPath, Dictionary<string, string> results)
