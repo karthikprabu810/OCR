@@ -14,16 +14,17 @@ The application is designed for researchers, data scientists, and professionals 
    - [ocrGui](#ocrgui)
    - [unitTestProject](#unittestproject)
 4. [System Requirements](#system-requirements)
-5. [Installation](#installation)
+5. [Dependencies](#dependencies)
+6. [Installation](#installation)
    - [Prerequisites](#prerequisites)
    - [Setup Steps](#setup-steps)
    - [Configuration](#configuration)
    - [Language Data Files](#language-data-files)
-6. [Usage](#usage)
+7. [Usage](#usage)
    - [Command Line Interface](#command-line-interface)
    - [Graphical User Interface](#graphical-user-interface)
-7. [Testing](#testing)
-8. [Architecture](#architecture)
+8. [Testing](#testing)
+9. [Architecture](#architecture)
    - [ocrApplication](#ocrapplication-1)
       - [Input Handling](#input-handling)
       - [Image Preprocessing](#image-preprocessing)
@@ -31,10 +32,10 @@ The application is designed for researchers, data scientists, and professionals 
       - [Similarity Analysis](#similarity-analysis)
       - [Visualization](#visualization)
    - [ocrGui](#ocrgui)
-      - [App axaml](#app-axaml)
+      - [App.axaml](#appaxaml)
       - [Main Window](#main-window)
-9. [Result and Visualization](result-and-visualization)
-10. [Dependencies](#dependencies)
+10. [Result and Visualization](result-and-visualization)
+
 
 ## Goal of the Experiment
 The goal of this experiment is to evaluate and optimize the effectiveness of various image preprocessing techniques on the accuracy of Optical Character Recognition (OCR) using the Terrasect SDK. Specifically, this experiment seeks to achieve the following objectives:
@@ -98,6 +99,9 @@ A comprehensive test suite that ensures:
 - **Memory**: 8GB RAM minimum, 16GB recommended
 - **Storage**: 2GB for installation, additional space for processing
 - **Dependencies**: .NET 8.0 SDK and runtime
+
+## Dependencies
+See the [requirements.json](assets/requirements.json) file for a detailed list of dependencies.
 
 ## Installation
 
@@ -180,7 +184,6 @@ dotnet run -- --input "/path/to/images" --output "/path/to/results" --methods "1
 - `--input`: Directory containing images to process
 - `--output`: Directory to save results
 - `--methods`: Comma-separated list of preprocessing method IDs (optional)
-- `--help`: Display help information
 
 Example Usage
 ```bash
@@ -258,7 +261,8 @@ Before applying OCR, it is important to enhance the image quality for better rec
 The [`ImagePreprocessing`](ocrApplication/ImagePreprocessing.cs) class implements the preprocessing module shown in the architecture diagram. This critical component applies various image enhancement techniques to improve OCR accuracy by normalizing image quality, removing artifacts, and enhancing text features before OCR processing.
 
 The image processing module architecture is described below:
-![processing module](<assets/readme/preprocessing-module.png>)
+<img src="assets/readme/preprocessing-module.png" alt="image processing module" height="50%"/>
+
 
 The preprocessing module addresses various image quality challenges that can impact OCR accuracy. It implements 24 distinct image enhancement techniques, organized into five functional categories:
 
@@ -279,19 +283,18 @@ These techniques are designed to optimize image quality, improving OCR performan
 #### OCR Integration Engine
 
 The extraction module containg various OCR Engines is described as follows
-![extraction module](<assets/readme/extraction-module.png>)
-
+<img src="assets/readme/extraction-module.png" alt="extraction module" height="70%"/>
 This component utilizes a multi-engine strategy for text extraction, offering flexibility and improved accuracy through the following integrations:
 
-Tesseract OCR: A locally-running OCR engine that supports a wide range of languages, providing an offline solution for text extraction.
+**Tesseract OCR**: A locally-running OCR engine that supports a wide range of languages, providing an offline solution for text extraction.
 
-Google Cloud Vision API: A cloud-based OCR service with advanced recognition capabilities, leveraging Google's powerful machine learning models for improved accuracy.
+**Google Cloud Vision API**: A cloud-based OCR service with advanced recognition capabilities, leveraging Google's powerful machine learning models for improved accuracy.
 
-IronOCR: A powerful OCR library for .NET, providing fast and accurate text extraction from images and PDFs with support for multiple languages.
+**IronOCR**: A powerful OCR library for .NET, providing fast and accurate text extraction from images and PDFs with support for multiple languages.
 
 The system allows users to compare results from all three OCR engines, leveraging an ensemble approach to generate more accurate synthetic ground truth data.
 
-Note: The integration for IronOCR and Google Cloud Vision API is currently commented out. Once the appropriate API keys are provided, the relevant sections of the code can be uncommented to enable these engines.
+*Note: The integration for IronOCR and Google Cloud Vision API is currently commented out. Once the appropriate API keys are provided, the relevant sections of the code can be uncommented to enable these engines.*
 
 The [`OcrExtractionTools`](ocrApplication/OcrExtractionTools.cs) class represents the OCR engine integration component in the architecture diagram. This module interfaces with multiple OCR engines to extract text from preprocessed images.
 
@@ -315,7 +318,7 @@ public class OcrExtractionTools
 #### Similarity Analysis
 
 The text comparision and similarity module archuitecture is described below:
-![comparision module](<assets/readme/similarity-module.png>)
+<img src="assets/readme/similarity-module.png" alt="comparision module" height="70%"/>
 
 The [`TextSimilarity`](ocrApplication/OcrComparision.cs) class provides a set of methods for comparing and analyzing the similarity between two text strings. It implements several text comparison techniques, each of which calculates similarity based on different algorithms. The class includes the following methods:
 
@@ -343,27 +346,27 @@ public class OcrComparison
 
 The Similarity Analysis Module leverages multiple text similarity metrics and embedding techniques to evaluate OCR accuracy comprehensively. This module allows for a detailed comparison of OCR outputs, ensuring the system can assess recognition quality from various perspectives. The following metrics and techniques are implemented:
 
-##### Character-level metrics
+**Character-level metrics**
 
-1) Levenshtein Distance: Measures the minimum number of character edits (insertions, deletions, substitutions) required to transform one string into another.
+- Levenshtein Distance: Measures the minimum number of character edits (insertions, deletions, substitutions) required to transform one string into another.
 
-2) Jaro-Winkler Similarity: A string comparison algorithm that focuses on matching characters while accounting for transpositions.
+- Jaro-Winkler Similarity: A string comparison algorithm that focuses on matching characters while accounting for transpositions.
 
-##### Word-level metrics
+**Word-level metrics**
 
-1) Cosine Similarity: Measures the cosine of the angle between two word vectors, useful for comparing documents based on word frequency distributions.
+- Cosine Similarity: Measures the cosine of the angle between two word vectors, useful for comparing documents based on word frequency distributions.
 
-2) Jaccard Similarity: Calculates the ratio of the intersection over the union of two sets (e.g., sets of words), assessing the overlap between texts.
+- Jaccard Similarity: Calculates the ratio of the intersection over the union of two sets (e.g., sets of words), assessing the overlap between texts.
 
-##### Embedding-based analysis:
+**Embedding-based analysis**
 
 Word Frequency Vectors: Represents each word in a text as a vector, with the frequency of occurrence providing weight.
 
-##### Cluster-based analysis:
+**Cluster-based analysis**
 
 This technique extracts features from images (e.g., visual characteristics) and groups similar images into clusters. This is useful for identifying patterns, organizing OCR outputs, and grouping similar documents or pages.
 
-###### Visual Characteristics for Feature Extraction
+**Visual Characteristics for Feature Extraction**
 
 The following visual attributes are extracted to assess OCR accuracy:
 
@@ -378,7 +381,10 @@ These techniques combine to form a robust analysis toolkit for comparing OCR res
 
 #### Visualization
 
-The Visualization Module is designed to provide visual representations of text similarity and facilitate the export of OCR results for reporting and analysis. This module includes the following key classes and methods:
+The Visualization Module as described in the below figure is designed to provide visual representations of text similarity and facilitate the export of OCR results for reporting and analysis. 
+<img src="assets/readme/visualisation-module.png" alt="visualisation module" height="70%"/>
+
+This module includes the following key classes and methods:
 
 **SimilarityMatrixGenerator Class**
 
@@ -402,7 +408,6 @@ public class SimilarityMatrixGenerator
 The SimilarityMatrixGenerator class is responsible for creating visual representations of text similarity. It generates embeddings and visualizes similarity metrics to help analyze and compare OCR outputs against the ground truth. The key methods in this class are:
 
 1) GenerateTextEmbeddings: This method generates text embeddings for a given list of texts, which are used for visualizing the similarity between different text entries. The embeddings are accompanied by corresponding labels, making it easier to interpret the results.
-
 2) GenerateAndVisualizeOcrSimilarityMatrix: This asynchronous method creates a similarity heatmap by comparing OCR results with the ground truth. It visualizes the degree of similarity between OCR outputs and provides a useful way to assess how well different OCR results match the expected text. The heatmap is saved as an excel file at the specified outputFilePath.
 
 These methods help in generating a visual matrix that allows for easy comparison and analysis of OCR accuracy.
@@ -433,12 +438,36 @@ ExportResults: This method exports the complete OCR results to various file form
 3) Best Clustering Methods: Best methods based on clustering results.
 4) Overall Best Methods: A summary of the overall best-performing OCR methods.
 
+Key methods:
+
+- **ExportToPlainText**: Exports OCR text to a .txt file.
+- **ExportToPdf**: Exports OCR text to a formatted PDF.
+- **ExportBestMethodsSummary**: Exports a detailed analysis of the best methods to text, PDF, and Excel.
+
 By utilizing this method, users can export results and summaries of their OCR comparison to share, review, or document their findings.
 
 ### ocrGui
-The flow diagram of the application is provided below:
-![Application Flow Chart](assets/readme/image-10.png)
+
+OCRGui is a graphical user interface designed to facilitate Optical Character Recognition (OCR) tasks by interacting with the underlying ocrApplication. It allows users to provide necessary inputs, validate them, and process them through OCR. The results are then displayed, or users are prompted to correct any errors.
+
+The following flowchart describes the workflow of ocrGui, a graphical user interface (GUI) designed for handling OCR (Optical Character Recognition) processing by interacting with an underlying ocrApplication.
+
+<img src="assets/readme/image-10.png" alt="Application Flow Chart" height="30%"/>
 *This diagram shows the GUI component workflow, illustrating how user interactions are processed through the Avalonia UI framework. It demonstrates the flow from user input capture, through the MVVM architecture components, to the rendering of results and visualizations in the interface.*
+
+**Key Components**
+
+- **ocrGui**: The user interface where users interact with the OCR system. It captures input, displays error messages, and presents the final OCR results.
+
+- **User Input**: The user provides inputs such as file selection, OCR settings, and preprocessing options to initiate the OCR task.
+
+- **Input Validation**: OCRGui checks whether the user inputs are valid. If valid, it transforms the inputs into commands that ocrApplication can process. If invalid, an error message prompts the user to correct the inputs.
+
+- **ocrApplication**: The underlying application that performs the actual OCR task. It receives commands from OCRGui and processes them to extract text from the provided files.
+
+- **Error Handling**: In case of an execution error, OCRGui displays a detailed error message to help users identify and correct the issue.
+
+- **Result Display**: After a successful OCR execution, OCRGui shows the results. If an error occurs, users are guided to fix the inputs and retry the process.
 
 In the .NET MAUI application, the main page and window are crucial for user interaction. This section provides an overview of how the main page and window are configured in the application.
 
@@ -468,9 +497,9 @@ public class App : Application
 }
 ```
 
-- Initialize(): This method loads the XAML resources required for the application. It prepares the UI and resources, like styles and themes, that are defined in XAML.
+- **Initialize()**: This method loads the XAML resources required for the application. It prepares the UI and resources, like styles and themes, that are defined in XAML.
 
-- OnFrameworkInitializationCompleted(): This method runs when the application is initialized. It checks if the application is running in a desktop environment (IClassicDesktopStyleApplicationLifetime) and assigns the main window (MainWindow) to the desktop application. This ensures the main window is managed properly and is the first window users see.
+- **OnFrameworkInitializationCompleted()**: This method runs when the application is initialized. It checks if the application is running in a desktop environment (IClassicDesktopStyleApplicationLifetime) and assigns the main window (MainWindow) to the desktop application. This ensures the main window is managed properly and is the first window users see.
 
 #### Main Window
 
@@ -496,29 +525,25 @@ To summarise the working of GUI Application
 ## Result and Visualization
 
 ### Similarity Metrics
-The similarity metrics provided quantitative measures of OCR accuracy across different preprocessing methods and document types. The average cosine and Levenshtein similarity scores for each preprocessing configuration indicates higher scores indicating better OCR quality.
 
-![Similarity scores for different preprocessing configurations for a image](assets/readme/image.png) 
-*This image shows a tabular representation of similarity scores across different preprocessing methods. Each row represents a different preprocessing technique, while columns show Cosine and Levenshtein similarity scores. Higher values (closer to 1.0) indicate better text extraction quality.*
+<img src="assets/readme/text-similarity-metrics.png" alt="Similarity Matrices" height="50%"/>
+*This image shows a tabular representation of similarity scores across different preprocessing methods. Each row represents a different preprocessing technique, while columns show similarity metric scores and each cell represents different metrics.*
 
-![Graphical representation of Similarity score for different configuration settings](assets/readme/image-1.png)
-*This bar chart visualizes the similarity scores from the previous table, making it easier to compare the effectiveness of different preprocessing techniques. The x-axis shows preprocessing methods, while the y-axis shows similarity values from 0 to 1.*
-
-
-
-The application's visualization tools provided intuitive representations of OCR performance across different preprocessing methods. 
+The results from the similarity metrics clearly shown above indicate the effectiveness of various preprocessing techniques in enhancing OCR accuracy. Higher similarity scores, closer to 1.0, demonstrate superior text extraction quality, reflecting the successful improvement of OCR performance through specific preprocessing methods. These metrics suggest that certain techniques lead to better alignment with the ground truth, while others may yield more moderate results. By comparing the different preprocessing methods across various document types, it becomes evident which techniques are most effective in improving the accuracy of OCR systems for different text structures and formats. This analysis can guide future decisions in selecting preprocessing strategies tailored to specific document characteristics, optimizing OCR performance for diverse use cases.
 
 ### Performance Visualization
-The parallel processing implementation significantly improved overall processing efficiency. Table II shows the processing time for different numbers of images for default image processing methods. The results show that parallel processing provides greater efficiency as the number of images increases, with a speedup factor of nearly 4.5× for larger datasets. This efficiency gain is attributed to the concurrent processing model implemented in the OcrProcessor class, which effectively utilizes multiple CPU cores.
 
-![Performance Analysis in single core vs multi-core system](assets/readme/image-4.png)
+<img src="assets/readme/image-4.png" alt="Performance Analysis in single core vs multi-core system" height="50%"/>
+
+The results presented in the figure above demonstrate the substantial improvement in processing efficiency due to the parallel processing implementation. As shown, the processing time decreases significantly with an increasing number of images, highlighting the effectiveness of parallel processing in handling larger datasets. The speedup factor of nearly 4.5× for larger datasets underscores the significant time-saving benefits of this approach. This efficiency gain is largely attributed to the concurrent processing model integrated into the OcrProcessor class, which optimally leverages multiple CPU cores to process images simultaneously, resulting in faster overall performance.
 
 ### Embedding Analysis
+
 The application generated vector embeddings for OCR text results, enabling detailed analysis of text similarity in a high-dimensional space. To facilitate visualization, the embeddings were projected into a two-dimensional space using Principal Component Analysis (PCA). 
 
 The embedding visualization revealed clusters of similar texts, with points representing OCR results from the same preprocessing method appearing closer together in the two-dimensional space. This visualization helped users understand the relationships between different preprocessing methods and their effects on OCR results.
 
-![Scatter plot of vector embeddings for different preprocessing configurations](assets/readme/image-5.png)
+<img src="assets/readme/image-5.png" alt="Scatter plot of vector embeddings for different preprocessing configurations"/>
 
 The embedding analysis revealed several key insights:
 
@@ -539,35 +564,38 @@ The superimposed vector embeddings suggests that the similar preprocessing techn
 ### Cluster Analysis
 
 The clustering-based preprocessing method selection showed significant effectiveness in identifying optimal preprocessing methods that maintained important visual characteristics while enhancing OCR accuracy. Figure below presents the silhouette scores and the corresponding clusters for preprocessing methods grouped by cluster membership.
-![GUI-input](<assets/readme/image-11.png>) ![GUI-output](<assets/readme/image-12.png>)
 
-The clustering analysis revealed three distinct clusters of preprocessing methods:
-1) Cluster 1 (Minimal Processing): Methods that preserved most of the original image characteristics, including no preprocessing and noise reduction. These methods had moderate silhouette scores (0.624-0.683), indicating reasonably cohesive grouping.
-2) Cluster 2 (Structural Enhancement): Methods that enhanced document structure without aggressive pixel-level modifications, including binarization, deskewing, and their combination. These methods had high silhouette scores (0.736-0.883), indicating strong cluster cohesion.
-3) Cluster 3 (Comprehensive Enhancement): Methods that applied more aggressive transformations to improve image quality, including contrast enhancement and combinations with multiple processing steps. These methods also showed high silhouette scores (0.795-0.891).
+<img src="assets/readme/image-11.png" alt="GUI-input" width="50%"/> <img src="assets/readme/image-12.png" alt="GUI-output" width="50%"/>
+
 The agreement between clustering and text similarity metrics was high, with 78% of cases showing alignment between the preprocessing method selected by clustering analysis and the method selected by either cosine or Levenshtein similarity. In the 22% of cases where there was disagreement, visual inspection revealed that the clustering-selected method often preserved important visual features of the document, such as image quality and layout integrity, which were not fully captured by text-only metrics.
 
-The final outcome of the overall image processing methods is summarized to provide a clear assessment of the effectiveness of each applied technique. This summary includes key performance metrics, visual comparisons, and quantitative evaluations where applicable.
+### Overall Summary
 
-Additionally, the processed results are saved for future reference, ensuring reproducibility and enabling further analysis or refinement if needed. These saved outputs can be used for benchmarking, comparative studies, or improving subsequent iterations of the image processing pipeline.
-![Excel-output](<assets/readme/image-13.png>)
-![CLI-output](<assets/readme/image-15.png>)
+The final outcomes of the image processing methods are summarized to offer a clear evaluation of the effectiveness of each applied technique. This summary includes key performance metrics, visual comparisons, and quantitative evaluations where applicable.
 
-### Command Line Interface Screen
+Additionally, the processed results are saved for future reference, ensuring reproducibility and enabling further analysis or refinement. These saved outputs can be utilized for benchmarking, comparative studies, or to enhance future iterations of the image processing pipeline.
 
-In the CLI version, the user specifies the folder names by entering the paths as command-line arguments or providing inputs interactively. The application processes the images within the specified folders, extracting text using OCR techniques.
+<img src="assets/readme/image-13.png" alt="Excel-output" />
 
-During processing, a progress bar is displayed to keep the user informed about the current status and estimated completion time. Once processing is complete, the extracted text is displayed in the terminal for immediate review. Additionally, the user has the option to save the results to a file for future reference, ensuring convenient access and further analysis if needed.
-![GUI-input](<assets/readme/image-14.png>)
+<img src="assets/readme/image-15.png" alt="CLI-output" />
 
-### Graphical User Interface Screen
 
-![GUI-input](<assets/readme/image-8.png>)
-![GUI-output](<assets/readme/image-9.png>)
+### User Interface 
 
-The user inputs the folder names through the GUI, either by typing the path or selecting folders via a browse dialog. After processing, the extracted text is displayed in the GUI, allowing the user to review or save the results easily.
+The application provides two modes of interaction for users: the Command Line Interface (CLI) and the Graphical User Interface (GUI). Both interfaces allow users to specify input folders, process images using OCR techniques, and view or save the extracted text. The choice of interface depends on user preference and the desired level of interaction, with the CLI offering a streamlined, text-based approach and the GUI providing a more visual, user-friendly experience. Each interface is designed to ensure smooth processing and efficient access to OCR results.
 
-## Dependencies
-See the [requirements.json](assets/requirements.json) file for a detailed list of dependencies.
+**Command Line Interface Screen**
+
+In the CLI version, users specify folder names by entering paths as command-line arguments or providing inputs interactively. The application then processes the images within the specified folders, extracting text using OCR techniques.
+
+During the processing, a progress bar is shown to keep the user updated on the current status and estimated completion time. Once the processing is complete, the extracted text is displayed in the terminal for immediate review. Additionally, users have the option to save the results to a file for future reference, ensuring easy access for further analysis or follow-up actions.
+
+<img src="assets/readme/image-14.png" alt="GUI-input" />
+
+**Graphical User Interface Screen**
+
+<img src="assets/readme/image-8.png" alt="GUI-input" width="50%"/> <img src="assets/readme/image-9.png" alt="GUI-output" width="50%"/>
+
+The user inputs the folder names through the GUI, either by typing the path or selecting folders via a browse dialog. Once the folders are specified, the application processes the images and extracts text using OCR techniques. After processing is complete, the extracted text is displayed directly in the GUI, allowing the user to review the results. Users can easily save the extracted text to a file for future reference or further analysis. Additionally, the interface provides an intuitive and user-friendly experience, ensuring smooth navigation and efficient access to the OCR results.
 
 [⬆️ Back to Top](#top)
