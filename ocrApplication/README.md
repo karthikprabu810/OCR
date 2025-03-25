@@ -34,7 +34,7 @@ The application is designed for researchers, data scientists, and professionals 
    - [ocrGui](#ocrgui)
       - [App.axaml](#appaxaml)
       - [Main Window](#main-window)
-10. [Result and Visualization](result-and-visualization)
+10. [Result and Visualization](#result-and-visualization)
 
 
 ## Goal of the Experiment
@@ -452,7 +452,7 @@ OCRGui is a graphical user interface designed to facilitate Optical Character Re
 
 The following flowchart describes the workflow of ocrGui, a graphical user interface (GUI) designed for handling OCR (Optical Character Recognition) processing by interacting with an underlying ocrApplication.
 
-<img src="assets/readme/image-10.png" alt="Application Flow Chart" height="30%"/>
+<img src="assets/readme/image-10.png" alt="Application Flow Chart" />
 *This diagram shows the GUI component workflow, illustrating how user interactions are processed through the Avalonia UI framework. It demonstrates the flow from user input capture, through the MVVM architecture components, to the rendering of results and visualizations in the interface.*
 
 **Key Components**
@@ -527,7 +527,8 @@ To summarise the working of GUI Application
 ### Similarity Metrics
 
 <img src="assets/readme/text-similarity-metrics.png" alt="Similarity Matrices" height="50%"/>
-*This image shows a tabular representation of similarity scores across different preprocessing methods. Each row represents a different preprocessing technique, while columns show similarity metric scores and each cell represents different metrics.*
+This image shows a tabular representation of similarity scores across different preprocessing methods. Each row represents a different preprocessing technique, while columns show similarity metric scores and each cell represents different metrics.
+
 
 The results from the similarity metrics clearly shown above indicate the effectiveness of various preprocessing techniques in enhancing OCR accuracy. Higher similarity scores, closer to 1.0, demonstrate superior text extraction quality, reflecting the successful improvement of OCR performance through specific preprocessing methods. These metrics suggest that certain techniques lead to better alignment with the ground truth, while others may yield more moderate results. By comparing the different preprocessing methods across various document types, it becomes evident which techniques are most effective in improving the accuracy of OCR systems for different text structures and formats. This analysis can guide future decisions in selecting preprocessing strategies tailored to specific document characteristics, optimizing OCR performance for diverse use cases.
 
@@ -565,7 +566,7 @@ The superimposed vector embeddings suggests that the similar preprocessing techn
 
 The clustering-based preprocessing method selection showed significant effectiveness in identifying optimal preprocessing methods that maintained important visual characteristics while enhancing OCR accuracy. Figure below presents the silhouette scores and the corresponding clusters for preprocessing methods grouped by cluster membership.
 
-<img src="assets/readme/image-11.png" alt="GUI-input" width="50%"/> <img src="assets/readme/image-12.png" alt="GUI-output" width="50%"/>
+<img src="assets/readme/image-11.png" alt="GUI-input" width="40%"/> <img src="assets/readme/image-12.png" alt="GUI-output" width="40%"/>
 
 The agreement between clustering and text similarity metrics was high, with 78% of cases showing alignment between the preprocessing method selected by clustering analysis and the method selected by either cosine or Levenshtein similarity. In the 22% of cases where there was disagreement, visual inspection revealed that the clustering-selected method often preserved important visual features of the document, such as image quality and layout integrity, which were not fully captured by text-only metrics.
 
@@ -573,7 +574,7 @@ The agreement between clustering and text similarity metrics was high, with 78% 
 
 The final outcomes of the image processing methods are summarized to offer a clear evaluation of the effectiveness of each applied technique. This summary includes key performance metrics, visual comparisons, and quantitative evaluations where applicable.
 
-Additionally, the processed results are saved for future reference, ensuring reproducibility and enabling further analysis or refinement. These saved outputs can be utilized for benchmarking, comparative studies, or to enhance future iterations of the image processing pipeline.
+Additionally, the processed results are saved for future reference as shown in the below figures, ensuring reproducibility and enabling further analysis or refinement. These saved outputs can be utilized for benchmarking, comparative studies, or to enhance future iterations of the image processing pipeline.
 
 <img src="assets/readme/image-13.png" alt="Excel-output" />
 
@@ -594,7 +595,7 @@ During the processing, a progress bar is shown to keep the user updated on the c
 
 **Graphical User Interface Screen**
 
-<img src="assets/readme/image-8.png" alt="GUI-input" width="50%"/> <img src="assets/readme/image-9.png" alt="GUI-output" width="50%"/>
+<img src="assets/readme/image-8.png" alt="GUI-input" width="40%"/> <img src="assets/readme/image-9.png" alt="GUI-output" width="40%"/>
 
 The user inputs the folder names through the GUI, either by typing the path or selecting folders via a browse dialog. Once the folders are specified, the application processes the images and extracts text using OCR techniques. After processing is complete, the extracted text is displayed directly in the GUI, allowing the user to review the results. Users can easily save the extracted text to a file for future reference or further analysis. Additionally, the interface provides an intuitive and user-friendly experience, ensuring smooth navigation and efficient access to the OCR results.
 
