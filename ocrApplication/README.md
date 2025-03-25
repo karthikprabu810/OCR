@@ -31,7 +31,7 @@ The application is designed for researchers, data scientists, and professionals 
       - [OCR Extraction](#ocr-extraction)
       - [Similarity Analysis](#similarity-analysis)
       - [Visualization](#visualization)
-   - [ocrGui](#ocrgui)
+   - [ocrGui](#ocrgui-1)
       - [App.axaml](#appaxaml)
       - [Main Window](#main-window)
 10. [Result and Visualization](#result-and-visualization)
@@ -452,8 +452,19 @@ OCRGui is a graphical user interface designed to facilitate Optical Character Re
 
 The following flowchart describes the workflow of ocrGui, a graphical user interface (GUI) designed for handling OCR (Optical Character Recognition) processing by interacting with an underlying ocrApplication.
 
-<img src="assets/readme/image-10.png" alt="Application Flow Chart" />
+<img src="assets/readme/image-gui.png" alt="GUI Architecture" />
+
 *This diagram shows the GUI component workflow, illustrating how user interactions are processed through the Avalonia UI framework. It demonstrates the flow from user input capture, through the MVVM architecture components, to the rendering of results and visualizations in the interface.*
+
+The **MVVM (Model-View-ViewModel) architecture** separates the application into three distinct components, improving maintainability and testability:
+
+- **Model**: Represents the data and business logic. It handles tasks like image processing and OCR without any direct interaction with the UI.
+
+- **View**: The user interface that displays data and captures user interactions. It’s responsible for presenting the results and doesn’t contain any logic for data manipulation.
+
+- **ViewModel**: Acts as a mediator between the Model and View. It provides data from the Model in a format the View can display and handles user interactions to update the Model.
+
+This separation allows for a more organized, modular approach to development, making the application easier to maintain and extend.
 
 **Key Components**
 
@@ -566,7 +577,7 @@ The superimposed vector embeddings suggests that the similar preprocessing techn
 
 The clustering-based preprocessing method selection showed significant effectiveness in identifying optimal preprocessing methods that maintained important visual characteristics while enhancing OCR accuracy. Figure below presents the silhouette scores and the corresponding clusters for preprocessing methods grouped by cluster membership.
 
-<img src="assets/readme/image-11.png" alt="GUI-input" width="40%"/> <img src="assets/readme/image-12.png" alt="GUI-output" width="40%"/>
+<img src="assets/readme/image-11.png" alt="GUI-input" width="45%"/> <img src="assets/readme/image-12.png" alt="GUI-output" width="40%"/>
 
 The agreement between clustering and text similarity metrics was high, with 78% of cases showing alignment between the preprocessing method selected by clustering analysis and the method selected by either cosine or Levenshtein similarity. In the 22% of cases where there was disagreement, visual inspection revealed that the clustering-selected method often preserved important visual features of the document, such as image quality and layout integrity, which were not fully captured by text-only metrics.
 
@@ -595,7 +606,7 @@ During the processing, a progress bar is shown to keep the user updated on the c
 
 **Graphical User Interface Screen**
 
-<img src="assets/readme/image-8.png" alt="GUI-input" width="40%"/> <img src="assets/readme/image-9.png" alt="GUI-output" width="40%"/>
+<img src="assets/readme/image-8.png" alt="GUI-input" width="45%"/> <img src="assets/readme/image-9.png" alt="GUI-output" width="40%"/>
 
 The user inputs the folder names through the GUI, either by typing the path or selecting folders via a browse dialog. Once the folders are specified, the application processes the images and extracts text using OCR techniques. After processing is complete, the extracted text is displayed directly in the GUI, allowing the user to review the results. Users can easily save the extracted text to a file for future reference or further analysis. Additionally, the interface provides an intuitive and user-friendly experience, ensuring smooth navigation and efficient access to the OCR results.
 
