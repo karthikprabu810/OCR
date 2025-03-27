@@ -1,6 +1,10 @@
 # Visualisation
 
-<a name="top"></a>
+Below is a sample image after basic preprocessing techniques:
+
+<img src="../../assets/readme/preprocessed-images.png" alt="GUI-input" />
+
+This image showcases the result of applying fundamental preprocessing methods to enhance the data quality for further analysis. The adjustments made improve clarity and make key features more prominent for accurate comparisons.
 
 ## User Interface 
 
@@ -16,8 +20,8 @@ During the processing, a progress bar is shown to keep the user updated on the c
 
 **Graphical User Interface Screen**
 
-<img src="../../assets/readme/image-8.png" alt="GUI-input" width="45%"/> <img src="../../assets/readme/image-9.png" alt="GUI-output" width="40%"/>
-
 The user inputs the folder names through the GUI, either by typing the path or selecting folders via a browse dialog. Once the folders are specified, the application processes the images and extracts text using OCR techniques. After processing is complete, the extracted text is displayed directly in the GUI, allowing the user to review the results. Users can easily save the extracted text to a file for future reference or further analysis. Additionally, the interface provides an intuitive and user-friendly experience, ensuring smooth navigation and efficient access to the OCR results.
 
-[⬆️ Back to Top](#top)
+<img src="../../assets/readme/image-8.png" alt="GUI-input" width="45%"/> <img src="../../assets/readme/image-9.png" alt="GUI-output" width="40%"/>
+
+[Back to Home](../../readme.md)

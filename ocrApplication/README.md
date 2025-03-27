@@ -83,7 +83,10 @@ Ultimately, the experiment aims to enhance OCR capabilities and provide a compre
      - API URL for your preferred LLM model service
      - Authentication credentials if required by the LLM service
      - Sufficient API quota/credits for processing text
+     - Python, Flask, and Ollma are required to set up and run the LLM model locally
    - These can be configured in the config.json file as described in the Configuration section
+
+To learn how to set up and configure the LLM model on your local machine, please refer to the [setup guide](assets/README_API.md)
 
 ### Setup Steps
 
@@ -124,9 +127,9 @@ The configuration parameters are:
 - **TesseractTessDataPath**: Path to Tesseract language data files (required)
 - **IronOcrLicenseKey**: License key for IronOCR (optional)
 - **GoogleVisionApiKey**: API key for Google Cloud Vision (optional)
-- **ApiUrl**: URL endpoint for LLM API service (optional, used for advanced text analysis)
-- **Counter**: Counter for your google vision API requests
-- **Limit**: Vision API Limit to avoid excess charge
+- **Counter**: Counter for your google vision API requests (required if GoogleVisionApiKey is entered)
+- **Limit**: Vision API Limit to avoid excess charge (required if GoogleVisionApiKey is entered)
+- **ApiUrl**: URL endpoint for LLM API service (optional, used for advanced text analysis) (optional)
 
 ### Language Data Files:
 Extract the `tessdata.zip` file from the assets folder to the appropriate location as specified in your config.json.
@@ -190,7 +193,7 @@ The application consists of the following core Modules:
 - **ocrGui**: A graphical user interface built on top of ocr Application with Avalonia UI, offering intuitive file selection and interactive result visualization.
 - **unitTestProject**: A comprehensive test suite ensuring code reliability, accuracy, and performance.
 
-For detailed information on the architecture of the system, please see **[`architecture.md`](Documentation/readme/architecture.md)**.
+For detailed information on the architecture of the system, please see [`architecture.md`](Documentation/readme/architecture.md).
 
 ### Extending the System
 
@@ -201,12 +204,12 @@ If you want to:
 - Implement new preprocessing techniques (e.g., noise reduction, binarization, deskewing).  
 - Introduce new text similarity metrics (e.g., alternative distance measures).  
 
-Refer to **[EXTENDING.md](Documentation/readme/extending.md)** for detailed instructions on modifying and expanding the application. 
+Refer to [`extending.md`](Documentation/readme/extending.md) for detailed instructions on modifying and expanding the application. 
 
 ## Result and Visualization
 
-For detailed information on the results and analysis, please see **[`results.md`](Documentation/readme/results.md)**.
+For detailed information on the results and analysis, please see [`results.md`](Documentation/readme/results.md).
 
-For UI and CLI output screenshots, please see, **[`visualisation.md`](Documentation/readme/visualisation.md)**.
+For UI and CLI output screenshots, please see, [`visualisation.md`](Documentation/readme/visualisation.md).
 
 [⬆️ Back to Top](#top)

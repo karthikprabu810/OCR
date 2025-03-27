@@ -1,7 +1,5 @@
 # Result Analysis
 
-<a name="top"></a>
-
 ## Similarity Metrics
 
 <img src="../../assets/readme/text-similarity-metrics.png" alt="Similarity Matrices" height="50%"/>
@@ -52,10 +50,22 @@ The agreement between clustering and text similarity metrics was high, with 78% 
 
 The final outcomes of the image processing methods are summarized to offer a clear evaluation of the effectiveness of each applied technique. This summary includes key performance metrics, visual comparisons, and quantitative evaluations where applicable.
 
+<img src="../../assets/readme/image-15.png" alt="CLI-output" />
+
 Additionally, the processed results are saved for future reference as shown in the below figures, ensuring reproducibility and enabling further analysis or refinement. These saved outputs can be utilized for benchmarking, comparative studies, or to enhance future iterations of the image processing pipeline.
 
 <img src="../../assets/readme/image-13.png" alt="Excel-output" />
 
-<img src="../../assets/readme/image-15.png" alt="CLI-output" />
 
-[⬆️ Back to Top](#top)
+The comparative analysis for the sample image has been generated and is available in the following Excel file:
+[comparative_analysis.xlsx](https://github.com/karthikprabu810/OCR/blob/main/ocrApplication/assets/readme/comparative_analysis.xlsx)
+
+This file includes detailed comparisons and relevant data derived from the image for further analysis and review.
+
+**Usage Instructions**
+
+1. Download the Excel file.
+2. Open it using any spreadsheet software (e.g., Microsoft Excel, Google Sheets).
+3. Review the various tabs containing the analysis and results.
+
+[Back to Home](../../readme.md)

@@ -195,3 +195,5 @@ dotnet run -- --input "test_images/" --output "results/"
 By following these steps, you can seamlessly extend the OCR application to support additional text recognition engines, preprocessing techniques, similarity metrics, and output formats.  
 
 For further improvements, consider contributing to the main repository or submitting a pull request.
+
+[Back to Home](../../readme.md)

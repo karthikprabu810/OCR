@@ -1,7 +1,5 @@
 #  Architecture
 
-<a name="top"></a>
-
 ## ocrApplication
 
 The architectural flow diagram of the application is provided below:
@@ -238,7 +236,7 @@ OCRGui is a graphical user interface designed to facilitate Optical Character Re
 
 The following flowchart describes the workflow of ocrGui, a graphical user interface (GUI) designed for handling OCR (Optical Character Recognition) processing by interacting with an underlying ocrApplication.
 
-<img src="../../assets/readme/image-gui.png" alt="GUI Architecture" />
+<img src="../../assets/readme/image-guii.png" alt="GUI Architecture" />
 
 *This diagram shows the GUI component workflow, illustrating how user interactions are processed through the Avalonia UI framework. It demonstrates the flow from user input capture, through the MVVM architecture components, to the rendering of results and visualizations in the interface.*
 
@@ -251,20 +249,6 @@ The **MVVM (Model-View-ViewModel) architecture** separates the application into 
 - **ViewModel**: Acts as a mediator between the Model and View. It provides data from the Model in a format the View can display and handles user interactions to update the Model.
 
 This separation allows for a more organized, modular approach to development, making the application easier to maintain and extend.
-
-**Key Components**
-
-- **ocrGui**: The user interface where users interact with the OCR system. It captures input, displays error messages, and presents the final OCR results.
-
-- **User Input**: The user provides inputs such as file selection, OCR settings, and preprocessing options to initiate the OCR task.
-
-- **Input Validation**: OCRGui checks whether the user inputs are valid. If valid, it transforms the inputs into commands that ocrApplication can process. If invalid, an error message prompts the user to correct the inputs.
-
-- **ocrApplication**: The underlying application that performs the actual OCR task. It receives commands from OCRGui and processes them to extract text from the provided files.
-
-- **Error Handling**: In case of an execution error, OCRGui displays a detailed error message to help users identify and correct the issue.
-
-- **Result Display**: After a successful OCR execution, OCRGui shows the results. If an error occurs, users are guided to fix the inputs and retry the process.
 
 In the .NET MAUI application, the main page and window are crucial for user interaction. This section provides an overview of how the main page and window are configured in the application.
 
@@ -319,4 +303,4 @@ To summarise the working of GUI Application
 
 - **MainWindow.axaml.cs** is where the main application window is configured, providing the user interface for interacting with the app.
 
-[⬆️ Back to Top](#top)
+[Back to Home](../../readme.md)
