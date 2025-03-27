@@ -110,6 +110,8 @@ See [Configurations](#configuration) for more details.
    dotnet build
    ```
 
+A setup video has been uploaded for easy reference. Use this [youtube link](https://youtu.be/NpfjyuhVfWA)
+
 ### Configuration
 
 Create or modify the `config.json` file in the root directory with the following structure:
