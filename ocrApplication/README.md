@@ -92,16 +92,20 @@ To learn how to set up and configure the LLM model on your local machine, please
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/ocrApplication.git
+   git clone https://github.com/karthikprabu810/OCR.git
    cd ocrApplication
    ```
+2. **Set up TessdataPath**
 
-2. **Restore dependencies**:
+    Create or modify the `config.json` file in the root directory to initialise the tessdata path for tesseract.
+See [Configurations](#configuration) for more details.
+
+3. **Restore dependencies**:
    ```bash
    dotnet restore
    ```
 
-3. **Build the solution**:
+4. **Build the solution**:
    ```bash
    dotnet build
    ```

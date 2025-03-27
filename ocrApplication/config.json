@@ -3,7 +3,7 @@
   "TesseractTessDataPath": "/Users/karthikprabu/.nuget/packages/tesseract.data.english/4.0.0/build/tessdata",
   "IronOcrLicenseKey": "IRONOCR_API_KEY",
   "GoogleVisionApiKey": "/Users/karthikprabu/Downloads/personal/radiant-raceway-449617-p7-3d176321d658.json",
-  "Counter": 188,
+  "Counter": 189,
   "Limit": 950,
   "ApiUrl": "http://127.0.0.1:5000/process_ocr"
 }

@@ -2,9 +2,13 @@
 
 Below is a sample image after basic preprocessing techniques:
 
-<img src="../../assets/readme/preprocessed-images.png" alt="GUI-input" />
+<img src="../../assets/readme/preprocessed-images.png" alt="Preprocessed Images" />
 
 This image showcases the result of applying fundamental preprocessing methods to enhance the data quality for further analysis. The adjustments made improve clarity and make key features more prominent for accurate comparisons.
+
+The following shows the extracted text output after each preprocessing.
+
+<img src="../../assets/readme/extracted_text.png" alt="Extracted Text" />
 
 ## User Interface 
 
