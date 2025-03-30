@@ -165,7 +165,9 @@ public static class ExecutionTimeLogger
         
         // Perform dimensionality reduction to get 2D coordinates
         var reduced = ReduceDimensionality(vectors);
-            
+        
+        
+
         // Set up column headers for the reduced coordinates
         worksheet.Cells[1, 1].Value = "X";
         worksheet.Cells[1, 2].Value = "Y";
@@ -176,8 +178,8 @@ public static class ExecutionTimeLogger
         // Write the reduced 2D coordinates and labels to the worksheet
         for (int i = 0; i < reduced.Count; i++)
         {
-            worksheet.Cells[i + 2, 1].Value = reduced[i][0]; // X coordinate
-            worksheet.Cells[i + 2, 2].Value = reduced[i][1]; // Y coordinate
+            worksheet.Cells[i + 2, 1].Value = (reduced[i] != null && reduced[i].Length > 0) ? reduced[i][0] : 0; // X coordinate
+            worksheet.Cells[i + 2, 2].Value = (reduced[i] != null && reduced[i].Length > 0) ? reduced[i][1] : 0; // Y coordinate
             worksheet.Cells[i + 2, 3].Value = embeddings[i].Label; // Text label
             
             // Set number format to display decimals
